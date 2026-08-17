@@ -29,11 +29,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm build
+
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Build packages & examples
-        run: pnpm build
+      - name: Build documentation & demo site
+        run: pnpm build:site
 
       - name: Run unit & integration tests
         run: pnpm test
