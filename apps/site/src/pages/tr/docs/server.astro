@@ -2,70 +2,87 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const cliCommands = `# Veritabanı şemasını başlat ve yönetici parolası belirle
+const cliCommands = `# Veritabani semasini baslatin ve yonetici parolasini belirleyin
 npx copypatch init --db ./copypatch.sqlite
 
-# Yüksek performanslı sunucuyu başlat
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://alanadiniz.com" --mode direct
+# Bagimsiz yuksek performansli sunucuyu baslatin
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://sitem.com" --mode direct
 
-# Parolayı değiştir ve tüm aktif oturumları anında sonlandır
+# Parolayi degistirin ve tum aktif oturumlari aninda sonlandirin
 npx copypatch password --db ./copypatch.sqlite
 
-# Bekleyen veritabanı şema güncellemelerini uygula
+# Bekleyen veritabani sema guncellemelerini uygulayin
 npx copypatch migrate --db ./copypatch.sqlite`;
 
 const embeddedServer = `import { createCopyPatchApp } from '@copypatch/server';
 import { serve } from '@hono/node-server';
 
+// Ozel ayarlarinizla gomulu Hono router'i olusturun
 const app = createCopyPatchApp({
   dbPath: './copypatch.sqlite',
-  publicOrigins: ['http://localhost:5173', 'https://alanadiniz.com'],
-  sessionSecret: process.env.COPYPATCH_SECRET || 'en-az-32-karakterli-guvenli-gizli-anahtar',
-  publishingMode: 'direct',
+  publicOrigins: ['http://localhost:5173', 'https://sitem.com'],
+  sessionSecret: process.env.COPYPATCH_SECRET || 'en-az-32-karakterli-rastgele-gizli-anahtar',
+  publishingMode: 'direct', // 'direct' veya 'draft'
 });
 
+// Node.js yerel HTTP sunucusu ile calistirin
 serve({
   fetch: app.fetch,
   port: 4040,
 });
 
-console.log('CopyPatch API http://localhost:4040/__copypatch/api/v1 adresinde çalışıyor');`;
+console.log('CopyPatch API sunucusu dinliyor: http://localhost:4040/__copypatch/api/v1');`;
+
+const sqlitePragmas = `-- CopyPatch Otomatik SQLite Pragma Yapilandirmalari
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA foreign_keys = ON;
+PRAGMA busy_timeout = 5000;
+PRAGMA cache_size = -64000; -- 64MB bellek onbellegi`;
+
+const cacheFlow = `Ziyaretçi İsteği -> Bellek İçi Anlık Görüntü Önbelleği (0.2ms altı) -> JSON Yanıtı
+(Genel ziyaretçi okumalarında sıfır disk I/O, sıfır SQLite sorgusu)`;
 ---
 
 <DocsLayout
-  title="Sunucu & CLI Referansı"
-  description="CopyPatch arka uç sunucusu, CLI parametreleri, SQLite şeması ve gömülü Hono rotaları."
+  title="Sunucu ve CLI Referansı"
+  description="Kapsamlı CLI parametreleri, SQLite veritabanı şeması, bellek içi önbellek ve gömülü sunucu yapılandırması."
 >
-  <h1>Sunucu & CLI Referansı</h1>
+  <h1>Sunucu ve CLI Referansı</h1>
 
   <p class="lead">
-    <code>@copypatch/server</code> paketi Hono, SQLite (<code>better-sqlite3</code>) ve Drizzle ORM ile geliştirilmiş hafif ve kurumsal standartta bir arka uç sunar. Ziyaretçi isteklerini bellek içi önbellekle 0.2ms altında yanıtlar.
+    <code>@copypatch/server</code> paketi; Hono, SQLite (<code>better-sqlite3</code>) ve Drizzle ORM ile geliştirilmiş hafif ve güvenilir bir arka uç sunar. Ziyaretçi isteklerine bellek içi önbellekle 0.2ms altında yanıt verir ve yetkili editörler için güvenlik korumalı uç noktalar sağlar.
   </p>
 
-  <h2>CLI Komutları</h2>
+  <h2>CLI Komut Seti</h2>
   <table>
     <thead>
       <tr>
         <th>Komut</th>
-        <th>İşlev</th>
+        <th>Amaç</th>
+        <th>Etkileşimli Seçenekler</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><code>copypatch init</code></td>
-        <td>SQLite şemasını başlatır, geçişleri çalıştırır ve parola belirlemenizi ister.</td>
+        <td>SQLite şemasını başlatır, migrasyonları uygular ve yönetici parolası ister.</td>
+        <td><code>--passphrase</code> verilmediyse etkileşimli olarak parola sorar.</td>
       </tr>
       <tr>
         <td><code>copypatch serve</code></td>
-        <td>HTTP API sunucusunu belirtilen portta çalıştırır.</td>
+        <td>HTTP API sunucusunu belirtilen port üzerinden başlatır.</td>
+        <td>Ziyaretçi isteklerini ve kimlik doğrulamalı düzenlemeleri dinler.</td>
       </tr>
       <tr>
         <td><code>copypatch password</code></td>
-        <td>Yönetici parolasını yeniler ve aktif oturumları anında sonlandırır.</td>
+        <td>Yönetici parolasını yeniler ve mevcut tüm oturumları geçersiz kılar.</td>
+        <td>Minimum uzunluk kontrolüyle yeni parola ister.</td>
       </tr>
       <tr>
         <td><code>copypatch migrate</code></td>
-        <td>Bekleyen şema güncellemelerini kesintisiz uygular.</td>
+        <td>Bekleyen veritabanı şema güncellemelerini hizmet kesintisi olmadan uygular.</td>
+        <td>Çift çalıştırmaya dayanıklı (idempotent) Drizzle migrasyonlarını çalıştırır.</td>
       </tr>
     </tbody>
   </table>
@@ -73,7 +90,7 @@ console.log('CopyPatch API http://localhost:4040/__copypatch/api/v1 adresinde ç
   <h2>CLI Kullanım Örnekleri</h2>
   <CodeBlock code={cliCommands} lang="bash" title="Terminal" />
 
-  <h2>CLI Parametreleri</h2>
+  <h2>CLI Parametreleri Referansı</h2>
   <table>
     <thead>
       <tr>
@@ -85,30 +102,61 @@ console.log('CopyPatch API http://localhost:4040/__copypatch/api/v1 adresinde ç
     <tbody>
       <tr>
         <td><code>--port, -p</code></td>
-        <td>Sunucunun dinleyeceği TCP portu.</td>
+        <td>HTTP sunucusunun bağlanacağı TCP portu.</td>
         <td><code>4040</code></td>
       </tr>
       <tr>
         <td><code>--db, -d</code></td>
-        <td>SQLite veritabanı dosyasının disk yolu.</td>
+        <td>Diskteki SQLite veritabanı dosyasının yolu.</td>
         <td><code>"./copypatch.sqlite"</code></td>
       </tr>
       <tr>
         <td><code>--origin, -o</code></td>
-        <td>İzin verilen ön yüz alan adı adresleri (virgülle ayrılmış).</td>
+        <td>İzin verilen istemci Origin/Referer adreslerinin virgülle ayrılmış listesi.</td>
         <td><code>"http://localhost:5173"</code></td>
       </tr>
       <tr>
         <td><code>--mode, -m</code></td>
-        <td>Yayınlama modu: <code>direct</code> (doğrudan canlı) veya <code>draft</code> (taslak).</td>
+        <td>Yayınlama modu: <code>direct</code> (anlık canlı) veya <code>draft</code> (taslak staging).</td>
         <td><code>"direct"</code></td>
+      </tr>
+      <tr>
+        <td><code>--passphrase</code></td>
+        <td>Yönetici parolası (otomasyon scriptleri / CI için).</td>
+        <td><em>Etkileşimli istem</em></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>Mevcut Node.js Sunucularına Gömme</h2>
+  <h2>SQLite Veritabanı Mimarisi</h2>
   <p>
-    Ayrı bir işlem olarak çalıştırmak yerine mevcut Express veya Hono uygulamanıza gömmek isterseniz:
+    CopyPatch, SQLite veritabanını yüksek eşzamanlılık sağlayan pragmalar ile otomatik olarak başlatır:
+  </p>
+
+  <CodeBlock code={sqlitePragmas} lang="sql" title="SQLite Pragmalari" />
+
+  <h3>Veritabanı Tabloları</h3>
+  <ul>
+    <li><strong><code>auth_credentials</code>:</strong> Argon2id parola hash'i, tuz ve zaman damgasını saklar.</li>
+    <li><strong><code>sessions</code>:</strong> Kriptografik oturum token hash'lerini, son kullanma sürelerini ve CSRF gizli anahtarlarını saklar.</li>
+    <li><strong><code>content_state</code>:</strong> Aktif dillerin yayınlanmış ve taslak revizyon numaralarını takip eder.</li>
+    <li><strong><code>content_entries</code>:</strong> Dil ve anahtar bazında yayınlanan ve taslak metin kayıtlarını saklar.</li>
+  </ul>
+
+  <h2>Bellek İçi Anlık Görüntü Önbelleği</h2>
+  <p>
+    Genel ziyaretçiler için sıfır veritabanı yükü sağlamak amacıyla CopyPatch bellek içinde değişmez bir anlık görüntü haritası tutar:
+  </p>
+
+  <CodeBlock code={cacheFlow} lang="text" title="Önbellek Akışı" />
+
+  <p>
+    Bir editör değişiklik kaydettiğinde veya yayınladığında, SQLite bir işlem içinde güncellenir ve bellek içi önbellek anında atomik olarak değiştirilir.
+  </p>
+
+  <h2>Mevcut Node.js Arka Uçlarına Gömme</h2>
+  <p>
+    CopyPatch'i bağımsız bir süreç yerine mevcut Express, Fastify veya Hono uygulamanız içinde çalıştırmak isterseniz <code>createCopyPatchApp</code> fonksiyonunu kullanabilirsiniz:
   </p>
 
   <CodeBlock code={embeddedServer} lang="typescript" title="server.ts" />

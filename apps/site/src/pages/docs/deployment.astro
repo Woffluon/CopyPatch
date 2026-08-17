@@ -151,7 +151,7 @@ const litestreamConfig = `dbs:
   <h1>Self-Hosted Deployment Guide</h1>
 
   <p class="lead">
-    CopyPatch is designed for effortless, deterministic self-hosting. Because persistence lives in a single SQLite database in Write-Ahead Logging (WAL) mode with zero external service dependencies, a standard single-node server handles millions of monthly requests for under $5/month.
+    CopyPatch is designed for zero-dependency, deterministic self-hosting. Because persistence lives in a single SQLite database in Write-Ahead Logging (WAL) mode with zero external service dependencies, a standard single-node server handles millions of monthly requests for under $5/month.
   </p>
 
   <h2>Deployment Strategies</h2>
@@ -211,7 +211,7 @@ sudo systemctl enable --now copypatch</code></pre>
 
   <h2>4. Reverse Proxy Setup (Caddy / Nginx)</h2>
   <p>
-    Serving both your frontend app and CopyPatch under the same origin (or cleanly routing <code>/__copypatch/api/v1</code>) ensures cookies, CSRF tokens, and SameSite validation operate seamlessly without cross-origin friction.
+    Serving both your frontend app and CopyPatch under the same origin (or cleanly routing <code>/__copypatch/api/v1</code>) ensures cookies, CSRF tokens, and SameSite validation operate reliably without cross-origin friction.
   </p>
 
   <CodeBlock code={caddyfile} lang="nginx" title="Caddyfile" />

@@ -2,7 +2,7 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const nextServerCode = `// app/[locale]/page.tsx (Sunucu Bileşeni)
+const nextServerCode = `// app/[locale]/page.tsx (Sunucu Bileseni / Server Component)
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
 import { fetchServerSnapshot } from '@copypatch/next/server';
 
@@ -13,11 +13,11 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { locale } = await params;
 
-  // SSR sırasında yayınlanan metin anlık görüntüsünü önceden çek
+  // SSR sirasinda yayinlanan anlik goruntuyu ISR onbellegiyle cekin
   const snapshot = await fetchServerSnapshot(locale, {
     apiBaseUrl: process.env.COPYPATCH_INTERNAL_URL || 'http://127.0.0.1:4040',
     next: {
-      revalidate: 60,
+      revalidate: 60, // 60 saniyede bir veya istege bagli webhook ile yenileyin
       tags: [\`copypatch-snapshot-\${locale}\`],
     },
   });
@@ -30,15 +30,31 @@ export default async function Page({ params }: PageProps) {
     >
       <main className="container mx-auto px-4 py-16">
         <EditableText contentKey="hero.title" as="h1" className="text-5xl font-bold tracking-tight">
-          Next.js ile Sunucuda Oluşturulan Başlık
+          Next.js ile Sunucuda Önceden Render Edilen Başlık
         </EditableText>
 
         <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true} className="text-xl text-zinc-400 mt-4">
-          Sunucu tarafında sıfır düzen kayması, kusursuz SEO indeksleme ve anında hidrasyon ile oluşturulur.
+          Sıfır yerleşim kayması, tam SEO indeksleme ve anında istemci hidrasyonu ile sunucuda oluşturulur.
         </EditableText>
       </main>
     </NextCopyPatchProvider>
   );
+}`;
+
+const revalidateAction = `// app/api/revalidate/route.ts (İsteğe bağlı ISR webhook rotası)
+import { revalidateTag } from 'next/cache';
+import { NextRequest, NextResponse } from 'next/server';
+
+export async function POST(request: NextRequest) {
+  const authHeader = request.headers.get('Authorization');
+  if (authHeader !== \`Bearer \${process.env.REVALIDATE_SECRET}\`) {
+    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 });
+  }
+
+  const { locale } = await request.json().catch(() => ({ locale: 'tr' }));
+  revalidateTag(\`copypatch-snapshot-\${locale}\`);
+
+  return NextResponse.json({ revalidated: true, locale, now: Date.now() });
 }`;
 
 const rewriteCode = `// next.config.mjs
@@ -60,26 +76,74 @@ export default nextConfig;`;
 ---
 
 <DocsLayout
-  title="Next.js App Router & SSR Entegrasyonu"
-  description="Next.js App Router (RSC) ile CopyPatch kullanımı, sıfır hidrasyon uyarısıyla sunucuda ön oluşturma."
+  title="Next.js App Router ve SSR Entegrasyonu"
+  description="Next.js App Router (RSC) ile CopyPatch entegrasyonu, sunucu tarafında anlık görüntü ön yükleme ve 0ms hidrasyon uyumu."
 >
-  <h1>Next.js App Router & SSR Entegrasyonu</h1>
+  <h1>Next.js App Router ve SSR Entegrasyonu</h1>
 
   <p class="lead">
-    <code>@copypatch/next</code> paketi Next.js App Router ve React Sunucu Bileşenleri (RSC) için tam uyumluluk sağlar. Yayınlanan metinlerin sunucu tarafında çekilmesini sağlayarak metin sıçramalarını ve hidrasyon hatalarını tamamen ortadan kaldırır.
+    <code>@copypatch/next</code> paketi, Next.js App Router ve React Server Components (RSC) için birinci sınıf destek sağlar. Sunucunuzun SSR aşamasında yayınlanan içeriği önceden çekmesine olanak tanır; metin sıçramalarını ve React hidrasyon uyumsuzluklarını tamamen ortadan kaldırır.
   </p>
 
-  <h2>Nasıl Çalışır?</h2>
+  <h2>Çalışma Mantığı</h2>
   <ol>
-    <li>Sunucu oluşturma sırasında <code>fetchServerSnapshot(locale)</code> CopyPatch veritabanından aktif dil verilerini çeker.</li>
-    <li>Veriler <code>NextCopyPatchProvider</code> bileşenine <code>initialSnapshot</code> olarak verilir.</li>
-    <li>İstemci tarayıcıda açıldığında ek bir ağ isteği yapmadan doğrudan sunucu çıktısıyla hidrate olur.</li>
-    <li>Yetkili bir editör sayfayı <code>?copypatch=1</code> ile açtığında araç çubuğu yüklenir ve sayfa içi düzenleme aktifleşir.</li>
+    <li>Sunucu render aşamasında, <code>fetchServerSnapshot(locale)</code> fonksiyonu aktif dil için CopyPatch depolamasından anlık görüntüyü çeker.</li>
+    <li>Anlık görüntü verisi Sunucu Bileşeni işaretlemesine gömülür ve <code>NextCopyPatchProvider</code> bileşenine <code>initialSnapshot</code> olarak aktarılır.</li>
+    <li>İstemci tarayıcıda yüklendiğinde, React ek bir ağ isteği atmadan sunucuda oluşturulan metinle anında hidrasyon sağlar.</li>
+    <li>Yetkili bir editör sayfayı <code>?copypatch=1</code> ile açtığında, düzenleme çubuğu dinamik olarak yüklenir ve sayfa içi düzenleme aktifleşir.</li>
   </ol>
 
   <h2>1. Sunucu Bileşeni Kurulumu</h2>
+  <p>
+    Herhangi bir Sunucu Bileşeni sayfası veya yerleşiminde <code>fetchServerSnapshot</code> fonksiyonunu kullanın:
+  </p>
+
   <CodeBlock code={nextServerCode} lang="tsx" title="app/[locale]/page.tsx" />
 
-  <h2>2. next.config.mjs Yapılandırması</h2>
+  <h2>2. next.config.mjs API Proxy Yapılandırması</h2>
+  <p>
+    Same-origin çerez politikalarını korumak ve CORS karmaşasını önlemek için <code>/__copypatch/api</code> isteklerini CopyPatch sunucusuna yönlendirin:
+  </p>
+
   <CodeBlock code={rewriteCode} lang="javascript" title="next.config.mjs" />
+
+  <h2>3. İsteğe Bağlı Artımlı Statik Yenileme (ISR)</h2>
+  <p>
+    Next.js statik oluşturma veya önbellekleme kullanıyorsanız, bir editör değişiklik yayınladığında eski anlık görüntüleri isteğe bağlı olarak temizleyebilirsiniz:
+  </p>
+
+  <CodeBlock code={revalidateAction} lang="typescript" title="app/api/revalidate/route.ts" />
+
+  <h2>Mimari Karşılaştırma</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Metrik</th>
+        <th>Standart Headless CMS</th>
+        <th>Next.js + CopyPatch</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>SSR Hidrasyon Sapması</strong></td>
+        <td>Sık yaşanır (uyuşmayan prop'lar / gecikmeli istekler)</td>
+        <td><strong>0ms (Tam anlık görüntü eşleşmesi)</strong></td>
+      </tr>
+      <tr>
+        <td><strong>SEO Tarama Kalitesi</strong></td>
+        <td>Ağır veri çekme şelalesi gerektirir</td>
+        <td><strong>Özelleştirilmiş metinle anında HTML çıktısı</strong></td>
+      </tr>
+      <tr>
+        <td><strong>İstemci Paket Boyutu</strong></td>
+        <td>15-50 kB CMS SDK</td>
+        <td><strong>&lt; 1 kB gzip istemci sağlayıcısı</strong></td>
+      </tr>
+      <tr>
+        <td><strong>Düzenleme Deneyimi</strong></td>
+        <td>Harici yönetim paneli</td>
+        <td><strong>Doğrudan canlı Next.js rotasında satır içi</strong></td>
+      </tr>
+    </tbody>
+  </table>
 </DocsLayout>

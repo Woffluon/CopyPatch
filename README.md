@@ -1,32 +1,84 @@
-# CopyPatch
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="apps/site/public/banner-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="apps/site/public/banner-white.png">
+    <img alt="CopyPatch Banner" src="apps/site/public/banner-dark.png" width="100%">
+  </picture>
+</p>
 
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![CI](https://github.com/woffluon/CopyPatch/actions/workflows/ci.yml/badge.svg)](https://github.com/woffluon/CopyPatch/actions)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D20-green.svg)](https://nodejs.org/)
+<p align="center">
+  <strong>Self-hosted inline copy editing for React and Next.js applications.</strong><br>
+  Let teammates and clients edit copy directly on the live page without touching code or risking layouts.
+</p>
 
-A lightweight, self-hosted inline copy editing system designed specifically for React and Next.js applications.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <a href="https://github.com/woffluon/CopyPatch/actions"><img src="https://github.com/woffluon/CopyPatch/actions/workflows/ci.yml/badge.svg" alt="CI Status"></a>
+  <img src="https://img.shields.io/badge/TypeScript-5.8-3178c6.svg" alt="TypeScript 5.8">
+  <img src="https://img.shields.io/badge/Node.js-%3E%3D20-339933.svg" alt="Node.js >=20">
+  <img src="https://img.shields.io/badge/Visitor_Bundle-%3C_1_kB_gzip-success.svg" alt="Bundle Size">
+  <img src="https://img.shields.io/badge/Storage-SQLite_WAL-003B57.svg" alt="SQLite WAL">
+  <img src="https://img.shields.io/badge/XSS_Safety-0%25_Stored_XSS-blueviolet.svg" alt="XSS Safety">
+</p>
 
-CopyPatch allows developers to mark text surfaces in React as editable. An authorized client or content editor opens the live website with `?copypatch=1`, clicks directly into the text, types naturally with native caret preservation, and publishes changes in real time. HTML layout, CSS rules, and React component code remain untouched.
+<p align="center">
+  <a href="#why-copypatch">Why CopyPatch</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#quick-start-react--vite">Quick Start (React)</a> •
+  <a href="#nextjs-app-router-rsc">Next.js (RSC)</a> •
+  <a href="#package-matrix">Packages</a> •
+  <a href="#production-recipes">Production Recipes</a> •
+  <a href="#security-invariants">Security</a> •
+  <a href="#documentation">Docs</a>
+</p>
+
+---
+
+## Why CopyPatch?
+
+Most content tools introduce unacceptable tradeoffs for engineering teams:
+- **Headless CMS platforms** (Sanity, Contentful, Strapi) force rigid schema modeling, external dashboard context switching, heavy SDKs (15 to 50 kB), and monthly API fees for simple copy changes.
+- **Visual page builders** (Webflow, Framer, Wix) take away full code ownership, export bloated HTML/CSS, and break design system constraints.
+- **Hardcoded Git commits** require developers to open pull requests, rebase branches, and run full CI/CD deployment pipelines just to fix a single headline typo.
+
+**CopyPatch provides a surgical third path:** developers write standard React components and wrap editable text in `<EditableText>`. When an authorized team member opens the site with `?copypatch=1`, they log in with an Argon2id passphrase, click directly into the text, type naturally with native caret preservation, and save. The underlying layout, CSS, and component logic remain strictly untouched.
 
 ```text
-+-------------------------------------------------------------------------+
-| Developer Marks Text In React:                                          |
-| <EditableText contentKey="home.hero.title">Build fast.</EditableText>  |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-| Editor Opens Live URL: https://mysite.com?copypatch=1                   |
-| 1. Argon2id Passphrase Modal -> 2. In-Memory Edit Plane Lazy-Loads      |
-| 3. Caret Placed Inline -> 4. Edit Plain String -> 5. Click Save (Cmd+S) |
-+-------------------------------------------------------------------------+
-                                    |
-                                    v
-+-------------------------------------------------------------------------+
-| SQLite Persistence (WAL Mode) + Atomic In-Memory Snapshot Cache         |
-| Public visitors receive instant sub-millisecond reads (< 1 kB runtime)  |
-+-------------------------------------------------------------------------+
++===================================================================================+
+|                              REACT / NEXT.JS HOST APP                             |
++===================================================================================+
+|                                                                                   |
+|  [ PUBLIC VISITOR PLANE ]                                                         |
+|  * Normal visitors download < 1 kB gzip client runtime.                           |
+|  * Pre-rendered SSR snapshots ensure 0ms React hydration drift.                   |
+|  * Pure text node interpolation -> 0% Stored XSS risk -> Zero DB queries.         |
+|                                                                                   |
+|  [ AUTHORIZED EDIT PLANE: ?copypatch=1 ]                                          |
+|  * Lazy-loads editing bundle (~12 kB gzip) only upon explicit query flag.         |
+|  * Argon2id Passphrase Modal -> 256-bit Session Cookie + Memory CSRF Token.       |
+|  * contenteditable="plaintext-only" caret preserving inline editing.              |
+|  * Floating Toolbar: Save (Cmd+S), Save Draft, Discard, Locale Switcher.          |
++===================================================================================+
+                                         |
+                       HTTP API (Hono)   |   /__copypatch/api/v1
+                                         v
++===================================================================================+
+|                               COPYPATCH SERVER                                    |
++===================================================================================+
+|  * In-Memory Snapshot Cache   -> Sub-0.2ms responses for public visitors          |
+|  * Dual-Token CSRF Engine     -> Cookie + 'x-copypatch-csrf' header verification  |
+|  * Origin & Referer Shield    -> Strict allowlist check against --origin          |
+|  * Optimistic Concurrency     -> Revision validation (409 Conflict rejection)     |
++===================================================================================+
+                                         |
+                       Drizzle + WAL     |   Atomic Disk Persistence
+                                         v
++===================================================================================+
+|                          SINGLE-FILE SQLITE PERSISTENCE                           |
+|  * PRAGMA journal_mode = WAL  * PRAGMA synchronous = NORMAL                       |
+|  * PRAGMA busy_timeout = 5000 * PRAGMA cache_size = -64000 (64MB)                 |
+|  * Tables: auth_credentials, sessions, content_state, content_entries             |
++===================================================================================+
 ```
 
 ---
@@ -35,66 +87,60 @@ CopyPatch allows developers to mark text surfaces in React as editable. An autho
 
 | Dimension | CopyPatch | Traditional Headless CMS | Visual Page Builder |
 | :--- | :--- | :--- | :--- |
-| **Editing Workflow** | Inline directly on live website (`?copypatch=1`) | Disconnected admin dashboard | Drag-and-drop visual canvas |
-| **Code Ownership** | 100% developer React & CSS code | Rigid schema bindings | Proprietary exported markup |
-| **Visitor Bundle** | **< 1 kB gzip** (0.2 kB core runtime) | 15-50 kB CMS SDK | 150-500+ kB script runtime |
-| **Security Invariant** | Strict plain text (0% Stored XSS) | HTML/Markdown injection risks | Arbitrary script risks |
-| **Data Sovereignty** | Self-hosted SQLite file | Third-party vendor SaaS lock-in | Hosted vendor cloud |
-| **Licensing** | 100% Free & MIT Open-Source | Monthly seat / bandwidth fees | Domain subscription fees |
+| **Editing Context** | Inline on actual live website (`?copypatch=1`) | Disconnected admin dashboard | Drag-and-drop proprietary canvas |
+| **Code Ownership** | **100% developer React & CSS code** | Rigid schema bindings | Vendor-generated markup |
+| **Visitor Bundle** | **< 1 kB gzip** (0.2 kB core runtime) | 15 to 50 kB CMS SDK | 150 to 500+ kB runtime scripts |
+| **Security Invariant** | **Strict plain text (0% Stored XSS)** | HTML/Markdown injection risks | Arbitrary script risks |
+| **Hydration Drift** | **0ms (Exact SSR snapshot sync)** | Common prop/async fetch drift | N/A (Server render bypass) |
+| **Data Sovereignty** | **Self-hosted single SQLite file** | Third-party cloud vendor lock-in | Hosted vendor cloud |
+| **Time to First Edit** | **< 2 minutes (1 component wrap)** | Hours of schema configuration | Full project migration |
+| **Licensing** | **100% Free & MIT Open-Source** | Monthly seat / bandwidth fees | Domain subscription pricing |
 
 ---
 
 ## Core Invariants
 
-1. **Strict Plain-Text Invariant**: CopyPatch persists only plain strings. HTML tags, scripts, JSX, and markdown are rejected on both client and server, guaranteeing Stored XSS immunity.
-2. **Zero Hydration Mismatch**: `@copypatch/next` pre-renders published snapshots on the server via React Server Components (RSC) to ensure instant SEO indexing and 0ms hydration drift.
-3. **Lazy-Loaded Editor Plane**: The floating editing toolbar and authentication modal (~12 kB gzip) load dynamically only when `?copypatch=1` is explicitly present in the URL.
-4. **Optimistic Concurrency**: Revisions are tracked per locale (`publishedRevision`, `draftRevision`). Conflicting concurrent edits fail safely with HTTP `409 Conflict`.
-5. **Deterministic Self-Hosting**: Operates on a single-file SQLite database with Write-Ahead Logging (WAL) and zero external database dependencies.
+1. **Strict Plain-Text Invariant**: CopyPatch accepts and stores plain strings only. HTML tags, script injection payloads, and Markdown are normalized as inert text, guaranteeing immunity from Stored Cross-Site Scripting (XSS).
+2. **Zero Hydration Mismatch**: `@copypatch/next` pre-fetches published snapshots during server rendering (RSC) so client hydration matches server markup with 0ms drift.
+3. **Lazy-Loaded Editor Plane**: The editor UI, authentication modal, and toolbar (~12 kB gzip) load dynamically only when `?copypatch=1` is explicitly present in the URL.
+4. **Optimistic Concurrency**: Revisions are tracked per locale (`publishedRevision`, `draftRevision`). Conflicting concurrent edits are rejected with HTTP `409 Conflict`.
+5. **Zero External Dependencies**: Operates on a single-file SQLite database with Write-Ahead Logging (WAL) and zero external database services.
 
 ---
 
-## Package Architecture
+## Package Matrix
 
 | Package | Version | Description | Target Environment |
 | :--- | :--- | :--- | :--- |
-| [`@copypatch/react`](packages/react) | `0.1.0` | React provider, `<EditableText>`, and hooks | React / Vite / Next.js Client |
-| [`@copypatch/core`](packages/core) | `0.1.0` | Shared types, validation, and constants | Universal (Node / Browser) |
-| [`@copypatch/next`](packages/next) | `0.1.0` | Next.js App Router RSC snapshot pre-rendering | Next.js Server & Client |
+| [`@copypatch/react`](packages/react) | `0.1.0` | React context provider, `<EditableText>`, and hooks | React / Vite / Next.js Client |
+| [`@copypatch/core`](packages/core) | `0.1.0` | Shared interfaces, normalization, and constants | Universal (Node.js / Browser) |
+| [`@copypatch/next`](packages/next) | `0.1.0` | Next.js App Router (RSC) snapshot pre-rendering | Next.js Server & Client |
 | [`@copypatch/server`](packages/server) | `0.1.0` | Hono HTTP server, SQLite WAL storage, and CLI | Node.js Server (`>= 20`) |
-
----
-
-## Installation
-
-```bash
-# In your React / Next.js project:
-pnpm add @copypatch/react @copypatch/core
-
-# For Next.js App Router (RSC) support:
-pnpm add @copypatch/next
-
-# For standalone server & CLI:
-pnpm add @copypatch/server
-```
 
 ---
 
 ## Quick Start (React & Vite)
 
-### 1. Initialize SQLite Database & Editor Passphrase
+### 1. Install Dependencies
+
+```bash
+pnpm add @copypatch/react @copypatch/core
+pnpm add -D @copypatch/server
+```
+
+### 2. Initialize Database & Set Editor Passphrase
 
 ```bash
 npx copypatch init --db ./copypatch.sqlite
 ```
 
-### 2. Start Standalone CopyPatch Server
+### 3. Start CopyPatch API Server
 
 ```bash
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173 --mode direct
 ```
 
-### 3. Wrap App with `CopyPatchProvider` and Use `<EditableText>`
+### 4. Wrap React App with `CopyPatchProvider`
 
 ```tsx
 import React, { useState } from 'react';
@@ -102,47 +148,43 @@ import { CopyPatchProvider, EditableText, useCopyPatch } from '@copypatch/react'
 
 export function App() {
   const [locale, setLocale] = useState<'en' | 'tr'>('en');
-
-  // Dynamic button label via hook
-  const ctaLabel = useCopyPatch('home.cta.button', 'Get Started');
+  const ctaText = useCopyPatch('home.cta.button', 'Get Started');
 
   return (
     <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v1">
       <header>
         <EditableText contentKey="nav.brand" as="span">
-          My Website
+          Acme Studio
         </EditableText>
       </header>
 
       <main>
-        {/* Rendered as <h1> with native caret editing in edit mode */}
+        {/* Single-line headline with native caret editing */}
         <EditableText contentKey="home.hero.title" as="h1">
           Build something people actually use.
         </EditableText>
 
-        {/* Multiline text with line breaks allowed */}
-        <EditableText
-          contentKey="home.hero.subtitle"
-          as="p"
-          allowLineBreaks={true}
-        >
-          A fast, reliable product description that editors can refine inline.
+        {/* Multiline paragraph */}
+        <EditableText contentKey="home.hero.subtitle" as="p" allowLineBreaks={true}>
+          Fast, accessible, and self-hosted inline copy editing for React teams.
         </EditableText>
 
-        <button type="button">{ctaLabel}</button>
+        <button type="button">{ctaText}</button>
       </main>
     </CopyPatchProvider>
   );
 }
 ```
 
-### 4. Activate Edit Mode
+### 5. Start Editing
 
-Open `http://localhost:5173?copypatch=1` in your browser, enter your configured editor passphrase, and click directly into any text to edit.
+Open `http://localhost:5173?copypatch=1` in your browser, enter your passphrase, click any text, and edit. Press `Cmd+S` or `Ctrl+S` to save.
 
 ---
 
-## Next.js App Router (SSR) Integration
+## Next.js App Router (RSC)
+
+Pre-render published snapshots on the server to ensure perfect SEO indexing and zero hydration warnings:
 
 ```tsx
 // app/[locale]/page.tsx (Server Component)
@@ -156,9 +198,13 @@ interface PageProps {
 export default async function Page({ params }: PageProps) {
   const { locale } = await params;
 
-  // Pre-fetch published snapshot on server for zero-hydration mismatch
+  // Pre-fetch published snapshot at SSR/build time
   const snapshot = await fetchServerSnapshot(locale, {
     apiBaseUrl: process.env.COPYPATCH_INTERNAL_URL || 'http://127.0.0.1:4040',
+    next: {
+      revalidate: 60,
+      tags: [`copypatch-snapshot-${locale}`],
+    },
   });
 
   return (
@@ -169,7 +215,7 @@ export default async function Page({ params }: PageProps) {
     >
       <main>
         <EditableText contentKey="hero.title" as="h1">
-          Server Pre-Rendered Headline
+          Next.js Pre-rendered Headline
         </EditableText>
       </main>
     </NextCopyPatchProvider>
@@ -177,32 +223,173 @@ export default async function Page({ params }: PageProps) {
 }
 ```
 
+Proxy the CopyPatch API through `next.config.mjs` to keep same-origin cookies:
+
+```javascript
+// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/__copypatch/api/:path*',
+        destination: 'http://127.0.0.1:4040/__copypatch/api/:path*',
+      },
+    ];
+  },
+};
+
+export default nextConfig;
+```
+
+---
+
+## Deep Dives & Technical Architecture
+
+<details>
+<summary><strong>Sub-0.2ms In-Memory Snapshot & SQLite WAL Architecture</strong></summary>
+
+### Memory Cache & Write-Ahead Logging
+
+Public visitors never hit disk I/O. When `@copypatch/server` boots, it loads published snapshots into an in-memory map. When a visitor requests `GET /__copypatch/api/v1/content/:locale`, the server responds directly from memory in under 0.2ms.
+
+When an authorized editor saves content:
+1. A transaction begins in SQLite (WAL mode).
+2. Content records are inserted or updated in `content_entries`.
+3. Revision numbers in `content_state` increment atomically.
+4. The transaction commits to the WAL file with `PRAGMA synchronous = NORMAL`.
+5. The in-memory cache pointer is atomically swapped.
+6. Public visitors immediately receive the updated snapshot on subsequent requests.
+
+</details>
+
+<details>
+<summary><strong>Cryptographic Hardening (Argon2id, Dual-Token CSRF, Host-Prefix Cookies)</strong></summary>
+
+### Security Architecture
+
+- **Argon2id Passphrase Hashing**: Uses RFC 9106 memory-hard parameters (19 MiB RAM cost, 2 iterations, 1 parallelism lane). Resists GPU and ASIC brute-force attacks.
+- **256-bit Session Entropy**: Tokens are generated via `crypto.randomBytes(32)` and stored in SQLite hashed with SHA-256. Database leaks do not expose active tokens.
+- **Dual-Token CSRF**: State-mutating endpoints require both a valid `HttpOnly` session cookie and an in-memory `x-copypatch-csrf` header. Cross-origin scripts cannot access this header.
+- **Origin Isolation**: Mutating endpoints enforce `Origin` and `Referer` allowlist checks against `--origin`.
+- **`__Host-` Cookie Scoping**: In production HTTPS environments, cookies enforce `__Host-` prefixes, preventing subdomain injection.
+
+</details>
+
+<details>
+<summary><strong>Zero-Downtime SQLite S3 Replication via Litestream</strong></summary>
+
+Because CopyPatch runs SQLite in WAL mode, you can stream continuous real-time backups to AWS S3, Cloudflare R2, or MinIO using Litestream:
+
+```yaml
+# /etc/litestream.yml
+dbs:
+  - path: /data/copypatch.sqlite
+    replicas:
+      - type: s3
+        bucket: my-copypatch-backups
+        path: production/copypatch.sqlite
+        endpoint: s3.eu-central-1.amazonaws.com
+        access-key-id: ${AWS_ACCESS_KEY_ID}
+        secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+        retention: 720h
+```
+
+</details>
+
+---
+
+## Production Recipes
+
+### 1. Docker & Docker Compose
+
+```yaml
+# docker-compose.yml
+version: "3.8"
+
+services:
+  copypatch:
+    image: node:20-alpine
+    working_dir: /app
+    command: npx copypatch serve --port 4040 --db /data/copypatch.sqlite --origin https://my-site.com --mode direct
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4040:4040"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - copypatch_data:/data
+
+volumes:
+  copypatch_data:
+    driver: local
+```
+
+### 2. Caddy Reverse Proxy
+
+```nginx
+# Caddyfile
+my-site.com {
+    encode gzip zstd
+
+    # Route CopyPatch API directly to backend container
+    handle /__copypatch/api/v1/* {
+        reverse_proxy 127.0.0.1:4040
+    }
+
+    # Main frontend application (Next.js / Node / SPA)
+    handle {
+        reverse_proxy 127.0.0.1:3000
+    }
+}
+```
+
+### 3. Linux systemd Service Unit
+
+```ini
+# /etc/systemd/system/copypatch.service
+[Unit]
+Description=CopyPatch Standalone Server
+After=network.target
+
+[Service]
+Type=simple
+User=copypatch
+Group=copypatch
+WorkingDirectory=/var/www/copypatch
+ExecStart=/usr/bin/node packages/server/dist/cli/bin.js serve --port 4040 --db /var/lib/copypatch/copypatch.sqlite --origin https://my-site.com
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+# Hardening Directives
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/copypatch
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+```
+
 ---
 
 ## CLI Command Suite
 
 ```bash
-# Initialize SQLite database schema and set editor passphrase
+# Initialize SQLite database schema and configure editor passphrase
 npx copypatch init --db ./copypatch.sqlite
 
-# Start the high-performance HTTP API server
+# Start the HTTP API server
 npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://my-site.com" --mode direct
 
-# Invalidate all active sessions and rotate administrative passphrase
+# Invalidate active sessions and rotate administrative passphrase
 npx copypatch password --db ./copypatch.sqlite
 
-# Apply any pending database schema migrations
+# Apply pending database schema migrations
 npx copypatch migrate --db ./copypatch.sqlite
 ```
-
----
-
-## Security Invariants & Cryptography
-
-- **Passphrase Hashing**: Argon2id (RFC 9106 recommended parameters: 19 MiB RAM, 2 iterations, 1 lane, 256-bit salt).
-- **Session Tokens**: 256-bit entropy generated with `crypto.randomBytes(32)`, stored hashed with SHA-256 in SQLite, transmitted via `HttpOnly`, `SameSite=Strict`, and `Secure` cookies with `__Host-` prefixes in production.
-- **Dual-Token CSRF**: Mutating endpoints verify both the session cookie and a memory-only `x-copypatch-csrf` header.
-- **Origin Isolation**: Mutating endpoints strictly validate `Origin` and `Referer` headers against the server allowlist.
 
 ---
 

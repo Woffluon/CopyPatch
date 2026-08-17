@@ -2,11 +2,11 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const conflictRecoveryExample = `// İyimser sürüm çakışması yanıtı örneği (409 Conflict)
+const conflictRecoveryExample = `// İyimser revizyon çakışması hata yanıtı örneği (409 Conflict)
 {
   "error": {
     "code": "REVISION_CONFLICT",
-    "message": "Aktif dil siz düzenleme yaparken başka bir editör tarafından güncellendi.",
+    "message": "Oturumunuz başladığından bu yana aktif dil başka bir editör tarafından güncellendi.",
     "currentRevision": 14,
     "expectedRevision": 12
   }
@@ -14,13 +14,13 @@ const conflictRecoveryExample = `// İyimser sürüm çakışması yanıtı örn
 ---
 
 <DocsLayout
-  title="Yayınlama Modları & İş Akışları"
-  description="Doğrudan Yayınlama ve Taslak/Onaylama modları, iyimser eşzamanlılık denetimi ve sürüm yönetimi."
+  title="Yayınlama ve Taslak İş Akışları"
+  description="Doğrudan Yayınlama ve Taslak İnceleme modları, iyimser eşzamanlılık denetimi ve revizyon yönetimi."
 >
-  <h1>Yayınlama Modları & İş Akışları</h1>
+  <h1>Yayınlama ve Taslak İş Akışları</h1>
 
   <p class="lead">
-    CopyPatch iki temel yayınlama iş akışını destekler: Anında canlıya alma için <strong>Doğrudan Mod (Direct Mode)</strong> ve müşteri/onay süreçleri için <strong>Taslak Modu (Draft Mode)</strong>.
+    CopyPatch, farklı editoryal modelleri desteklemek için iki farklı çalışma modu sunar: Anlık canlı güncellemeler için <strong>Doğrudan Mod (Direct Mode)</strong> ve onay/inceleme döngüleri için <strong>Taslak Modu (Draft Mode)</strong>.
   </p>
 
   <h2>Mod Karşılaştırması</h2>
@@ -29,42 +29,77 @@ const conflictRecoveryExample = `// İyimser sürüm çakışması yanıtı örn
       <tr>
         <th>Özellik</th>
         <th>Doğrudan Mod (Varsayılan)</th>
-        <th>Taslak Modu</th>
+        <th>Taslak Modu (Staging)</th>
       </tr>
     </thead>
     <tbody>
       <tr>
-        <td><strong>Ana Eylem</strong></td>
-        <td><code>Kaydet</code> butonu metinleri anında canlıya aktarır.</td>
-        <td><code>Taslak Kaydet</code> butonu metinleri taslak olarak saklar.</td>
+        <td><strong>Birincil Eylem</strong></td>
+        <td><code>Kaydet</code> butonu doğrudan canlı anlık görüntüye yazar.</td>
+        <td><code>Taslak Kaydet</code> butonu değişiklikleri taslak durumunda bekletir.</td>
       </tr>
       <tr>
         <td><strong>Ziyaretçi Görünürlüğü</strong></td>
         <td>Kaydedildiği anda canlıda görünür.</td>
-        <td><code>Yayınla</code> butonuna basılana kadar gizlidir.</td>
+        <td><code>Yayınla</code> butonuna basılana kadar ziyaretçilerden gizlidir.</td>
       </tr>
       <tr>
-        <td><strong>En Uygun Senaryo</strong></td>
+        <td><strong>Uygun Senaryolar</strong></td>
         <td>Hızlı ürün ekipleri, yazım hatası düzeltmeleri, kurucular.</td>
-        <td>Ajanslar, müşteri onay süreçleri, planlı lansmanlar.</td>
+        <td>Ajanslar, çok paydaşlı onay süreçleri, planlı lansmanlar.</td>
       </tr>
       <tr>
-        <td><strong>Sunucu Parametresi</strong></td>
+        <td><strong>Sunucu Bayrağı</strong></td>
         <td><code>--mode direct</code></td>
         <td><code>--mode draft</code></td>
       </tr>
     </tbody>
   </table>
 
-  <h2>İyimser Eşzamanlılık & Çakışma Önleme</h2>
+  <h2>1. Doğrudan Mod İş Akışı</h2>
   <p>
-    Aynı anda çalışan birden fazla editörün birbirinin çalışmasını ezmesini engellemek için CopyPatch iyimser eşzamanlılık denetimi uygular:
+    Doğrudan Modda, <strong>Kaydet</strong> butonuna tıklandığında (veya <code>Cmd+S</code> / <code>Ctrl+S</code> kısayoluyla) değişiklikler SQLite içinde atomik olarak kaydedilir ve bellek içi önbellek anında güncellenir:
+  </p>
+  <ol>
+    <li>Editör <code>?copypatch=1</code> ile sayfayı açar ve parolasını girer.</li>
+    <li>İlgili metne tıklar ve doğrudan satır içinde düzenleme yapar.</li>
+    <li>Araç çubuğundaki <strong>Kaydet</strong> butonuna tıklar.</li>
+    <li>Sunucu SQLite işlemi içinde değişiklikleri yazar ve <code>publishedRevision</code> sayacını artırır.</li>
+    <li>Tüm ziyaretçiler bir sonraki sayfa yüklemesinde güncel metni görüntüler.</li>
+  </ol>
+
+  <h2>2. Taslak Modu İş Akışı (İnceleme ve Onay)</h2>
+  <p>
+    Taslak Modunda, değişiklikler açıkça onaylanana kadar ziyaretçilerden gizli tutulur:
+  </p>
+  <ol>
+    <li>Editör satır içi düzenlemeleri yapar ve <strong>Taslak Kaydet</strong> butonuna basar.</li>
+    <li>Taslak metinler SQLite içinde <code>draftRevision</code> altında depolanır; ziyaretçilerin gördüğü canlı anlık görüntü değişmez.</li>
+    <li>Paydaşlar ve müşteriler <code>?copypatch=1</code> ile staging ortamına girerek taslak metinleri sayfa bağlamında inceler.</li>
+    <li>Onay verildiğinde, yetkili editör araç çubuğundaki <strong>Yayınla</strong> butonuna basar.</li>
+    <li>Sunucu tek bir atomik SQLite işleminde tüm taslakları canlı anlık görüntüye aktarır ve <code>publishedRevision</code> sayacını artırır.</li>
+  </ol>
+
+  <h2>3. İyimser Eşzamanlılık ve Çakışma Önleme</h2>
+  <p>
+    Birden fazla editörün aynı anda çalışırken birbirinin değişikliklerini yanlışlıkla ezmesini önlemek için iyimser eşzamanlılık denetimi uygulanır:
   </p>
   <ul>
-    <li>Her yazma isteği <code>expectedPublishedRevision</code> ve <code>expectedDraftRevision</code> değerlerini gönderir.</li>
-    <li>Oturumunuz açıkken başka bir editör değişiklik yayınlarsa sunucu isteği <code>409 Conflict (REVISION_CONFLICT)</code> ile reddeder.</li>
-    <li>Arayüz editörü uyarır ve değişiklikleri güvenle inceleyip yeniden uygulamasını sağlar.</li>
+    <li>Her kaydetme isteği <code>expectedPublishedRevision</code> ve <code>expectedDraftRevision</code> değerlerini gönderir.</li>
+    <li>Siz sayfadayken başka bir editör değişiklik yayınladıysa, sunucu isteği HTTP <code>409 Conflict (REVISION_CONFLICT)</code> hatasıyla reddeder.</li>
+    <li>Arayüz editörü uyararak güncel anlık görüntüyü yenilemesini ve değişikliklerini veri kaybı yaşamadan güvenle birleştirmesini sağlar.</li>
   </ul>
 
-  <CodeBlock code={conflictRecoveryExample} lang="json" title="Çakışma Yanıtı" />
+  <CodeBlock code={conflictRecoveryExample} lang="json" title="Çakışma Hata Yanıtı" />
+
+  <h2>4. Revizyon Geçmişi ve Denetim Kayıtları</h2>
+  <p>
+    Her yayınlama eyleminde veritabanına denetim amaçlı değişmez bir kayıt eklenir:
+  </p>
+  <ul>
+    <li>Hedef dil (örneğin <code>"tr"</code>, <code>"en"</code>)</li>
+    <li>Önceki ve yeni revizyon numarası</li>
+    <li>Değiştirilen metin anahtarları ve önceki değerleri</li>
+    <li>Oturum belirteci ve zaman damgası</li>
+  </ul>
 </DocsLayout>

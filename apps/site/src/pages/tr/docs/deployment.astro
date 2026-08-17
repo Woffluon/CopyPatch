@@ -195,7 +195,7 @@ sudo systemctl enable --now copypatch</code></pre>
 
   <CodeBlock code={caddyfile} lang="nginx" title="Caddyfile" />
 
-  <h2>5. Litestream ile Kesintisiz Gerçek Zamanlı Yedekleme</h2>
+  <h2>5. Litestream ile Kilitlenmesiz Gerçek Zamanlı Yedekleme</h2>
   <p>
     CopyPatch SQLite veritabanını WAL modunda çalıştırdığı için, <strong>Litestream</strong> kullanarak AWS S3 veya Cloudflare R2 üzerine sıfır kilitlenme ile gerçek zamanlı yedek alabilirsiniz:
   </p>
