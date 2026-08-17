@@ -14,6 +14,23 @@ export function createSecurityMiddleware(
     c.header('X-Frame-Options', 'SAMEORIGIN');
     c.header('Referrer-Policy', 'strict-origin-when-cross-origin');
 
+    // CORS Handling for configured public origins
+    const rawOrigin = c.req.header('Origin') || c.req.header('origin') || '';
+    const reqOrigin = rawOrigin.trim().replace(/\/+$/, '');
+
+    if (reqOrigin && config.publicOrigins.some((allowed) => allowed === reqOrigin)) {
+      c.header('Access-Control-Allow-Origin', reqOrigin);
+      c.header('Access-Control-Allow-Credentials', 'true');
+      c.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      c.header('Access-Control-Allow-Headers', `Content-Type, ${CSRF_HEADER_NAME}, Accept`);
+      c.header('Vary', 'Origin');
+    }
+
+    // Handle preflight OPTIONS requests immediately
+    if (c.req.method.toUpperCase() === 'OPTIONS') {
+      return c.body(null, 204);
+    }
+
     // Authenticate session from cookie if present
     const sessionCookie = getCookie(c, config.cookieName);
     if (sessionCookie) {
@@ -48,26 +65,27 @@ export function requireOrigin(config: ResolvedServerConfig) {
   return async (c: Context, next: Next) => {
     const method = c.req.method.toUpperCase();
     if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-      const origin = c.req.header('Origin') || c.req.header('origin');
-      const referer = c.req.header('Referer') || c.req.header('referer');
+      const rawOrigin = c.req.header('Origin') || c.req.header('origin');
+      const rawReferer = c.req.header('Referer') || c.req.header('referer');
 
       // Origin check
-      if (origin) {
-        const isAllowed = config.publicOrigins.some((allowed) => allowed === origin);
+      if (rawOrigin) {
+        const normOrigin = rawOrigin.trim().replace(/\/+$/, '');
+        const isAllowed = config.publicOrigins.some((allowed) => allowed === normOrigin);
 
         if (!isAllowed) {
           const errRes: ApiErrorResponse = {
             error: {
               code: 'ORIGIN_REJECTED',
-              message: `Origin ${origin} is not authorized for write operations.`,
+              message: `Origin ${rawOrigin} is not authorized for write operations.`,
             },
           };
           return c.json(errRes, 403);
         }
-      } else if (referer) {
+      } else if (rawReferer) {
         // Fallback to referer origin checking if Origin header is omitted by certain clients
         try {
-          const refOrigin = new URL(referer).origin;
+          const refOrigin = new URL(rawReferer).origin.replace(/\/+$/, '');
           const isAllowed = config.publicOrigins.some((allowed) => allowed === refOrigin);
 
           if (!isAllowed) {

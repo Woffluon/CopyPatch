@@ -332,14 +332,14 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
   .lang-switcher {
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
     background-color: var(--cp-surface);
     border: 1px solid var(--cp-border);
-    padding: 0.25rem 0.5rem;
+    padding: 2px;
     border-radius: var(--cp-radius-sm);
     font-family: var(--cp-font-mono);
-    font-size: 0.75rem;
+    font-size: 0.6875rem;
     font-weight: 600;
+    line-height: 1;
     transition: background-color var(--cp-transition-theme), border-color var(--cp-transition-theme);
   }
 
@@ -347,13 +347,12 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-width: 44px;
-    min-height: 44px;
-    color: var(--cp-text-muted);
-    transition: color var(--cp-transition-fast);
-    padding: 0.25rem 0.5rem;
-    border-radius: 3px;
+    color: var(--cp-text-dim);
+    transition: all var(--cp-transition-fast);
+    padding: 4px 8px;
+    border-radius: 4px;
     text-decoration: none;
+    letter-spacing: 0.04em;
   }
 
   .lang-btn:hover {
@@ -363,12 +362,12 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
   .lang-btn.active {
     color: var(--cp-text);
     font-weight: 700;
-    background-color: var(--cp-accent-subtle);
+    background-color: var(--cp-surface-elevated);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
   }
 
   .lang-divider {
-    color: var(--cp-border-hover);
-    user-select: none;
+    display: none;
   }
 
   /* GitHub Link */

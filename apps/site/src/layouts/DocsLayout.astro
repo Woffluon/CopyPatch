@@ -141,6 +141,10 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     padding-top: var(--cp-space-8);
     padding-bottom: var(--cp-space-16);
     flex: 1;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   .docs-sidebar {
@@ -222,7 +226,10 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
   }
 
   .docs-main {
+    width: 100%;
+    min-width: 0;
     max-width: var(--cp-prose-width);
+    box-sizing: border-box;
   }
 
   .docs-breadcrumb {
@@ -232,6 +239,7 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     font-size: 0.8125rem;
     color: var(--cp-text-dim);
     margin-bottom: 1.5rem;
+    flex-wrap: wrap;
   }
 
   .docs-breadcrumb a {
@@ -248,20 +256,28 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
 
   .breadcrumb-current {
     color: var(--cp-text);
+    word-break: break-word;
   }
 
   .docs-article {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
     margin-bottom: var(--cp-space-12);
   }
 
   .docs-pagination {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     justify-content: space-between;
     border-top: 1px solid var(--cp-border);
     padding-top: var(--cp-space-8);
     margin-top: var(--cp-space-12);
     gap: 1rem;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .pagination-link {
@@ -273,8 +289,10 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     border-radius: var(--cp-radius-md);
     background-color: var(--cp-surface);
     transition: all var(--cp-transition-fast);
+    min-width: 0;
     max-width: 240px;
     flex: 1;
+    box-sizing: border-box;
   }
 
   .pagination-link.next {
@@ -297,15 +315,19 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--cp-text);
+    word-break: break-word;
   }
 
   .docs-mobile-nav {
     display: none;
     margin-bottom: 1.5rem;
+    width: 100%;
+    min-width: 0;
   }
 
   .docs-select {
     width: 100%;
+    max-width: 100%;
     padding: 0.625rem 0.875rem;
     font-size: 0.875rem;
     font-family: inherit;
@@ -315,6 +337,7 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     border-radius: var(--cp-radius-md);
     outline: none;
     cursor: pointer;
+    box-sizing: border-box;
   }
 
   .sr-only {
@@ -331,13 +354,33 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
 
   @media (max-width: 860px) {
     .docs-container {
-      grid-template-columns: 1fr;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem;
+      padding-top: 1.5rem;
     }
     .docs-sidebar {
       display: none;
     }
     .docs-mobile-nav {
       display: block;
+    }
+    .docs-main {
+      max-width: 100%;
+      width: 100%;
+      min-width: 0;
+    }
+    .docs-article {
+      max-width: 100%;
+      width: 100%;
+      min-width: 0;
+    }
+    .docs-pagination {
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    .pagination-link {
+      max-width: 100%;
+      width: 100%;
     }
   }
 </style>

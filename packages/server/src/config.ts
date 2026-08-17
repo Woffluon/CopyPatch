@@ -62,9 +62,18 @@ export function defineCopyPatchConfig(config: CopyPatchServerConfig): ResolvedSe
     throw new Error('CopyPatch configuration error: publicOrigin is required.');
   }
 
-  const publicOrigins = Array.isArray(config.publicOrigin)
+  const rawOrigins = Array.isArray(config.publicOrigin)
     ? config.publicOrigin
     : [config.publicOrigin];
+
+  const publicOrigins = rawOrigins
+    .flatMap((o) => (typeof o === 'string' ? o.split(',') : []))
+    .map((o) => o.trim().replace(/\/+$/, ''))
+    .filter(Boolean);
+
+  if (publicOrigins.length === 0) {
+    throw new Error('CopyPatch configuration error: At least one valid publicOrigin is required.');
+  }
 
   for (const origin of publicOrigins) {
     if (typeof origin !== 'string' || origin === '*' || !origin.startsWith('http')) {

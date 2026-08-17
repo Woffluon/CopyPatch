@@ -269,6 +269,7 @@ th {
   overflow-wrap: break-word;
   word-break: break-word;
   line-height: 1.7;
+  box-sizing: border-box;
 }
 
 .prose h1, .prose h2, .prose h3, .prose h4 {
@@ -277,35 +278,45 @@ th {
   margin-bottom: 0.75rem;
   overflow-wrap: break-word;
   word-break: break-word;
+  max-width: 100%;
 }
 
 .prose h1 {
-  font-size: clamp(1.5rem, 5vw, 2.5rem);
+  font-size: clamp(1.4rem, 5vw, 2.25rem);
   margin-top: 0;
+  line-height: 1.15;
 }
 
 .prose h2 {
-  font-size: clamp(1.25rem, 4vw, 1.85rem);
+  font-size: clamp(1.2rem, 4vw, 1.75rem);
+  line-height: 1.2;
 }
 
 .prose h3 {
-  font-size: clamp(1.05rem, 3vw, 1.4rem);
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  line-height: 1.25;
 }
 
 .prose p {
   margin-bottom: 1.25rem;
   overflow-wrap: break-word;
   word-break: break-word;
+  max-width: 100%;
 }
 
 .prose ul, .prose ol {
   margin-bottom: 1.25rem;
-  padding-left: 1.5rem;
+  padding-left: 1.25rem;
   overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .prose li {
   margin-bottom: 0.5rem;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
 }
 
 .prose blockquote {
@@ -316,6 +327,9 @@ th {
   background-color: var(--cp-surface);
   border-radius: 0 var(--cp-radius-sm) var(--cp-radius-sm) 0;
   overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .prose table {
@@ -327,6 +341,7 @@ th {
   border-collapse: collapse;
   margin: 1.5rem 0;
   font-size: 0.875rem;
+  box-sizing: border-box;
 }
 
 .prose th, .prose td {
