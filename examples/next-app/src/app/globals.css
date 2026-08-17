@@ -85,11 +85,29 @@ button {
   font-family: inherit;
 }
 
-/* Empty text resilience in CopyPatch */
+/* Empty text resilience in CopyPatch: preserve block layout for headings/paragraphs */
 [data-copypatch] {
   min-height: 1em;
+}
+
+span[data-copypatch],
+a[data-copypatch],
+em[data-copypatch],
+strong[data-copypatch] {
   display: inline-block;
-  vertical-align: top;
+  vertical-align: baseline;
+}
+
+h1[data-copypatch],
+h2[data-copypatch],
+h3[data-copypatch],
+h4[data-copypatch],
+h5[data-copypatch],
+h6[data-copypatch],
+p[data-copypatch],
+div[data-copypatch] {
+  display: block;
+  width: 100%;
 }
 
 /* Container */

@@ -23,6 +23,10 @@ const currentIndex = allDocItems.findIndex((item) => item.href === pathname);
 const prevItem = currentIndex > 0 ? allDocItems[currentIndex - 1] : null;
 const nextItem = currentIndex < allDocItems.length - 1 ? allDocItems[currentIndex + 1] : null;
 
+// Find active section title for mobile header
+const currentSection = docsNav.find((section) => section.items.some((item) => item.href === pathname));
+const currentSectionTitle = currentSection ? currentSection.title : (currentLang === 'tr' ? 'Dokümantasyon' : 'Documentation');
+
 const docsHomeHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
 const docsRootLabel = currentLang === 'tr' ? 'Dokümanlar' : 'Docs';
 const prevLabel = currentLang === 'tr' ? '← Önceki' : '← Previous';
@@ -68,22 +72,60 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
 
     <!-- Main Documentation Content -->
     <main id="main-content" class="docs-main">
-      <!-- Breadcrumb & Mobile Doc Selector -->
+      <!-- Breadcrumb & Custom Mobile Doc Navigator -->
       <div class="docs-mobile-nav">
-        <label for="docs-mobile-select" class="sr-only">Select Documentation Page</label>
-        <select id="docs-mobile-select" class="docs-select" aria-label="Select Documentation Page">
-          {
-            docsNav.map((section) => (
-              <optgroup label={section.title}>
-                {section.items.map((item) => (
-                  <option value={item.href} selected={pathname === item.href}>
-                    {item.title}
-                  </option>
-                ))}
-              </optgroup>
-            ))
-          }
-        </select>
+        <button
+          type="button"
+          id="docs-mobile-trigger"
+          class="docs-mobile-trigger"
+          aria-haspopup="true"
+          aria-expanded="false"
+          aria-controls="docs-mobile-dropdown"
+          aria-label={currentLang === 'tr' ? 'Doküman menüsünü aç' : 'Open documentation menu'}
+        >
+          <div class="docs-trigger-info">
+            <span class="docs-trigger-section">{currentSectionTitle}</span>
+            <span class="docs-trigger-title">{title}</span>
+          </div>
+          <div class="docs-trigger-badge">
+            <span>{currentLang === 'tr' ? 'Menü' : 'Menu'}</span>
+            <svg class="docs-trigger-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+
+        <div id="docs-mobile-dropdown" class="docs-dropdown-panel" hidden>
+          <div class="docs-dropdown-inner">
+            {
+              docsNav.map((section) => (
+                <div class="docs-dropdown-group">
+                  <div class="docs-dropdown-group-title">{section.title}</div>
+                  <div class="docs-dropdown-list">
+                    {section.items.map((item) => {
+                      const isActive = pathname === item.href;
+                      return (
+                        <a
+                          href={item.href}
+                          class:list={['docs-dropdown-item', { active: isActive }]}
+                          aria-current={isActive ? 'page' : undefined}
+                        >
+                          <span class="docs-item-bullet" aria-hidden="true" />
+                          <span class="docs-item-name">{item.title}</span>
+                          {isActive && (
+                            <svg class="docs-item-check" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                          )}
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        </div>
       </div>
 
       <nav class="docs-breadcrumb" aria-label={currentLang === 'tr' ? 'Gezinme Yolu' : 'Breadcrumbs'}>
@@ -122,12 +164,36 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
 </BaseLayout>
 
 <script>
-  const mobileSelect = document.getElementById('docs-mobile-select') as HTMLSelectElement | null;
-  if (mobileSelect) {
-    mobileSelect.addEventListener('change', (e) => {
-      const target = (e.target as HTMLSelectElement).value;
-      if (target) {
-        window.location.href = target;
+  const trigger = document.getElementById('docs-mobile-trigger');
+  const dropdown = document.getElementById('docs-mobile-dropdown');
+
+  if (trigger && dropdown) {
+    const toggleDropdown = () => {
+      const isExpanded = trigger.getAttribute('aria-expanded') === 'true';
+      const nextExpanded = !isExpanded;
+      trigger.setAttribute('aria-expanded', String(nextExpanded));
+      dropdown.hidden = !nextExpanded;
+    };
+
+    trigger.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleDropdown();
+    });
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+      if (!dropdown.hidden && !dropdown.contains(e.target as Node) && !trigger.contains(e.target as Node)) {
+        trigger.setAttribute('aria-expanded', 'false');
+        dropdown.hidden = true;
+      }
+    });
+
+    // Close on Escape
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !dropdown.hidden) {
+        trigger.setAttribute('aria-expanded', 'false');
+        dropdown.hidden = true;
+        trigger.focus();
       }
     });
   }
@@ -171,16 +237,6 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     color: var(--cp-text);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-  }
-
-  .sidebar-badge {
-    font-family: var(--cp-font-mono);
-    font-size: 0.6875rem;
-    color: var(--cp-accent-hover);
-    background-color: var(--cp-accent-subtle);
-    padding: 0.15rem 0.4rem;
-    border-radius: 4px;
-    border: 1px solid var(--cp-accent-border);
   }
 
   .sidebar-nav {
@@ -230,6 +286,180 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     min-width: 0;
     max-width: var(--cp-prose-width);
     box-sizing: border-box;
+  }
+
+  /* Custom Mobile Doc Navigator */
+  .docs-mobile-nav {
+    display: none;
+    position: relative;
+    margin-bottom: 1.5rem;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .docs-mobile-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 0.875rem;
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    color: var(--cp-text);
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--cp-transition-fast);
+    box-sizing: border-box;
+  }
+
+  .docs-mobile-trigger:hover,
+  .docs-mobile-trigger[aria-expanded="true"] {
+    border-color: var(--cp-border-hover);
+    background-color: var(--cp-surface-elevated);
+  }
+
+  .docs-mobile-trigger[aria-expanded="true"] .docs-trigger-chevron {
+    transform: rotate(180deg);
+  }
+
+  .docs-trigger-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+  }
+
+  .docs-trigger-section {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--cp-text-dim);
+  }
+
+  .docs-trigger-title {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: var(--cp-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .docs-trigger-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--cp-radius-sm);
+    background-color: var(--cp-accent-subtle);
+    border: 1px solid var(--cp-border-subtle);
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--cp-text);
+    flex-shrink: 0;
+  }
+
+  .docs-trigger-chevron {
+    transition: transform var(--cp-transition-fast);
+  }
+
+  .docs-dropdown-panel {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.22);
+    overflow: hidden;
+    max-height: 70vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .docs-dropdown-panel[hidden] {
+    display: none;
+  }
+
+  .docs-dropdown-inner {
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .docs-dropdown-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .docs-dropdown-group-title {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--cp-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .docs-dropdown-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .docs-dropdown-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: var(--cp-radius-sm);
+    color: var(--cp-text-muted);
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: all var(--cp-transition-fast);
+  }
+
+  .docs-dropdown-item:hover {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+  }
+
+  .docs-dropdown-item.active {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+    font-weight: 700;
+  }
+
+  .docs-item-bullet {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--cp-border-hover);
+    flex-shrink: 0;
+  }
+
+  .docs-dropdown-item.active .docs-item-bullet {
+    background-color: var(--cp-text);
+  }
+
+  .docs-item-name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .docs-item-check {
+    color: var(--cp-text);
+    flex-shrink: 0;
   }
 
   .docs-breadcrumb {
@@ -316,40 +546,6 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     font-weight: 600;
     color: var(--cp-text);
     word-break: break-word;
-  }
-
-  .docs-mobile-nav {
-    display: none;
-    margin-bottom: 1.5rem;
-    width: 100%;
-    min-width: 0;
-  }
-
-  .docs-select {
-    width: 100%;
-    max-width: 100%;
-    padding: 0.625rem 0.875rem;
-    font-size: 0.875rem;
-    font-family: inherit;
-    color: var(--cp-text);
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-md);
-    outline: none;
-    cursor: pointer;
-    box-sizing: border-box;
-  }
-
-  .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    padding: 0;
-    margin: -1px;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border-width: 0;
   }
 
   @media (max-width: 860px) {

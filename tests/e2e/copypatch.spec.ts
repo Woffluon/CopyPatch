@@ -17,13 +17,22 @@ test.describe('CopyPatch End-to-End Browser & Acceptance Tests', () => {
 
     // 2. Initialize database & admin password
     const { initDatabase, hashPassword } = await import('../../packages/server/dist/index.js');
-    const dbConn = initDatabase(DB_PATH);
     const passHash = await hashPassword('correct-horse-battery-staple-2026');
-    dbConn.sqlite.exec(`
-      INSERT OR REPLACE INTO auth_credentials (id, password_hash, updated_at)
-      VALUES (1, '${passHash}', ${Date.now()});
-    `);
-    dbConn.sqlite.close();
+
+    const dbsToClean = [DB_PATH, path.resolve('copypatch.sqlite')];
+    for (const p of dbsToClean) {
+      try {
+        const dbConn = initDatabase(p);
+        dbConn.sqlite.exec(`
+          DELETE FROM content_entries;
+          DELETE FROM content_state;
+          DELETE FROM sessions;
+          INSERT OR REPLACE INTO auth_credentials (id, password_hash, updated_at)
+          VALUES (1, '${passHash}', ${Date.now()});
+        `);
+        dbConn.sqlite.close();
+      } catch {}
+    }
 
     // 3. Start standalone CopyPatch server in direct mode
     serverProcess = spawn(
