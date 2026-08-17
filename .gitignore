@@ -1,0 +1,90 @@
+# ==========================================
+# CopyPatch - Git Ignore Configuration
+# ==========================================
+
+# --- Dependencies & Package Managers ---
+node_modules/
+.pnpm-store/
+.npm/
+.yarn/
+*.tgz
+
+# --- Build Outputs & Caches ---
+dist/
+build/
+out/
+.next/
+.turbo/
+.vite/
+.cache/
+*.tsbuildinfo
+
+# --- SQLite & Local Databases ---
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# --- Testing & Coverage ---
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# --- Environment Variables & Secrets ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+*.pem
+*.key
+*.cert
+
+# --- Logs & Debugging ---
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# --- Operating System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# --- IDEs & Code Editors ---
+.idea/
+*.sublime-workspace
+*.sublime-project
+*.sw?
+*.swo
+*.swn
+
+# VS Code (ignore workspace state, allow shared team settings)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# --- AI & Temporary Tool Folders ---
+.claude/
+analizler
+temp/
+tmp/

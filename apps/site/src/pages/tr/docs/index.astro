@@ -1,0 +1,74 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const quickExample = `import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function App() {
+  return (
+    <CopyPatchProvider locale="tr" apiBase="/__copypatch/api/v1">
+      <EditableText contentKey="hero.title" as="h1">
+        İnsanların gerçekten kullandığı ürünler üretin.
+      </EditableText>
+    </CopyPatchProvider>
+  );
+}`;
+---
+
+<DocsLayout
+  lang="tr"
+  title="Giriş"
+  description="CopyPatch sayfa içi metin düzenleme sisteminin genel bakışı ve temel prensipleri."
+>
+  <h1>CopyPatch'e Giriş</h1>
+
+  <p class="lead">
+    <strong>CopyPatch</strong>, React uygulamaları için özel olarak tasarlanmış, hafif, kendi sunucunuzda barındırılan ve açık kaynaklı bir sayfa içi (inline) metin düzenleme sistemidir.
+  </p>
+
+  <p>
+    CopyPatch'in arkasındaki temel felsefe son derece basittir: <strong>Metinleri müşterileriniz düzenlesin. Kodları ve tasarımı değil.</strong>
+  </p>
+
+  <h2>Temel Problem</h2>
+  <p>
+    Müşteri web siteleri yayına alındığında, müşterilerden kaçınılmaz olarak küçük metin değişiklikleri gelir: yazım hataları, güncellenen sloganlar, revize edilen fiyat cümleleri veya yeni duyurular. Geleneksel olarak yazılım ekipleri iki zorlayıcı uç noktayla karşılaşır:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Geliştirici darboğazı:</strong> Her tekil cümle değişikliği için bir geliştiricinin commit atması, pull request açması, derleme yapması ve sunucuya dağıtım çıkması gerekir.
+    </li>
+    <li>
+      <strong>Aşırı hantal CMS sistemleri:</strong> Ağırlıklı bir Headless CMS veya görsel sayfa oluşturucu (page builder) kurmak; projeye devasa karmaşıklık, katı içerik modelleme şemaları, kopuk yönetim panelleri ve müşterilerin stilleri ya da sayfa düzenini yanlışlıkla bozma riskini getirir.
+    </li>
+  </ul>
+
+  <h2>CopyPatch Yaklaşımı</h2>
+  <p>
+    CopyPatch cerrahi bir alternatif sunar. Geliştiriciler, React bileşenlerinde onaylanan metinleri <code>&lt;EditableText&gt;</code> bileşeniyle doğrudan işaretler. Yetkili içerik editörleri canlı siteyi <code>?copypatch=1</code> parametresiyle açar, doğrudan ekrandaki metne tıklar, düzenlemeyi yazar ve Kaydet düğmesine basar.
+  </p>
+
+  <CodeBlock code={quickExample} lang="tsx" title="Hızlı Önizleme" />
+
+  <h2>Temel Değişmezler (Invariants)</h2>
+  <ul>
+    <li>
+      <strong>Kesin Düz Metin (Strict Plain Text):</strong> CopyPatch yalnızca düz metin dizgelerini saklar. HTML, markdown, script etiketleri ve JSX hem istemcide hem sunucuda katı biçimde reddedilir; böylece Stored XSS açıkları mimari düzeyde engellenir.
+    </li>
+    <li>
+      <strong>Sıfır Düzen Bozulması:</strong> Stiller, tipografi ve bileşen hiyerarşisi tamamen sizin React ve CSS kodunuzun denetimindedir.
+    </li>
+    <li>
+      <strong>Milisaniyenin Altında Ziyaretçi Okuma Performansı:</strong> Normal ziyaretçiler &lt; 1 kB gzip çalışma zamanı yükler; eleman başına ayrı API trafiği oluşmaz.
+    </li>
+    <li>
+      <strong>Tam Veri Bağımsızlığı:</strong> Kendi sunucunuzda, WAL (Write-Ahead Logging) modunda çalışan tek bir SQLite dosyası üzerinde çalışır.
+    </li>
+  </ul>
+
+  <h2>Sonraki Adım</h2>
+  <p>
+    Projelerinizde kullanmaya hazır mısınız? Projenize CopyPatch eklemek için <a href="/tr/docs/installation">Kurulum Rehberi</a> sayfasına geçebilirsiniz.
+  </p>
+</DocsLayout>

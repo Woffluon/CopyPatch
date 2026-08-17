@@ -1,0 +1,109 @@
+---
+import { SITE_CONFIG, type Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
+---
+
+<section class="final-cta-section">
+  <div class="container">
+    <div class="final-cta-card">
+      <h2 class="final-headline">
+        {
+          lang === 'tr' ? (
+            <>
+              Müşterinizin bir cümleyi değiştirmesi gerekiyor.<br />
+              <span class="final-highlight">Bunun için geliştiricinin yeni bir dağıtım yapmasına gerek olmamalı.</span>
+            </>
+          ) : (
+            <>
+              Your client needs to change a sentence.<br />
+              <span class="final-highlight">They shouldn't need a developer deployment.</span>
+            </>
+          )
+        }
+      </h2>
+
+      <p class="final-subtext">
+        {
+          lang === 'tr'
+            ? 'Hafif React kütüphanesini hemen kurun; uygulama mimarinizden ödün vermeden müşterilerinize sayfa içi düzenleme süper gücü kazandırın.'
+            : 'Install the lightweight React library today and give your clients inline editing superpower without sacrificing your application architecture.'
+        }
+      </p>
+
+      <div class="final-actions">
+        <a href={docsHref} class="btn btn-primary btn-lg">
+          <span>{lang === 'tr' ? '2 Dakikada Başlayın' : 'Get Started in 2 Minutes'}</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+        <a href={SITE_CONFIG.githubUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-lg">
+          <span>{lang === 'tr' ? "GitHub'da İnceleyin" : 'View on GitHub'}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .final-cta-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .final-cta-card {
+    max-width: 820px;
+    margin: 0 auto;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .final-headline {
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+
+  .final-highlight {
+    color: var(--cp-text-muted);
+  }
+
+  .final-subtext {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+    max-width: 600px;
+    margin-bottom: 2rem;
+  }
+
+  .final-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .btn-lg {
+    padding: 0.75rem 1.75rem;
+    font-size: 1rem;
+  }
+
+  @media (max-width: 640px) {
+    .final-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+    .final-actions .btn {
+      width: 100%;
+    }
+  }
+</style>

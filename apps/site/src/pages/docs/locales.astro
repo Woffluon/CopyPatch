@@ -1,0 +1,130 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+const localeSetup = `import React, { useState } from 'react';
+import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function MultilingualApp() {
+  const [locale, setLocale] = useState<'en' | 'tr' | 'de'>('en');
+
+  return (
+    <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v1">
+      {/* Locale Switcher Controls */}
+      <nav className="flex gap-2 p-4">
+        <button
+          type="button"
+          onClick={() => setLocale('en')}
+          className={locale === 'en' ? 'font-bold underline' : ''}
+        >
+          English
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocale('tr')}
+          className={locale === 'tr' ? 'font-bold underline' : ''}
+        >
+          Türkçe
+        </button>
+        <button
+          type="button"
+          onClick={() => setLocale('de')}
+          className={locale === 'de' ? 'font-bold underline' : ''}
+        >
+          Deutsch
+        </button>
+      </nav>
+
+      {/* Editable Content scoped by current locale */}
+      <main className="p-8">
+        <EditableText contentKey="home.welcome.title" as="h1" className="text-3xl font-bold">
+          {locale === 'en'
+            ? 'Welcome to our platform'
+            : locale === 'tr'
+            ? 'Platformumuza hoş geldiniz'
+            : 'Willkommen auf unserer Plattform'}
+        </EditableText>
+      </main>
+    </CopyPatchProvider>
+  );
+}`;
+
+const localeValidation = `// Core Locale Validator Regex (RFC 5646 compliant)
+const LOCALE_REGEX = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/i;
+
+// Examples of Valid Locales:
+// "en", "tr", "de", "fr-CA", "zh-Hans", "pt-BR", "es-419"`;
+---
+
+<DocsLayout
+  title="Multi-Locale Isolation & i18n"
+  description="How CopyPatch isolates copy snapshots per language, handles locale switching, and validates BCP-47 / RFC 5646 language codes."
+>
+  <h1>Multi-Locale Isolation & i18n</h1>
+
+  <p class="lead">
+    CopyPatch provides native multi-language support by strictly isolating content snapshots and revisions by locale identifier (such as <code>en</code>, <code>tr</code>, <code>de</code>, <code>fr-CA</code>, or <code>zh-Hans</code>).
+  </p>
+
+  <h2>Snapshot Isolation Mechanics</h2>
+  <ul>
+    <li><strong>Independent Storage:</strong> Each locale maintains its own published snapshot and draft revision in SQLite.</li>
+    <li><strong>Zero Cross-Contamination:</strong> Editing and publishing text in <code>locale="tr"</code> updates only Turkish records and increments Turkish revision counters. English and German snapshots remain completely untouched.</li>
+    <li><strong>Instant Swapping:</strong> Changing the <code>locale</code> prop in <code>CopyPatchProvider</code> automatically updates the in-memory cache and re-renders editable nodes with the corresponding language snapshot without requiring a full page refresh.</li>
+  </ul>
+
+  <h2>Locale Validation Standards</h2>
+  <p>
+    To prevent database pollution and path traversal attempts, all locale strings are validated against standard RFC 5646 language tag specifications:
+  </p>
+
+  <CodeBlock code={localeValidation} lang="typescript" title="validation.ts" />
+
+  <h2>React Multi-Language Integration</h2>
+  <p>
+    Pass your active state or URL route language to <code>CopyPatchProvider</code>:
+  </p>
+
+  <CodeBlock code={localeSetup} lang="tsx" title="MultilingualApp.tsx" />
+
+  <h2>Routing Architecture Recommendations</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Strategy</th>
+        <th>URL Pattern</th>
+        <th>Integration Technique</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Subpath (Recommended)</strong></td>
+        <td><code>/tr/pricing</code>, <code>/en/pricing</code></td>
+        <td>Extract locale from route path params and pass to <code>CopyPatchProvider</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Subdomain</strong></td>
+        <td><code>tr.my-site.com</code>, <code>en.my-site.com</code></td>
+        <td>Detect hostname in Next.js middleware or root layout.</td>
+      </tr>
+      <tr>
+        <td><strong>Client State</strong></td>
+        <td><code>my-site.com (React State)</code></td>
+        <td>Manage active language via React context or <code>useState</code>.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>What CopyPatch Intentionally Does NOT Do</h2>
+  <p>
+    To maintain an ultra-light runtime (&lt; 1 kB gzip for visitors), CopyPatch does not include:
+  </p>
+  <ul>
+    <li>Machine auto-translation APIs with questionable phrasing.</li>
+    <li>Complex runtime ICU message pluralization parsers.</li>
+    <li>Heavy client-side dictionary bundles.</li>
+  </ul>
+  <p>
+    Instead, it gives your team and professional human translators a clean, native editing surface directly on the actual live website.
+  </p>
+</DocsLayout>

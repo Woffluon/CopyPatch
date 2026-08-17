@@ -1,0 +1,211 @@
+---
+import CodeBlock from '../ui/CodeBlock.astro';
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+
+const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a iletmeniz yeterlidir
+<CopyPatchProvider locale={currentLocale} apiBase="/__copypatch/api/v1">
+  <EditableText contentKey="pricing.hero.title">
+    Büyüyen ekipler için şeffaf fiyatlandırma.
+  </EditableText>
+</CopyPatchProvider>` : `// Simply pass your active locale string to CopyPatchProvider
+<CopyPatchProvider locale={currentLocale} apiBase="/__copypatch/api/v1">
+  <EditableText contentKey="pricing.hero.title">
+    Transparent pricing for growing teams.
+  </EditableText>
+</CopyPatchProvider>`;
+---
+
+<section class="locales-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? 'Her dil için bağımsız metin anlık görüntüleri' : 'Independent copy snapshots per locale'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? 'CopyPatch onaylanan metinleri dil etiketlerine göre organize eder. Karmaşık çeviri çatıları dayatmadan her dili birbirinden bağımsız olarak saklar.'
+            : 'CopyPatch organizes approved copy per language tag. It stores copy independently without imposing translation frameworks or automated magic.'
+        }
+      </p>
+    </div>
+
+    <div class="locales-grid">
+      <div class="locales-text">
+        <h3 class="locales-title">{lang === 'tr' ? 'Dil İzolasyonu Nasıl Çalışır?' : 'How Locale Scoping Works'}</h3>
+        <p class="locales-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                Bir müşteri <code>locale="tr"</code> altında düzenleme yaptığında, yalnızca Türkçe için revizyonlar ve anlık görüntüler güncellenir. İngilizce (<code>en</code>) ve Almanca (<code>de</code>) düzenlenene kadar hiçbir şekilde etkilenmez.
+              </>
+            ) : (
+              <>
+                When a client edits copy under <code>locale="tr"</code>, revisions and snapshots for Turkish are modified in isolation. English (<code>en</code>) and German (<code>de</code>) remain untouched until edited.
+              </>
+            )
+          }
+        </p>
+
+        <ul class="locales-points">
+          <li>
+            <strong>{lang === 'tr' ? 'Bağımsız Anlık Görüntüler:' : 'Independent Snapshots:'}</strong>{' '}
+            {
+              lang === 'tr'
+                ? 'Her dil kendi veritabanı anlık görüntüsünü ve revizyon sayacını yönetir.'
+                : 'Each locale maintains its own database snapshot and revision number.'
+            }
+          </li>
+          <li>
+            <strong>{lang === 'tr' ? 'Sıfır i18n Bağımlılığı:' : 'Zero I18n Lock-In:'}</strong>{' '}
+            {
+              lang === 'tr'
+                ? 'Next.js Internationalization, react-i18next veya özel state çözümleriyle kusursuz uyum sağlar.'
+                : 'Works seamlessly alongside Next.js Internationalization, react-i18next, or custom state.'
+            }
+          </li>
+          <li>
+            <strong>{lang === 'tr' ? 'Otomatik Çeviri Şişkinliği Yok:' : 'No Auto-Translation Bloat:'}</strong>{' '}
+            {
+              lang === 'tr'
+                ? 'Geliştiriciler ve insan editörler her kelime üzerinde tam editoryal denetime sahip olur.'
+                : 'You and your human editors maintain full editorial fidelity over every word.'
+            }
+          </li>
+        </ul>
+      </div>
+
+      <div class="locales-code-card">
+        <CodeBlock code={localeCode} lang="tsx" title={lang === 'tr' ? 'Dil Entegrasyonu' : 'Locale Integration'} />
+        
+        <div class="locale-pills-demo">
+          <div class="pill-row">
+            <span class="pill-tag">EN</span>
+            <span class="pill-val">"Transparent pricing for growing teams."</span>
+          </div>
+          <div class="pill-row">
+            <span class="pill-tag">TR</span>
+            <span class="pill-val">"Büyüyen ekipler için şeffaf fiyatlandırma."</span>
+          </div>
+          <div class="pill-row">
+            <span class="pill-tag">DE</span>
+            <span class="pill-val">"Transparente Preise für wachsende Teams."</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .locales-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-bg);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .locales-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: var(--cp-space-10);
+    max-width: 1000px;
+    margin: 0 auto;
+    align-items: center;
+  }
+
+  .locales-title {
+    font-size: 1.25rem;
+    color: var(--cp-text);
+    margin-bottom: 0.75rem;
+  }
+
+  .locales-desc {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: var(--cp-text-muted);
+    margin-bottom: 1.5rem;
+  }
+
+  .locales-points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .locales-points li {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--cp-text-muted);
+  }
+
+  .locales-points strong {
+    color: var(--cp-text);
+  }
+
+  .locales-code-card {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-6);
+  }
+
+  .locale-pills-demo {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border-subtle);
+    padding: 0.75rem 1rem;
+    border-radius: var(--cp-radius-md);
+  }
+
+  .pill-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .pill-tag {
+    font-family: var(--cp-font-mono);
+    font-weight: 700;
+    font-size: 0.6875rem;
+    background-color: var(--cp-surface);
+    color: var(--cp-text);
+    border: 1px solid var(--cp-border);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+  }
+
+  .pill-val {
+    color: var(--cp-text);
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+  }
+
+  @media (max-width: 860px) {
+    .locales-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

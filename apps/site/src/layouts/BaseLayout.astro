@@ -1,0 +1,138 @@
+---
+import { SITE_CONFIG, getTagline, getDescription, type Locale } from '../config/site';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonicalUrl?: string;
+  ogImage?: string;
+  isDocs?: boolean;
+  lang?: Locale;
+}
+
+const {
+  lang = Astro.url.pathname.startsWith('/tr') ? 'tr' : 'en',
+  title = `${SITE_CONFIG.name}: ${getTagline(lang)}`,
+  description = getDescription(lang),
+  canonicalUrl = Astro.url.href,
+  ogImage = '/og-image.svg',
+} = Astro.props;
+
+const fullTitle = title.includes(SITE_CONFIG.name) ? title : `${title} | ${SITE_CONFIG.name}`;
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'SoftwareApplication',
+  name: SITE_CONFIG.name,
+  description: getDescription(lang),
+  applicationCategory: 'DeveloperApplication',
+  operatingSystem: 'Any',
+  license: 'https://opensource.org/licenses/MIT',
+  inLanguage: lang === 'tr' ? 'tr-TR' : 'en-US',
+  offers: {
+    '@type': 'Offer',
+    price: '0',
+    priceCurrency: 'USD',
+  },
+  author: {
+    '@type': 'Person',
+    name: SITE_CONFIG.author,
+  },
+};
+---
+
+<!doctype html>
+<html lang={lang} data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+
+    <!-- Google Fonts: League Spartan -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Primary Meta Tags -->
+    <title>{fullTitle}</title>
+    <meta name="title" content={fullTitle} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(ogImage, Astro.url)} />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content={canonicalUrl} />
+    <meta property="twitter:title" content={fullTitle} />
+    <meta property="twitter:description" content={description} />
+    <meta property="twitter:image" content={new URL(ogImage, Astro.url)} />
+
+    <!-- Theme Color (dynamic via JS) -->
+    <meta name="theme-color" id="meta-theme-color" content="#e4e2dd" />
+
+    <!-- Structured Data -->
+    <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+
+    <!-- FOUC Prevention & Theme Init (inline, runs synchronously before paint) -->
+    <script is:inline>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('cp-theme');
+        } catch (e) {}
+        var theme = stored === 'dark' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+        var metaColor = document.getElementById('meta-theme-color');
+        if (metaColor) {
+          metaColor.setAttribute('content', theme === 'dark' ? '#2b2b2b' : '#e4e2dd');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">
+      {lang === 'tr' ? 'Ana içeriğe atla' : 'Skip to main content'}
+    </a>
+    <slot />
+  </body>
+
+  <!-- IntersectionObserver Scroll Fade-In -->
+  <script is:inline>
+    (function () {
+      if (typeof IntersectionObserver === 'undefined') return;
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      var observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('visible');
+              observer.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
+      );
+
+      function observe() {
+        document.querySelectorAll('.fade-in, .stagger-children').forEach(function (el) {
+          observer.observe(el);
+        });
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', observe);
+      } else {
+        observe();
+      }
+    })();
+  </script>
+</html>

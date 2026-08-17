@@ -1,0 +1,12 @@
+packages:
+  - "packages/*"
+  - "examples/*"
+  - "apps/*"
+allowBuilds:
+  better-sqlite3: true
+  esbuild: true
+  sharp: true
+  "@node-rs/argon2": true
+overrides:
+  sharp: ">=0.35.0"
+  postcss: ">=8.5.12"

@@ -1,0 +1,165 @@
+---
+import { Code } from 'astro:components';
+
+interface Props {
+  code: string;
+  lang?: any;
+  title?: string;
+}
+
+const { code, lang = 'typescript', title } = Astro.props;
+---
+
+<div class="code-block-container">
+  <div class="code-header">
+    <span class="code-lang">{title || lang}</span>
+    <button type="button" class="copy-btn" aria-label="Copy code to clipboard">
+      <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+      </svg>
+      <span class="copy-text">Copy</span>
+    </button>
+  </div>
+  <div class="code-body">
+    <Code
+      code={code.trim()}
+      lang={lang}
+      themes={{ light: 'github-light-default', dark: 'github-dark-dimmed' }}
+      defaultColor={false}
+    />
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.code-block-container').forEach((block) => {
+    const btn = block.querySelector('.copy-btn');
+    const codeEl = block.querySelector('pre code');
+    if (btn && codeEl) {
+      btn.addEventListener('click', async () => {
+        try {
+          const text = codeEl.textContent || '';
+          await navigator.clipboard.writeText(text);
+          const textSpan = btn.querySelector('.copy-text');
+          if (textSpan) {
+            textSpan.textContent = 'Copied!';
+            btn.classList.add('copied');
+            setTimeout(() => {
+              textSpan.textContent = 'Copy';
+              btn.classList.remove('copied');
+            }, 2000);
+          }
+        } catch (err) {
+          console.error('Clipboard copy failed:', err);
+        }
+      });
+    }
+  });
+</script>
+
+<style>
+  .code-block-container {
+    position: relative;
+    margin: 1.25rem 0;
+    border-radius: var(--cp-radius-md);
+    border: 1px solid var(--cp-border);
+    background-color: var(--cp-surface);
+    overflow: hidden;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+  }
+
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 1rem;
+    background-color: var(--cp-surface-elevated);
+    border-bottom: 1px solid var(--cp-border-subtle);
+  }
+
+  .code-lang {
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--cp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .copy-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: 1px solid var(--cp-border-subtle);
+    border-radius: var(--cp-radius-sm);
+    color: var(--cp-text-muted);
+    padding: 0.35rem 0.65rem;
+    min-height: 44px;
+    min-width: 44px;
+    font-size: 0.75rem;
+    font-family: var(--cp-font-sans);
+    cursor: pointer;
+    transition: all var(--cp-transition-fast);
+  }
+
+  .copy-btn:hover {
+    color: var(--cp-text);
+    border-color: var(--cp-border-hover);
+    background-color: var(--cp-surface);
+  }
+
+  .copy-btn.copied {
+    color: var(--cp-success);
+    border-color: var(--cp-success);
+  }
+
+  .code-body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .code-body :global(pre) {
+    margin: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    padding: 0.875rem 1rem !important;
+    background-color: var(--cp-surface) !important;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .code-body :global(code) {
+    font-size: 0.875rem !important;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+
+  /* Shiki dual-theme: show correct theme based on data-theme attribute */
+  /* Light theme visible by default */
+  .code-body :global(.shiki.shiki-themes) {
+    background-color: transparent !important;
+  }
+
+  /* Light mode: show light theme colors */
+  :root:not([data-theme="dark"]) .code-body :global(.shiki span) {
+    color: var(--shiki-light, inherit) !important;
+  }
+
+  /* Dark mode: show dark theme colors */
+  [data-theme="dark"] .code-body :global(.shiki span) {
+    color: var(--shiki-dark, inherit) !important;
+  }
+</style>

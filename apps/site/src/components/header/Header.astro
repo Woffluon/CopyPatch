@@ -1,0 +1,531 @@
+---
+import { SITE_CONFIG, getNav, type Locale } from '../../config/site';
+
+interface Props {
+  isDocs?: boolean;
+  lang?: Locale;
+}
+
+const pathname = Astro.url.pathname;
+const isTr = pathname.startsWith('/tr');
+const currentLang: Locale = Astro.props.lang || (isTr ? 'tr' : 'en');
+const { isDocs = false } = Astro.props;
+
+const navItems = getNav(currentLang);
+
+// Compute alternate language URLs
+const currentPath = pathname.replace(/\/$/, '') || '/';
+let targetEnUrl = '/';
+let targetTrUrl = '/tr';
+
+if (currentLang === 'tr') {
+  const stripped = currentPath.replace(/^\/tr(\/|$)/, '/').replace(/\/$/, '') || '/';
+  targetEnUrl = stripped;
+  targetTrUrl = currentPath;
+} else {
+  targetEnUrl = currentPath;
+  targetTrUrl = currentPath === '/' ? '/tr' : `/tr${currentPath}`;
+}
+
+const homeHref = currentLang === 'tr' ? '/tr' : '/';
+const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
+---
+
+<header class="site-header">
+  <div class="header-bar">
+    <div class="container header-inner">
+      <!-- Brand Wordmark -->
+      <a href={homeHref} class="brand" aria-label={currentLang === 'tr' ? 'CopyPatch Ana Sayfası' : 'CopyPatch Homepage'}>
+        <img
+          src="/favicon.svg"
+          alt="CopyPatch Logo"
+          class="brand-logo"
+          width="30"
+          height="30"
+        />
+        <span class="brand-text">CopyPatch</span>
+      </a>
+
+      <!-- Desktop Navigation -->
+      <nav class="desktop-nav" aria-label={currentLang === 'tr' ? 'Birincil Gezinme' : 'Primary Navigation'}>
+        {
+          navItems.map((item) => {
+            const isItemDocs = item.href.includes('/docs');
+            const isActive = isItemDocs ? isDocs : pathname === item.href;
+            return (
+              <a href={item.href} class:list={['nav-link', { active: isActive }]}>
+                {item.title}
+              </a>
+            );
+          })
+        }
+      </nav>
+
+      <!-- Header Actions -->
+      <div class="header-actions">
+        <!-- Language Switcher -->
+        <div class="lang-switcher" role="group" aria-label="Language selection">
+          <a
+            href={targetEnUrl}
+            class:list={['lang-btn', { active: currentLang === 'en' }]}
+            aria-current={currentLang === 'en' ? 'true' : undefined}
+            title="English"
+          >
+            EN
+          </a>
+          <span class="lang-divider" aria-hidden="true">/</span>
+          <a
+            href={targetTrUrl}
+            class:list={['lang-btn', { active: currentLang === 'tr' }]}
+            aria-current={currentLang === 'tr' ? 'true' : undefined}
+            title="Türkçe"
+          >
+            TR
+          </a>
+        </div>
+
+        <a
+          href={SITE_CONFIG.githubUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="github-link"
+          aria-label="GitHub Repository"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+          </svg>
+          <span class="github-text">GitHub</span>
+        </a>
+
+        <!-- Theme Toggle -->
+        <button
+          type="button"
+          id="theme-toggle"
+          class="theme-toggle"
+          aria-label="Toggle light/dark theme"
+          title="Toggle theme"
+        >
+          <!-- Sun (shown in dark mode) -->
+          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"/>
+            <line x1="12" y1="1" x2="12" y2="3"/>
+            <line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/>
+            <line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+          <!-- Moon (shown in light mode) -->
+          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+
+        <a href={docsHref} class="btn btn-primary get-started-btn">
+          <span>{currentLang === 'tr' ? 'Başlayın' : 'Get Started'}</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button
+          type="button"
+          id="mobile-menu-btn"
+          class="mobile-toggle"
+          aria-label={currentLang === 'tr' ? 'Menüyü Aç' : 'Open Navigation Menu'}
+          aria-expanded="false"
+          aria-controls="mobile-nav-dialog"
+        >
+          <svg class="hamburger-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line class="line-1" x1="4" y1="6" x2="20" y2="6"/>
+            <line class="line-2" x1="4" y1="12" x2="20" y2="12"/>
+            <line class="line-3" x1="4" y1="18" x2="20" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Drawer Menu -->
+  <div id="mobile-nav-dialog" class="mobile-menu" hidden>
+    <div class="mobile-menu-inner">
+      <nav class="mobile-links" aria-label={currentLang === 'tr' ? 'Mobil Gezinme' : 'Mobile Navigation'}>
+        {
+          navItems.map((item) => (
+            <a href={item.href} class="mobile-nav-link">
+              {item.title}
+            </a>
+          ))
+        }
+        <a href={SITE_CONFIG.githubUrl} target="_blank" rel="noopener noreferrer" class="mobile-nav-link">
+          GitHub Repository
+        </a>
+      </nav>
+
+      <div class="mobile-extra">
+        <div class="mobile-lang-row">
+          <span class="mobile-lang-label">{currentLang === 'tr' ? 'Dil Seçimi' : 'Language'}:</span>
+          <div class="lang-switcher">
+            <a href={targetEnUrl} class:list={['lang-btn', { active: currentLang === 'en' }]}>English (EN)</a>
+            <span class="lang-divider">/</span>
+            <a href={targetTrUrl} class:list={['lang-btn', { active: currentLang === 'tr' }]}>Türkçe (TR)</a>
+          </div>
+        </div>
+
+        <div class="mobile-cta-wrap">
+          <a href={docsHref} class="btn btn-primary" style="width: 100%; justify-content: center;">
+            {currentLang === 'tr' ? 'Dokümantasyona Git' : 'Get Started'}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu
+  const btn = document.getElementById('mobile-menu-btn');
+  const menu = document.getElementById('mobile-nav-dialog');
+
+  if (btn && menu) {
+    const toggleMenu = () => {
+      const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+      const nextExpanded = !isExpanded;
+      btn.setAttribute('aria-expanded', String(nextExpanded));
+      btn.setAttribute('aria-label', nextExpanded ? 'Close Navigation Menu' : 'Open Navigation Menu');
+      menu.hidden = !nextExpanded;
+      document.body.style.overflow = nextExpanded ? 'hidden' : '';
+    };
+
+    btn.addEventListener('click', toggleMenu);
+
+    menu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open Navigation Menu');
+        menu.hidden = true;
+        document.body.style.overflow = '';
+      });
+    });
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !menu.hidden) {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open Navigation Menu');
+        menu.hidden = true;
+        document.body.style.overflow = '';
+        btn.focus();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 768 && !menu.hidden) {
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open Navigation Menu');
+        menu.hidden = true;
+        document.body.style.overflow = '';
+      }
+    });
+  }
+
+  // Theme toggle
+  const themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', () => {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      html.setAttribute('data-theme', next);
+      localStorage.setItem('cp-theme', next);
+      const metaColor = document.getElementById('meta-theme-color');
+      if (metaColor) {
+        metaColor.setAttribute('content', next === 'dark' ? '#2b2b2b' : '#e4e2dd');
+      }
+    });
+  }
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    width: 100%;
+  }
+
+  .header-bar {
+    width: 100%;
+    height: var(--cp-header-height);
+    background-color: var(--cp-surface-overlay);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--cp-border-subtle);
+    transition: background-color var(--cp-transition-theme), border-color var(--cp-transition-theme);
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 100%;
+  }
+
+  /* Brand */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: -0.02em;
+    color: var(--cp-text);
+    text-decoration: none;
+  }
+
+  .brand-logo {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--cp-radius-sm);
+    object-fit: contain;
+    display: block;
+  }
+
+  /* Show the right logo per theme */
+  :root:not([data-theme="dark"]) .brand-logo-dark { display: none; }
+  [data-theme="dark"] .brand-logo-light { display: none; }
+
+  .brand-text {
+    color: var(--cp-text);
+  }
+
+  /* Desktop Nav */
+  .desktop-nav {
+    display: flex;
+    align-items: center;
+    gap: 1.75rem;
+  }
+
+  .nav-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--cp-text-muted);
+    transition: color var(--cp-transition-fast);
+    text-decoration: none;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    color: var(--cp-text);
+  }
+
+  /* Actions */
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  /* Language Switcher */
+  .lang-switcher {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--cp-radius-sm);
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    transition: background-color var(--cp-transition-theme), border-color var(--cp-transition-theme);
+  }
+
+  .lang-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    color: var(--cp-text-muted);
+    transition: color var(--cp-transition-fast);
+    padding: 0.25rem 0.5rem;
+    border-radius: 3px;
+    text-decoration: none;
+  }
+
+  .lang-btn:hover {
+    color: var(--cp-text);
+  }
+
+  .lang-btn.active {
+    color: var(--cp-text);
+    font-weight: 700;
+    background-color: var(--cp-accent-subtle);
+  }
+
+  .lang-divider {
+    color: var(--cp-border-hover);
+    user-select: none;
+  }
+
+  /* GitHub Link */
+  .github-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: var(--cp-text-muted);
+    padding: 0.375rem 0.625rem;
+    border-radius: var(--cp-radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color var(--cp-transition-fast), background-color var(--cp-transition-fast);
+    text-decoration: none;
+  }
+
+  .github-link:hover {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+  }
+
+  /* Theme Toggle */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    border-radius: var(--cp-radius-md);
+    background: transparent;
+    border: 1px solid var(--cp-border);
+    color: var(--cp-text-muted);
+    cursor: pointer;
+    transition: color var(--cp-transition-fast), background-color var(--cp-transition-fast), border-color var(--cp-transition-fast);
+  }
+
+  .theme-toggle:hover {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+  }
+
+  /* Show moon in light mode, sun in dark mode */
+  :root:not([data-theme="dark"]) .icon-sun { display: none; }
+  [data-theme="dark"] .icon-moon { display: none; }
+
+  /* Get Started Button */
+  .get-started-btn {
+    padding: 0.45rem 0.875rem;
+    font-size: 0.875rem;
+  }
+
+  /* Mobile Toggle */
+  .mobile-toggle {
+    display: none;
+    background: transparent;
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-sm);
+    color: var(--cp-text);
+    padding: 0.375rem;
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+  }
+
+  .mobile-toggle .line-1,
+  .mobile-toggle .line-2,
+  .mobile-toggle .line-3 {
+    transform-origin: 12px 12px;
+    transition: transform var(--cp-transition-fast), opacity var(--cp-transition-fast);
+  }
+
+  .mobile-toggle[aria-expanded="true"] .line-1 { transform: translateY(6px) rotate(45deg); }
+  .mobile-toggle[aria-expanded="true"] .line-2 { opacity: 0; }
+  .mobile-toggle[aria-expanded="true"] .line-3 { transform: translateY(-6px) rotate(-45deg); }
+
+  /* Mobile Menu */
+  .mobile-menu {
+    position: fixed;
+    top: var(--cp-header-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: calc(100vh - var(--cp-header-height));
+    background-color: var(--cp-bg);
+    z-index: 9999;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.5rem;
+    box-sizing: border-box;
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .mobile-menu[hidden] { display: none !important; }
+
+  .mobile-menu-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .mobile-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .mobile-nav-link {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--cp-text);
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--cp-border-subtle);
+    transition: color var(--cp-transition-fast), padding-left var(--cp-transition-fast);
+    text-decoration: none;
+    display: block;
+  }
+
+  .mobile-nav-link:hover,
+  .mobile-nav-link:focus-visible {
+    color: var(--cp-text);
+    padding-left: 0.25rem;
+  }
+
+  .mobile-extra { margin-top: 1.5rem; }
+
+  .mobile-lang-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--cp-border-subtle);
+    margin-bottom: 1rem;
+  }
+
+  .mobile-lang-label {
+    font-size: 0.875rem;
+    color: var(--cp-text-muted);
+  }
+
+  .mobile-cta-wrap { padding-bottom: 1.5rem; }
+
+  @media (max-width: 768px) {
+    .desktop-nav { display: none; }
+    .github-text { display: none; }
+    .get-started-btn { display: none; }
+    .mobile-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+</style>

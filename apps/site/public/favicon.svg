@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none">
+  <rect width="32" height="32" rx="8" fill="#e4e2dd"/>
+  <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="#2b2b2b" stroke-opacity="0.15"/>
+  <!-- Left bracket -->
+  <path d="M10 9H8v14h2" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Caret / Cursor -->
+  <line x1="16" y1="10" x2="16" y2="22" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round"/>
+  <!-- Right bracket -->
+  <path d="M22 9h2v14h-2" stroke="#2b2b2b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

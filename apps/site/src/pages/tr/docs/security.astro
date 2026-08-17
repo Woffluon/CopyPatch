@@ -1,0 +1,85 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self' https://copypatch-api.alanadiniz.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;`;
+---
+
+<DocsLayout
+  title="Güvenlik Mimarisi & Tehdit Modeli"
+  description="CopyPatch kriptografik temelleri, Argon2id parametreleri, oturum güvenliği ve XSS koruması."
+>
+  <h1>Güvenlik Mimarisi & Tehdit Modeli</h1>
+
+  <p class="lead">
+    Güvenlik, CopyPatch mimarisinin en temel taşıdır. Gelişigüzel HTML veya Markdown saklayan geleneksel sistemlerin aksine CopyPatch, Stored XSS açıklarını ortadan kaldıran katı kurallarla çalışır.
+  </p>
+
+  <h2>Temel Güvenlik İlkeleri</h2>
+
+  <h3>1. Kesin Düz Metin Değişmezi (Sıfır XSS)</h3>
+  <p>
+    CopyPatch sunucu ve istemci tarafında <strong>yalnızca düz metin dizgelerini</strong> kabul eder ve saklar:
+  </p>
+  <ul>
+    <li>HTML etiketleri (örneğin <code>&lt;script&gt;</code> veya <code>&lt;img onerror&gt;</code>) hiçbir zaman çalıştırılmaz veya DOM olarak işlenmez.</li>
+    <li>React metin enterpolasyonu, değerleri güvenli metin düğümleri (text node) olarak ekrana basar.</li>
+    <li>Düzenleme alanına girilen zararlı betikler ekranda etkisiz düz metin olarak görünür.</li>
+  </ul>
+
+  <h3>2. Argon2id Parola Şifreleme</h3>
+  <p>
+    Yönetici parolaları endüstri standardı <strong>Argon2id</strong> algoritmasıyla özetlenir (RFC 9106 önerileri):
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Parametre</th>
+        <th>Değer</th>
+        <th>Açıklama</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Bellek Maliyeti (m)</strong></td>
+        <td><code>19 MiB (19456 KiB)</code></td>
+        <td>GPU ile kaba kuvvet (brute-force) saldırılarını engeller.</td>
+      </tr>
+      <tr>
+        <td><strong>Zaman Maliyeti (t)</strong></td>
+        <td><code>2 yineleme</code></td>
+        <td>Oturum açma hızını düşürmeden güvenli işlem sağlar.</td>
+      </tr>
+      <tr>
+        <td><strong>Paralellik (p)</strong></td>
+        <td><code>1 şerit</code></td>
+        <td>Standart sunucularda kararlı tek iş parçacıklı çalışma.</td>
+      </tr>
+      <tr>
+        <td><strong>Tuz (Salt) Uzunluğu</strong></td>
+        <td><code>256 bit (32 bayt)</code></td>
+        <td>Her parola özeti için kriptografik rastgele tuz.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>3. Güçlendirilmiş Oturum Yönetimi</h3>
+  <ul>
+    <li><strong>Entropi:</strong> Oturum belirteçleri 256 bit kriptografik rastgelelikle üretilir.</li>
+    <li><strong>Veritabanı Güvenliği:</strong> Oturum belirteçleri SQLite'ta SHA-256 ile özetlenerek saklanır. Veritabanı sızsa dahi oturumlar ele geçirilemez.</li>
+    <li><strong>Çerez Nitelikleri:</strong> <code>HttpOnly</code>, <code>SameSite=Strict</code> ve <code>Secure</code> bayraklarıyla korunur.</li>
+    <li><strong>Host Ön Eki:</strong> HTTPS canlı ortamlarda <code>__Host-</code> ön eki kullanılarak alt alan adı saldırılarına karşı tam yalıtım sağlanır.</li>
+  </ul>
+
+  <h3>4. Çift Belirteçli CSRF Koruması</h3>
+  <p>
+    Tüm veri değiştiren isteklerde hem <code>HttpOnly</code> oturum çerezi hem de JavaScript belleğinde tutulan <code>x-copypatch-csrf</code> başlığı zorunludur.
+  </p>
+
+  <h2>Önerilen İçerik Güvenliği Politikası (CSP)</h2>
+  <p>
+    En yüksek güvenlik seviyesi için web sunucunuzda aşağıdaki CSP başlığını tanımlayın:
+  </p>
+
+  <CodeBlock code={cspExample} lang="http" title="HTTP Yanıt Başlığı" />
+</DocsLayout>

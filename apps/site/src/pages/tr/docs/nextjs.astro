@@ -1,0 +1,85 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const nextServerCode = `// app/[locale]/page.tsx (Sunucu Bileşeni)
+import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+import { fetchServerSnapshot } from '@copypatch/next/server';
+
+interface PageProps {
+  params: Promise<{ locale: string }>;
+}
+
+export default async function Page({ params }: PageProps) {
+  const { locale } = await params;
+
+  // SSR sırasında yayınlanan metin anlık görüntüsünü önceden çek
+  const snapshot = await fetchServerSnapshot(locale, {
+    apiBaseUrl: process.env.COPYPATCH_INTERNAL_URL || 'http://127.0.0.1:4040',
+    next: {
+      revalidate: 60,
+      tags: [\`copypatch-snapshot-\${locale}\`],
+    },
+  });
+
+  return (
+    <NextCopyPatchProvider
+      locale={locale}
+      apiBase="/__copypatch/api/v1"
+      initialSnapshot={snapshot}
+    >
+      <main className="container mx-auto px-4 py-16">
+        <EditableText contentKey="hero.title" as="h1" className="text-5xl font-bold tracking-tight">
+          Next.js ile Sunucuda Oluşturulan Başlık
+        </EditableText>
+
+        <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true} className="text-xl text-zinc-400 mt-4">
+          Sunucu tarafında sıfır düzen kayması, kusursuz SEO indeksleme ve anında hidrasyon ile oluşturulur.
+        </EditableText>
+      </main>
+    </NextCopyPatchProvider>
+  );
+}`;
+
+const rewriteCode = `// next.config.mjs
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/__copypatch/api/:path*',
+        destination: process.env.NODE_ENV === 'production'
+          ? 'http://127.0.0.1:4040/__copypatch/api/:path*'
+          : 'http://localhost:4040/__copypatch/api/:path*',
+      },
+    ];
+  },
+};
+
+export default nextConfig;`;
+---
+
+<DocsLayout
+  title="Next.js App Router & SSR Entegrasyonu"
+  description="Next.js App Router (RSC) ile CopyPatch kullanımı, sıfır hidrasyon uyarısıyla sunucuda ön oluşturma."
+>
+  <h1>Next.js App Router & SSR Entegrasyonu</h1>
+
+  <p class="lead">
+    <code>@copypatch/next</code> paketi Next.js App Router ve React Sunucu Bileşenleri (RSC) için tam uyumluluk sağlar. Yayınlanan metinlerin sunucu tarafında çekilmesini sağlayarak metin sıçramalarını ve hidrasyon hatalarını tamamen ortadan kaldırır.
+  </p>
+
+  <h2>Nasıl Çalışır?</h2>
+  <ol>
+    <li>Sunucu oluşturma sırasında <code>fetchServerSnapshot(locale)</code> CopyPatch veritabanından aktif dil verilerini çeker.</li>
+    <li>Veriler <code>NextCopyPatchProvider</code> bileşenine <code>initialSnapshot</code> olarak verilir.</li>
+    <li>İstemci tarayıcıda açıldığında ek bir ağ isteği yapmadan doğrudan sunucu çıktısıyla hidrate olur.</li>
+    <li>Yetkili bir editör sayfayı <code>?copypatch=1</code> ile açtığında araç çubuğu yüklenir ve sayfa içi düzenleme aktifleşir.</li>
+  </ol>
+
+  <h2>1. Sunucu Bileşeni Kurulumu</h2>
+  <CodeBlock code={nextServerCode} lang="tsx" title="app/[locale]/page.tsx" />
+
+  <h2>2. next.config.mjs Yapılandırması</h2>
+  <CodeBlock code={rewriteCode} lang="javascript" title="next.config.mjs" />
+</DocsLayout>

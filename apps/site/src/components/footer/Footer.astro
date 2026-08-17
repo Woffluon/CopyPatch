@@ -1,0 +1,201 @@
+---
+import { SITE_CONFIG, type Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const pathname = Astro.url.pathname;
+const isTr = pathname.startsWith('/tr');
+const currentLang: Locale = Astro.props.lang || (isTr ? 'tr' : 'en');
+const docsPrefix = currentLang === 'tr' ? '/tr/docs' : '/docs';
+const homeHref = currentLang === 'tr' ? '/tr' : '/';
+---
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href={homeHref} class="brand" aria-label="CopyPatch">
+          <img src="/logo-white.png" alt="CopyPatch Logo" class="brand-logo brand-logo-light" width="28" height="28" />
+          <img src="/logo-dark.png" alt="CopyPatch Logo" class="brand-logo brand-logo-dark" width="28" height="28" />
+          <span class="brand-text">CopyPatch</span>
+        </a>
+        <p class="brand-desc">
+          {
+            currentLang === 'tr'
+              ? 'React uygulamaları için hafif, kendi sunucunuzda barındırılan, açık kaynak sayfa içi metin düzenleme sistemi.'
+              : 'Lightweight, self-hosted, open-source inline copy editing system for React applications.'
+          }
+        </p>
+      </div>
+
+      <div class="footer-links-grid">
+        <div class="footer-col">
+          <h4 class="col-title">{currentLang === 'tr' ? 'Dokümantasyon' : 'Documentation'}</h4>
+          <ul class="col-links">
+            <li><a href={docsPrefix}>{currentLang === 'tr' ? 'Başlarken' : 'Getting Started'}</a></li>
+            <li><a href={`${docsPrefix}/installation`}>{currentLang === 'tr' ? 'Kurulum' : 'Installation'}</a></li>
+            <li><a href={`${docsPrefix}/react`}>{currentLang === 'tr' ? 'React & Vite' : 'React & Vite'}</a></li>
+            <li><a href={`${docsPrefix}/nextjs`}>{currentLang === 'tr' ? 'Next.js App Router' : 'Next.js App Router'}</a></li>
+            <li><a href={`${docsPrefix}/server`}>{currentLang === 'tr' ? 'Sunucu & CLI' : 'Server & CLI'}</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="col-title">{currentLang === 'tr' ? 'Mimari & Güvenlik' : 'Architecture'}</h4>
+          <ul class="col-links">
+            <li><a href={`${docsPrefix}/edit-mode`}>{currentLang === 'tr' ? 'Düzenleme Modu & Yetki' : 'Edit Mode & Auth'}</a></li>
+            <li><a href={`${docsPrefix}/publishing`}>{currentLang === 'tr' ? 'Yayınlama Modları' : 'Publishing Modes'}</a></li>
+            <li><a href={`${docsPrefix}/locales`}>{currentLang === 'tr' ? 'Çoklu Dil İzolasyonu' : 'Multi-Locale Isolation'}</a></li>
+            <li><a href={`${docsPrefix}/security`}>{currentLang === 'tr' ? 'Güvenlik Mimarisi' : 'Threat Model & Security'}</a></li>
+            <li><a href={`${docsPrefix}/deployment`}>{currentLang === 'tr' ? 'Sunucu Dağıtımı' : 'Self-Hosted Deployment'}</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h4 class="col-title">{currentLang === 'tr' ? 'Açık Kaynak' : 'Open Source'}</h4>
+          <ul class="col-links">
+            <li><a href={SITE_CONFIG.githubUrl} target="_blank" rel="noopener noreferrer">{currentLang === 'tr' ? 'GitHub Deposu' : 'GitHub Repository'}</a></li>
+            <li><a href={`${SITE_CONFIG.githubUrl}/blob/main/LICENSE`} target="_blank" rel="noopener noreferrer">{currentLang === 'tr' ? 'MIT Lisansı' : 'MIT License'}</a></li>
+            <li><a href={`${SITE_CONFIG.githubUrl}/blob/main/SECURITY.md`} target="_blank" rel="noopener noreferrer">{currentLang === 'tr' ? 'Güvenlik Politikası' : 'Security Policy'}</a></li>
+            <li><a href={`${SITE_CONFIG.githubUrl}/blob/main/CONTRIBUTING.md`} target="_blank" rel="noopener noreferrer">{currentLang === 'tr' ? 'Katkıda Bulunma' : 'Contributing'}</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="copyright">
+        {
+          currentLang === 'tr'
+            ? `© 2026 ${SITE_CONFIG.author}. MIT Lisansı ile yayınlanmıştır. Üçüncü taraf izleme veya telemetri içermez.`
+            : `© 2026 ${SITE_CONFIG.author}. Released under the MIT License. No third-party tracking or telemetry.`
+        }
+      </p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+    padding-top: var(--cp-space-16);
+    padding-bottom: var(--cp-space-8);
+    margin-top: auto;
+    transition: background-color var(--cp-transition-theme), border-color var(--cp-transition-theme);
+  }
+
+  .footer-top {
+    display: grid;
+    grid-template-columns: 1.2fr 2fr;
+    gap: var(--cp-space-12);
+    margin-bottom: var(--cp-space-12);
+  }
+
+  .footer-brand {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    color: var(--cp-text);
+    text-decoration: none;
+  }
+
+  .brand-logo {
+    width: 28px;
+    height: 28px;
+    border-radius: var(--cp-radius-sm);
+    object-fit: contain;
+    display: block;
+  }
+
+  :root:not([data-theme="dark"]) .brand-logo-dark { display: none; }
+  [data-theme="dark"] .brand-logo-light { display: none; }
+
+  .brand-text {
+    color: var(--cp-text);
+  }
+
+  .brand-desc {
+    font-size: 0.875rem;
+    color: var(--cp-text-muted);
+    line-height: 1.6;
+    max-width: 320px;
+  }
+
+  .footer-links-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--cp-space-6);
+  }
+
+  .col-title {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--cp-text);
+    margin-bottom: 0.875rem;
+  }
+
+  .col-links {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .col-links a {
+    font-size: 0.875rem;
+    color: var(--cp-text-muted);
+    transition: color var(--cp-transition-fast);
+    text-decoration: none;
+  }
+
+  .col-links a:hover {
+    color: var(--cp-text);
+  }
+
+  .footer-bottom {
+    border-top: 1px solid var(--cp-border-subtle);
+    padding-top: var(--cp-space-6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .copyright {
+    font-size: 0.8125rem;
+    color: var(--cp-text-dim);
+  }
+
+  @media (max-width: 768px) {
+    .footer-top {
+      grid-template-columns: 1fr;
+      gap: var(--cp-space-8);
+    }
+    .footer-links-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: var(--cp-space-6);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .footer-links-grid { grid-template-columns: 1fr; }
+    .footer-bottom {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

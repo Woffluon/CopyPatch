@@ -1,0 +1,313 @@
+---
+import CodeBlock from '../ui/CodeBlock.astro';
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+
+const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1">
+  İnsanların gerçekten kullandığı ürünler üretin.
+</EditableText>` : `<EditableText contentKey="hero.title" as="h1">
+  Build something people actually use.
+</EditableText>`;
+---
+
+<section id="how-it-works" class="how-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? '3 Basit Adımda Sayfa İçi Düzenleme' : 'Inline editing in three simple steps'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? 'Harici SaaS yönetim panelleri yok, karmaşık içerik modelleme şemaları yok, tasarımın bozulma riski yok.'
+            : 'No external SaaS dashboards, no content modeling schema, and no accidental layout corruption.'
+        }
+      </p>
+    </div>
+
+    <div class="steps-grid">
+      <!-- Step 1 -->
+      <div class="step-card">
+        <div class="step-badge">01</div>
+        <h3 class="step-title">{lang === 'tr' ? 'Geliştirici onaylanan metinleri işaretler' : 'Developer marks editable text'}</h3>
+        <p class="step-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                React bileşeninizde onaylanan metni <code>&lt;EditableText&gt;</code> ile sarmalayın. Düzen, stil ve DOM hiyerarşisi üzerindeki %100 kontrolünüzü koruyun.
+              </>
+            ) : (
+              <>
+                Wrap approved copy in your React component with <code>&lt;EditableText&gt;</code>. You retain 100% control over layout, styling, and DOM hierarchy.
+              </>
+            )
+          }
+        </p>
+        <div class="step-visual">
+          <CodeBlock code={step1Code} lang="tsx" title="App.tsx" />
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step-card">
+        <div class="step-badge">02</div>
+        <h3 class="step-title">{lang === 'tr' ? 'Müşteri doğrudan sayfa üzerinde düzenler' : 'Client edits directly on the page'}</h3>
+        <p class="step-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                Müşteri siteyi düzenleme modunda (<code>?copypatch=1</code>) açar, doğrudan metne tıklar ve yerel tarayıcı imleç desteğiyle doğal biçimde yazar.
+              </>
+            ) : (
+              <>
+                The client visits the website in edit mode (<code>?copypatch=1</code>), clicks directly into the text, and types naturally with native browser selection and caret support.
+              </>
+            )
+          }
+        </p>
+        <div class="step-visual step-visual-interactive">
+          <div class="mini-browser-mockup">
+            <div class="mini-header">
+              <span class="mini-dot"></span>
+              <span class="mini-url">https://site.com?copypatch=1</span>
+            </div>
+            <div class="mini-content">
+              <span class="mini-label">{lang === 'tr' ? 'SAYFA İÇİ DÜZENLEME:' : 'EDITING INLINE:'}</span>
+              <div class="mini-editable-box">
+                <span class="mini-text">{lang === 'tr' ? 'İnsanların gerçekten ' : 'Build something people '}</span>
+                <span class="mini-caret">|</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step-card">
+        <div class="step-badge">03</div>
+        <h3 class="step-title">{lang === 'tr' ? 'Kaydet & anında kalıcılık' : 'Save & instant persistence'}</h3>
+        <p class="step-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                Müşteri Kaydet'e tıklar. Kendi sunucunuzdaki SQLite sunucusu anlık görüntü önbelleğini atomik olarak günceller. Ziyaretçiler güncel metni sıfır veritabanı maliyetiyle alır.
+              </>
+            ) : (
+              <>
+                Client hits Save. The self-hosted SQLite server updates the snapshot cache atomically. Next visitor request receives updated copy with zero database overhead.
+              </>
+            )
+          }
+        </p>
+        <div class="step-visual step-visual-publish">
+          <div class="pipeline-mockup">
+            <div class="pipe-node">
+              <span class="pipe-title">{lang === 'tr' ? 'Müşteri Kaydı' : 'Client Save'}</span>
+              <span class="pipe-sub">PUT /changes</span>
+            </div>
+            <div class="pipe-arrow">→</div>
+            <div class="pipe-node active">
+              <span class="pipe-title">SQLite DB</span>
+              <span class="pipe-sub">{lang === 'tr' ? 'Atomik Önbellek' : 'Atomic Cache'}</span>
+            </div>
+            <div class="pipe-arrow">→</div>
+            <div class="pipe-node">
+              <span class="pipe-title">{lang === 'tr' ? 'Ziyaretçiler' : 'Visitors'}</span>
+              <span class="pipe-sub">{lang === 'tr' ? '< 1 ms Anlık Görüntü' : '< 1 ms Snapshot'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .how-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--cp-space-6);
+  }
+
+  .step-card {
+    background-color: var(--cp-bg);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-6);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-badge {
+    font-family: var(--cp-font-mono);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border);
+    width: 32px;
+    height: 32px;
+    border-radius: var(--cp-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .step-title {
+    font-size: 1.1875rem;
+    margin-bottom: 0.5rem;
+    color: var(--cp-text);
+  }
+
+  .step-desc {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--cp-text-muted);
+    margin-bottom: 1.25rem;
+  }
+
+  .step-visual {
+    margin-top: auto;
+  }
+
+  .step-visual-interactive,
+  .step-visual-publish {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border-subtle);
+    border-radius: var(--cp-radius-md);
+    padding: 1rem;
+    min-height: 140px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mini-browser-mockup {
+    width: 100%;
+  }
+
+  .mini-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--cp-border-subtle);
+  }
+
+  .mini-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--cp-text-dim);
+  }
+
+  .mini-url {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    color: var(--cp-text-dim);
+  }
+
+  .mini-label {
+    font-size: 0.6875rem;
+    font-family: var(--cp-font-mono);
+    color: var(--cp-text-muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .mini-editable-box {
+    border: 1px dashed var(--cp-border-hover);
+    padding: 6px 10px;
+    border-radius: 4px;
+    background-color: var(--cp-accent-subtle);
+    font-size: 0.875rem;
+    color: var(--cp-text);
+    display: flex;
+    align-items: center;
+  }
+
+  .mini-caret {
+    color: var(--cp-text);
+    font-weight: bold;
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    50% { opacity: 0; }
+  }
+
+  .pipeline-mockup {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .pipe-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border-subtle);
+    padding: 6px 8px;
+    border-radius: var(--cp-radius-sm);
+    text-align: center;
+    flex: 1;
+  }
+
+  .pipe-node.active {
+    border-color: var(--cp-accent);
+    background-color: var(--cp-accent-subtle);
+  }
+
+  .pipe-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--cp-text);
+  }
+
+  .pipe-sub {
+    font-size: 0.625rem;
+    font-family: var(--cp-font-mono);
+    color: var(--cp-text-dim);
+  }
+
+  .pipe-arrow {
+    color: var(--cp-border-hover);
+    font-weight: bold;
+    font-size: 0.875rem;
+  }
+
+  @media (max-width: 960px) {
+    .steps-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

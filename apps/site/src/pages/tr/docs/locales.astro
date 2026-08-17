@@ -1,0 +1,52 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const localeSetup = `import React, { useState } from 'react';
+import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function MultilingualApp() {
+  const [locale, setLocale] = useState<'en' | 'tr' | 'de'>('tr');
+
+  return (
+    <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v1">
+      <nav className="flex gap-2 p-4">
+        <button type="button" onClick={() => setLocale('tr')}>Türkçe</button>
+        <button type="button" onClick={() => setLocale('en')}>English</button>
+        <button type="button" onClick={() => setLocale('de')}>Deutsch</button>
+      </nav>
+
+      <main className="p-8">
+        <EditableText contentKey="home.welcome.title" as="h1" className="text-3xl font-bold">
+          {locale === 'tr'
+            ? 'Platformumuza hoş geldiniz'
+            : locale === 'en'
+            ? 'Welcome to our platform'
+            : 'Willkommen auf unserer Plattform'}
+        </EditableText>
+      </main>
+    </CopyPatchProvider>
+  );
+}`;
+---
+
+<DocsLayout
+  title="Çoklu Dil Desteği & Yalıtım"
+  description="CopyPatch diller arası anlık görüntü yalıtımı, dil değiştirme ve RFC 5646 dil kodları."
+>
+  <h1>Çoklu Dil Desteği & Yalıtım</h1>
+
+  <p class="lead">
+    CopyPatch, metin anlık görüntülerini ve sürüm sayaçlarını dil kodlarına göre (örneğin <code>tr</code>, <code>en</code>, <code>de</code>, <code>fr-CA</code>) kesin bir şekilde birbirinden yalıtır.
+  </p>
+
+  <h2>Dil Yalıtımı Nasıl Çalışır?</h2>
+  <ul>
+    <li><strong>Bağımsız Depolama:</strong> Her dil SQLite içinde kendi bağımsız anlık görüntüsünü tutar.</li>
+    <li><strong>Sıfır Etkileşim:</strong> <code>locale="tr"</code> içinde yapılan düzenlemeler sadece Türkçe kayıtları günceller; İngilizce veya Almanca metinler bundan etkilenmez.</li>
+    <li><strong>Anında Geçiş:</strong> <code>CopyPatchProvider</code> bileşenindeki <code>locale</code> değeri değiştiğinde, sayfa yenilenmeden ilgili dilin metinleri bellekte anında değişir.</li>
+  </ul>
+
+  <h2>React Entegrasyonu</h2>
+  <CodeBlock code={localeSetup} lang="tsx" title="MultilingualApp.tsx" />
+</DocsLayout>

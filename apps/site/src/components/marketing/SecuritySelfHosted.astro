@@ -1,0 +1,183 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section id="security" class="security-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? 'Kendi sunucunuz. Kendi veritabanınız. Tam kontrol.' : 'Your server. Your database. Complete control.'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? 'CopyPatch harici sunuculara hiçbir veri göndermez. Katı kurumsal güvenlik ilkeleriyle tamamen kendi altyapınızda çalışır.'
+            : 'CopyPatch sends zero data to external servers. It runs in your own infrastructure with strict enterprise security invariants.'
+        }
+      </p>
+    </div>
+
+    <div class="security-grid">
+      <!-- Feature 1: Plain Text Invariant -->
+      <div class="security-card">
+        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 01' : 'INVARIANT 01'}</div>
+        <h3 class="sec-title">{lang === 'tr' ? 'Kesin Düz Metin Değişmezi' : 'Strict Plain-Text Invariant'}</h3>
+        <p class="sec-desc">
+          {
+            lang === 'tr'
+              ? 'Yalnızca düz metin dizgeleri kabul edilir ve kaydedilir. HTML, JSX, script etiketleri ve markdown kesin olarak reddedilir; depolanmış XSS açıklarını matematiksel olarak imkansız kılar.'
+              : 'Only plain strings are accepted and persisted. HTML, JSX, script tags, and markdown are strictly rejected, making stored XSS mathematically impossible.'
+          }
+        </p>
+        <div class="code-snippet-pill">
+          <code>assert(typeof text === 'string')</code>
+        </div>
+      </div>
+
+      <!-- Feature 2: Argon2id Authentication -->
+      <div class="security-card">
+        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 02' : 'INVARIANT 02'}</div>
+        <h3 class="sec-title">{lang === 'tr' ? 'Argon2id Parola Özetleme' : 'Argon2id Passphrase Hashing'}</h3>
+        <p class="sec-desc">
+          {
+            lang === 'tr'
+              ? 'Yönetici parolası, GPU tabanlı kaba kuvvet saldırılarına karşı 19 MiB bellek maliyeti ve 2 iterasyonla modern Argon2id algoritması kullanılarak özetlenir.'
+              : 'Administrative passphrases are hashed using state-of-the-art Argon2id with 19 MiB memory cost and 2 iterations to resist GPU-based brute-force attacks.'
+          }
+        </p>
+        <div class="code-snippet-pill">
+          <code>argon2.hash(passphrase, type: argon2id)</code>
+        </div>
+      </div>
+
+      <!-- Feature 3: HttpOnly & SameSite=Strict Sessions -->
+      <div class="security-card">
+        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 03' : 'INVARIANT 03'}</div>
+        <h3 class="sec-title">{lang === 'tr' ? '256-Bit Kriptografik Oturumlar' : '256-Bit Cryptographic Sessions'}</h3>
+        <p class="sec-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                Düzenleyici oturumları, istemci betiklerinin erişemeyeceği <code>HttpOnly</code>, <code>SameSite=Strict</code> ve <code>Secure</code> çerezlerinde saklanan 256-bit entropili belirteçler kullanır.
+              </>
+            ) : (
+              <>
+                Editor sessions use 256-bit entropy tokens stored exclusively in <code>HttpOnly</code>, <code>SameSite=Strict</code>, and <code>Secure</code> cookies inaccessible to client scripts.
+              </>
+            )
+          }
+        </p>
+        <div class="code-snippet-pill">
+          <code>Set-Cookie: __Host-cp_session; HttpOnly</code>
+        </div>
+      </div>
+
+      <!-- Feature 4: CSRF & Origin Validation -->
+      <div class="security-card">
+        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 04' : 'INVARIANT 04'}</div>
+        <h3 class="sec-title">{lang === 'tr' ? 'Çift Belirteçli CSRF ve Origin Koruması' : 'Dual-Token CSRF & Origin Guard'}</h3>
+        <p class="sec-desc">
+          {
+            lang === 'tr' ? (
+              <>
+                Tüm veri değiştiren istekler, bellekte tutulan özel <code>x-copypatch-csrf</code> başlığını zorunlu kılar ve <code>Origin</code> başlığını sunucu beyaz listesine göre doğrular.
+              </>
+            ) : (
+              <>
+                Every mutating request requires a custom memory-held <code>x-copypatch-csrf</code> header and validates the HTTP <code>Origin</code> header against explicit server whitelists.
+              </>
+            )
+          }
+        </p>
+        <div class="code-snippet-pill">
+          <code>headers['x-copypatch-csrf'] === session.csrf</code>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .security-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .security-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--cp-space-6);
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .security-card {
+    background-color: var(--cp-bg);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-6);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sec-badge {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--cp-text-dim);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.05em;
+  }
+
+  .sec-title {
+    font-size: 1.125rem;
+    color: var(--cp-text);
+    margin-bottom: 0.5rem;
+  }
+
+  .sec-desc {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--cp-text-muted);
+    margin-bottom: 1.25rem;
+    flex: 1;
+  }
+
+  .code-snippet-pill {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border-subtle);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--cp-radius-sm);
+  }
+
+  .code-snippet-pill code {
+    font-size: 0.75rem;
+    color: var(--cp-text-muted);
+  }
+
+  @media (max-width: 768px) {
+    .security-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

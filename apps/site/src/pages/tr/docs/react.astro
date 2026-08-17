@@ -1,0 +1,90 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const providerCode = `import React from 'react';
+import { CopyPatchProvider } from '@copypatch/react';
+
+export function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <CopyPatchProvider
+      locale="tr"
+      apiBase="/__copypatch/api/v1"
+    >
+      {children}
+    </CopyPatchProvider>
+  );
+}`;
+
+const editableTextCode = `import { EditableText } from '@copypatch/react';
+
+export function Hero() {
+  return (
+    <section className="hero">
+      {/* Özel stillere sahip bir <h1> olarak render edilir */}
+      <EditableText
+        contentKey="home.hero.title"
+        as="h1"
+        className="text-4xl font-bold"
+      >
+        İnsanların gerçekten kullandığı şeyler üretin.
+      </EditableText>
+
+      {/* Çok satırlı paragraflar için allowLineBreaks aktif edilir */}
+      <EditableText
+        contentKey="home.hero.subtitle"
+        as="p"
+        allowLineBreaks={true}
+        className="text-lg text-gray-500"
+      >
+        Müşterilerin kolayca düzenleyebileceği hızlı ve güvenilir bir ürün açıklaması.
+      </EditableText>
+    </section>
+  );
+}`;
+
+const hookCode = `import { useCopyPatch } from '@copypatch/react';
+
+export function CustomButton() {
+  // Buton etiketleri veya placeholder alanları için:
+  const label = useCopyPatch('home.cta.button', 'Hemen Başlayın');
+
+  return (
+    <button type="button" aria-label={label}>
+      {label}
+    </button>
+  );
+}`;
+---
+
+<DocsLayout
+  title="React & Vite API Referansı"
+  description="React uygulamalarında CopyPatchProvider, EditableText ve useCopyPatch hook kullanımı."
+>
+  <h1>React & Vite API Referansı</h1>
+
+  <p class="lead">
+    <code>@copypatch/react</code> paketi, React ağacınızdaki metin alanlarını işaretlemeniz için bileşenler ve hook'lar sunar.
+  </p>
+
+  <h2>1. CopyPatchProvider Kurulumu</h2>
+  <p>
+    Uygulama ağacınızı <code>CopyPatchProvider</code> ile sarın. Belirtilen dil için yayınlanan anlık görüntüyü ilk açılışta bir kez çeker ve bellek içi önbelleğe alır.
+  </p>
+
+  <CodeBlock code={providerCode} lang="tsx" title="RootLayout.tsx" />
+
+  <h2>2. &lt;EditableText&gt; Kullanımı</h2>
+  <p>
+    Düzenlenebilir olmasını istediğiniz her yerde <code>&lt;EditableText&gt;</code> kullanın. Normal ziyaretçi modunda sıfır çalışma zamanı ek yüküyle standart bir React düğümü render eder.
+  </p>
+
+  <CodeBlock code={editableTextCode} lang="tsx" title="Hero.tsx" />
+
+  <h2>3. useCopyPatch Hook'u</h2>
+  <p>
+    Metin dışı alanlar (örneğin buton etiketleri, resim <code>alt</code> metinleri veya <code>placeholder</code> değerleri) için:
+  </p>
+
+  <CodeBlock code={hookCode} lang="tsx" title="CustomButton.tsx" />
+</DocsLayout>

@@ -1,0 +1,105 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+const conflictRecoveryExample = `// Optimistic revision conflict payload example (409 Conflict)
+{
+  "error": {
+    "code": "REVISION_CONFLICT",
+    "message": "The active locale has been updated by another editor since your session began.",
+    "currentRevision": 14,
+    "expectedRevision": 12
+  }
+}`;
+---
+
+<DocsLayout
+  title="Publishing & Staging Workflows"
+  description="Understanding Direct Publishing vs Draft Staging modes, optimistic concurrency control, and revision management."
+>
+  <h1>Publishing & Staging Workflows</h1>
+
+  <p class="lead">
+    CopyPatch provides two distinct operational workflows to accommodate different editorial models: <strong>Direct Mode</strong> for instantaneous live updates and <strong>Draft Mode</strong> for review and staging approval cycles.
+  </p>
+
+  <h2>Mode Comparison</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Direct Mode (Default)</th>
+        <th>Draft Mode (Staging)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Primary Action</strong></td>
+        <td><code>Save</code> commits instantly to live snapshot.</td>
+        <td><code>Save Draft</code> stages changes into isolated draft state.</td>
+      </tr>
+      <tr>
+        <td><strong>Visitor Visibility</strong></td>
+        <td>Immediate upon saving.</td>
+        <td>Hidden until explicitly promoted via <code>Publish</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Best For</strong></td>
+        <td>Fast-moving product teams, typo fixes, founders.</td>
+        <td>Agencies, multi-stakeholder reviews, scheduled launches.</td>
+      </tr>
+      <tr>
+        <td><strong>Server Flag</strong></td>
+        <td><code>--mode direct</code></td>
+        <td><code>--mode draft</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>1. Direct Mode Workflow</h2>
+  <p>
+    In Direct Mode, clicking <strong>Save</strong> (or pressing <code>Cmd+S</code> / <code>Ctrl+S</code>) atomically updates the published snapshot in SQLite and swaps the in-memory cache:
+  </p>
+  <ol>
+    <li>Editor navigates to <code>?copypatch=1</code> and enters passphrase.</li>
+    <li>Editor clicks any text element and types modifications inline.</li>
+    <li>Editor clicks <strong>Save</strong> in the floating toolbar.</li>
+    <li>Backend commits changes within a SQLite transaction and increments <code>publishedRevision</code>.</li>
+    <li>All public visitors immediately receive updated copy on their next page load or client navigation.</li>
+  </ol>
+
+  <h2>2. Draft Mode Workflow (Review & Stage)</h2>
+  <p>
+    In Draft Mode, changes remain isolated from public visitors until explicitly approved:
+  </p>
+  <ol>
+    <li>Editor makes inline adjustments and clicks <strong>Save Draft</strong>.</li>
+    <li>The draft text is stored in SQLite under <code>draftRevision</code> without altering the live visitor snapshot.</li>
+    <li>Stakeholders and clients inspect the live staging environment with <code>?copypatch=1</code> to review staged modifications in real context.</li>
+    <li>Once approved, the authorized editor clicks <strong>Publish</strong> in the toolbar.</li>
+    <li>The backend atomically promotes all draft entries to the published snapshot in a single SQLite transaction and increments <code>publishedRevision</code>.</li>
+  </ol>
+
+  <h2>3. Optimistic Concurrency & Conflict Prevention</h2>
+  <p>
+    To prevent concurrent editors from accidentally overwriting each other's edits, CopyPatch enforces optimistic concurrency control:
+  </p>
+  <ul>
+    <li>Every mutation request transmits <code>expectedPublishedRevision</code> and <code>expectedDraftRevision</code>.</li>
+    <li>If another editor published changes while your session was open, the server rejects the request with HTTP <code>409 Conflict (REVISION_CONFLICT)</code>.</li>
+    <li>The client UI prompts the editor to refresh the snapshot, inspect diffs, and reapply changes safely without data loss.</li>
+  </ul>
+
+  <CodeBlock code={conflictRecoveryExample} lang="json" title="Conflict Error Response" />
+
+  <h2>4. Revision History & Audit Trails</h2>
+  <p>
+    Every publish action records an immutable row in the <code>revisions</code> audit table, tracking:
+  </p>
+  <ul>
+    <li>Target locale (e.g. <code>"en"</code>, <code>"tr"</code>)</li>
+    <li>Previous and new revision integer numbers</li>
+    <li>List of modified content keys and previous values</li>
+    <li>Cryptographic session identifier and timestamp</li>
+  </ul>
+</DocsLayout>

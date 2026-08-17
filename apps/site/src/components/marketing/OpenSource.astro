@@ -1,0 +1,173 @@
+---
+import { SITE_CONFIG, type Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section class="oss-section">
+  <div class="container">
+    <div class="oss-card">
+      <div class="oss-header">
+        <h2>{lang === 'tr' ? '%100 Ücretsiz. MIT Lisanslı. Sıfır Telemetri.' : '100% Free. MIT Licensed. Zero Telemetry.'}</h2>
+        <p class="oss-desc">
+          {
+            lang === 'tr'
+              ? 'CopyPatch, performansa ve veri mülkiyetine önem veren geliştiriciler için geliştirilmiş özgür bir yazılımdır. Kaynak kodunu inceleyin, yerelde çalıştırın, Docker ile dilediğiniz yere dağıtın; abonelik ücreti veya veri takibi olmadan kullanın.'
+              : 'CopyPatch is free software built for developers who care about performance and ownership. Inspect the source, run it locally, deploy anywhere with Docker, and never worry about subscription fees or tracking.'
+          }
+        </p>
+      </div>
+
+      <div class="oss-grid">
+        <div class="oss-feature">
+          <div class="oss-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h4 class="oss-feature-title">{lang === 'tr' ? 'Esnek MIT Lisansı' : 'Permissive MIT License'}</h4>
+          <p class="oss-feature-desc">
+            {
+              lang === 'tr'
+                ? 'Kişisel denemelerinizde, ticari projelerinizde, müşteri sitelerinizde veya kurumsal uygulamalarınızda hiçbir kısıtlama olmaksızın kullanın.'
+                : 'Use it for personal experiments, commercial projects, client websites, or internal enterprise applications without restrictions.'
+            }
+          </p>
+        </div>
+
+        <div class="oss-feature">
+          <div class="oss-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+          </div>
+          <h4 class="oss-feature-title">{lang === 'tr' ? 'Sıfır Telemetri veya Dışa Aktarım' : 'Zero Telemetry or Phone-Home'}</h4>
+          <p class="oss-feature-desc">
+            {
+              lang === 'tr'
+                ? 'CopyPatch asla kullanım verisi, IP adresi veya metin istatistiği toplamaz. Verileriniz yalnızca kendi SQLite diskinizde kalır.'
+                : 'CopyPatch never collects usage data, IPs, or content metrics. Your data stays strictly on your SQLite volume.'
+            }
+          </p>
+        </div>
+
+        <div class="oss-feature">
+          <div class="oss-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </div>
+          <h4 class="oss-feature-title">{lang === 'tr' ? 'Modern ve Test Edilmiş Mimari' : 'Community & Contributions'}</h4>
+          <p class="oss-feature-desc">
+            {
+              lang === 'tr'
+                ? 'Modern TypeScript, kapsamlı Vitest birim testleri ve Playwright uçtan uca tarayıcı testleriyle inşa edilmiştir.'
+                : 'Built with modern TypeScript, comprehensive Vitest unit tests, and Playwright end-to-end browser tests.'
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="oss-cta-wrap">
+        <a href={SITE_CONFIG.githubUrl} target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+          </svg>
+          <span>{lang === 'tr' ? "GitHub'da Yıldızlayın" : 'Star on GitHub'}</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .oss-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .oss-card {
+    max-width: 1000px;
+    margin: 0 auto;
+    background-color: var(--cp-bg);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-12) var(--cp-space-8);
+    text-align: center;
+  }
+
+  .oss-header {
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-10);
+  }
+
+  .oss-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .oss-desc {
+    font-size: 1rem;
+    color: var(--cp-text-muted);
+    line-height: 1.6;
+  }
+
+  .oss-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--cp-space-6);
+    text-align: left;
+    margin-bottom: var(--cp-space-10);
+  }
+
+  .oss-feature {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border-subtle);
+    border-radius: var(--cp-radius-md);
+    padding: var(--cp-space-6);
+  }
+
+  .oss-icon {
+    width: 36px;
+    height: 36px;
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cp-text-muted);
+    margin-bottom: 1rem;
+  }
+
+  .oss-feature-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cp-text);
+    margin-bottom: 0.5rem;
+  }
+
+  .oss-feature-desc {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--cp-text-muted);
+  }
+
+  .oss-cta-wrap {
+    display: flex;
+    justify-content: center;
+  }
+
+  @media (max-width: 768px) {
+    .oss-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

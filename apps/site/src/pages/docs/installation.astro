@@ -1,0 +1,100 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+const pnpmInstall = `# Install client packages for React
+pnpm add @copypatch/react @copypatch/core
+
+# For Next.js App Router (SSR) support:
+pnpm add @copypatch/next
+
+# For standalone server & CLI:
+pnpm add @copypatch/server`;
+
+const npmInstall = `# Install client packages with npm
+npm install @copypatch/react @copypatch/core
+
+# For Next.js App Router:
+npm install @copypatch/next
+
+# For standalone server:
+npm install @copypatch/server`;
+
+const initDb = `# Initialize SQLite database and set administrative passphrase
+npx copypatch init --db ./copypatch.sqlite`;
+---
+
+<DocsLayout
+  title="Installation"
+  description="How to install and set up CopyPatch in your React, Vite, or Next.js project."
+>
+  <h1>Installation & Setup</h1>
+
+  <p>
+    CopyPatch consists of lightweight modular packages published under the <code>@copypatch</code> npm namespace.
+  </p>
+
+  <h2>Prerequisites</h2>
+  <ul>
+    <li><strong>Node.js:</strong> <code>&gt;= 20.0.0</code></li>
+    <li><strong>React:</strong> <code>&gt;= 18.0.0</code> or <code>19.x</code></li>
+    <li><strong>Package Manager:</strong> <code>pnpm</code> (recommended), <code>npm</code>, or <code>yarn</code></li>
+  </ul>
+
+  <h2>Package Overview</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Package</th>
+        <th>Description</th>
+        <th>Target Environment</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>@copypatch/react</code></td>
+        <td>Client provider, <code>EditableText</code>, and hooks</td>
+        <td>React / Vite / Next.js Client</td>
+      </tr>
+      <tr>
+        <td><code>@copypatch/core</code></td>
+        <td>Shared types, constants, and validation</td>
+        <td>Universal</td>
+      </tr>
+      <tr>
+        <td><code>@copypatch/next</code></td>
+        <td>Next.js App Router RSC snapshot pre-rendering</td>
+        <td>Next.js Server & Client</td>
+      </tr>
+      <tr>
+        <td><code>@copypatch/server</code></td>
+        <td>Hono API server, SQLite persistence, and CLI</td>
+        <td>Node.js Server</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>1. Install Dependencies</h2>
+
+  <h3>Using pnpm</h3>
+  <CodeBlock code={pnpmInstall} lang="bash" title="Terminal" />
+
+  <h3>Using npm</h3>
+  <CodeBlock code={npmInstall} lang="bash" title="Terminal" />
+
+  <h2>2. Initialize SQLite Database</h2>
+  <p>
+    Use the built-in CLI to initialize your single-file SQLite database with automatic migrations and interactive passphrase configuration:
+  </p>
+
+  <CodeBlock code={initDb} lang="bash" title="Terminal" />
+
+  <p>
+    This command will prompt you for an editor passphrase (minimum 12 characters recommended), hash it using <strong>Argon2id</strong>, and create the SQLite database schema in <strong>WAL (Write-Ahead Logging)</strong> mode.
+  </p>
+
+  <h2>Next Step</h2>
+  <p>
+    Continue to the <a href="/docs/react">React & Vite Integration Guide</a> to wire CopyPatch into your user interface.
+  </p>
+</DocsLayout>

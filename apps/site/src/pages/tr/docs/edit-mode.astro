@@ -1,0 +1,41 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const keyboardShortcuts = `// Düzenleme Modu Klavye Kısayolları
+Cmd + S / Ctrl + S   -> Bekleyen düzenlemeleri sunucuya kaydet
+Escape               -> Aktif metin seçimini bırak / Modalı kapat
+Enter                -> Tek satırda: onayla ve çık; çok satırda: yeni satıra geç
+Tab / Shift + Tab    -> Sonraki / önceki düzenlenebilir metne odaklan`;
+---
+
+<DocsLayout
+  title="Düzenleme Modu & Mekanikler"
+  description="?copypatch=1 aktivasyonu, imleç kararlılığı, Argon2id kimlik doğrulaması ve araç çubuğu kontrolleri."
+>
+  <h1>Düzenleme Modu & Mekanikler</h1>
+
+  <p class="lead">
+    CopyPatch, yetkili bir ekip üyesi tarafından açıkça tetiklenene kadar düzenleme panelini ziyaretçilerden tamamen gizler ve ayırır.
+  </p>
+
+  <h2>Düzenleme Modunu Başlatma</h2>
+  <ol>
+    <li>Web sitenizin adresinin sonuna <code>?copypatch=1</code> ekleyin (örnek: <code>https://siteniz.com?copypatch=1</code>).</li>
+    <li><code>CopyPatchProvider</code> bu parametreyi algılar ve düzenleme modülünü dinamik olarak yükler (~12 kB gzip). Normal ziyaretçiler bu kodu asla indirmez.</li>
+    <li>Aktif bir oturum çerezi yoksa <strong>Parola Penceresi</strong> açılır.</li>
+    <li>Başarılı girişin ardından alt kısımda <strong>Araç Çubuğu</strong> belirir ve metinler doğrudan tıklanıp düzenlenebilir hale gelir.</li>
+  </ol>
+
+  <h2>Yerel İmleç ve Seçim Kararlılığı</h2>
+  <p>
+    React yeniden render edildiğinde imlecin başa sıçramasına yol açan basit çözümlerin aksine CopyPatch, kesintisiz bir yazma deneyimi sunar:
+  </p>
+  <ul>
+    <li>Bileşenler yerel <code>contenteditable="plaintext-only"</code> kullanır; yapıştırılan zengin HTML biçimlendirmeleri otomatik temizlenir.</li>
+    <li>Tuşa basıldığında tüm bileşen ağacı yeniden render edilmez, değişiklikler doğrudan bellek içi depoda güncellenir.</li>
+  </ul>
+
+  <h2>Klavye Kısayolları</h2>
+  <CodeBlock code={keyboardShortcuts} lang="text" title="Klavye Kısayolları" />
+</DocsLayout>

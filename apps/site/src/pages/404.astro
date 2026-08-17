@@ -1,0 +1,89 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Header from '../components/header/Header.astro';
+import Footer from '../components/footer/Footer.astro';
+
+const isTr = Astro.url.pathname.startsWith('/tr');
+const lang = isTr ? 'tr' : 'en';
+---
+
+<BaseLayout
+  lang={lang}
+  title={lang === 'tr' ? 'Sayfa Bulunamadı (404)' : 'Page Not Found (404)'}
+  description={lang === 'tr' ? 'Aradığınız sayfa bulunamadı.' : 'The requested page could not be found.'}
+>
+  <Header lang={lang} />
+
+  <main id="main-content" class="not-found-main">
+    <div class="container not-found-container">
+      <div class="code-badge">404</div>
+      <h1 class="not-found-title">{lang === 'tr' ? 'Sayfa bulunamadı' : 'Page not found'}</h1>
+      <p class="not-found-desc">
+        {
+          lang === 'tr'
+            ? 'Aradığınız sayfa mevcut değil veya taşınmış olabilir.'
+            : "The page you are looking for doesn't exist or may have moved."
+        }
+      </p>
+
+      <div class="not-found-actions">
+        <a href={lang === 'tr' ? '/tr' : '/'} class="btn btn-primary">
+          {lang === 'tr' ? 'Ana Sayfaya Dön' : 'Return to Homepage'}
+        </a>
+        <a href={lang === 'tr' ? '/tr/docs' : '/docs'} class="btn btn-secondary">
+          {lang === 'tr' ? 'Dokümantasyona Göz At' : 'Browse Documentation'}
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <Footer lang={lang} />
+</BaseLayout>
+
+<style>
+  .not-found-main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--cp-space-20) 0;
+  }
+
+  .not-found-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    max-width: 540px;
+  }
+
+  .code-badge {
+    font-family: var(--cp-font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--cp-text-muted);
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border);
+    padding: 0.35rem 1rem;
+    border-radius: var(--cp-radius-full);
+    margin-bottom: 1.5rem;
+  }
+
+  .not-found-title {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    margin-bottom: 0.75rem;
+  }
+
+  .not-found-desc {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+    margin-bottom: 2rem;
+  }
+
+  .not-found-actions {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+</style>

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <rect width="1200" height="630" fill="#e4e2dd"/>
+  <rect x="40" y="40" width="1120" height="550" rx="16" fill="#dddbd6" stroke="rgba(43,43,43,0.12)" stroke-width="1.5"/>
+
+  <!-- Logo badge -->
+  <g transform="translate(100, 100)">
+    <rect width="64" height="64" rx="14" fill="#e4e2dd" stroke="rgba(43,43,43,0.18)" stroke-width="1.5"/>
+    <path d="M20 18h-4v28h4" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="32" y1="20" x2="32" y2="44" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round"/>
+    <path d="M44 18h4v28h-4" stroke="#2b2b2b" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="84" y="44" fill="#2b2b2b" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="-1">CopyPatch</text>
+  </g>
+
+  <!-- Main Headline -->
+  <text x="100" y="260" fill="#2b2b2b" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="800" letter-spacing="-2">
+    Let clients edit the copy.
+  </text>
+  <text x="100" y="325" fill="#5a5a57" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-2">
+    Not the website.
+  </text>
+
+  <!-- Subtitle -->
+  <text x="100" y="400" fill="#7d7b77" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="24" font-weight="400">
+    Self-hosted, open-source inline copy editing system for React.
+  </text>
+  <text x="100" y="435" fill="#a8a6a1" font-family="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" font-size="20" font-weight="400">
+    Zero layout disruption · SQLite persistence · Argon2id security · &lt; 1 kB visitor runtime
+  </text>
+
+  <!-- Bottom Badges -->
+  <g transform="translate(100, 500)">
+    <rect width="170" height="40" rx="8" fill="#d5d3ce" stroke="rgba(43,43,43,0.15)" stroke-width="1"/>
+    <text x="85" y="25" fill="#2b2b2b" font-family="monospace" font-size="15" font-weight="600" text-anchor="middle">MIT Open Source</text>
+  </g>
+  <g transform="translate(290, 500)">
+    <rect width="280" height="40" rx="8" fill="#d5d3ce" stroke="rgba(43,43,43,0.15)" stroke-width="1"/>
+    <text x="140" y="25" fill="#5a5a57" font-family="monospace" font-size="15" font-weight="600" text-anchor="middle">pnpm add @copypatch/react</text>
+  </g>
+</svg>

@@ -1,0 +1,129 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const originFixCode = `# Ön yüz ve arka uç farklı portlardaysa virgülle ayırarak izin verin
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://alanadiniz.com"`;
+
+const passwordResetCode = `# Aktif tüm oturumları geçersiz kılarak yeni parola belirleyin
+npx copypatch password --db ./copypatch.sqlite`;
+
+const viteProxyCode = `// vite.config.ts
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig({
+  plugins: [react()],
+  server: {
+    port: 5173,
+    proxy: {
+      '/__copypatch/api/v1': {
+        target: 'http://localhost:4040',
+        changeOrigin: true,
+      },
+    },
+  },
+});`;
+
+const nextHydrationFixCode = `// app/page.tsx (Sunucu Bileşeni)
+import { NextCopyPatchProvider } from '@copypatch/next';
+import { fetchServerSnapshot } from '@copypatch/next/server';
+
+export default async function Page() {
+  const snapshot = await fetchServerSnapshot('tr');
+  return (
+    <NextCopyPatchProvider locale="tr" initialSnapshot={snapshot}>
+      {/* Sayfa İçeriği */}
+    </NextCopyPatchProvider>
+  );
+}`;
+---
+
+<DocsLayout
+  title="Sorun Giderme & Tanılama"
+  description="CopyPatch hata kodları, CORS yapılandırması, CSRF hataları ve SSR hidrasyon çözümleri."
+>
+  <h1>Sorun Giderme & Tanılama</h1>
+
+  <p class="lead">
+    Bu kılavuz, geliştirme ve canlı ortamlarda karşılaşılabilecek olası durumları ve çözüm adımlarını içerir.
+  </p>
+
+  <h2>Tanılama Matrisi</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Hata Kodu / Belirti</th>
+        <th>Olası Neden</th>
+        <th>Çözüm</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ORIGIN_REJECTED (403)</code></td>
+        <td>İstemci Origin başlığı sunucunun <code>--origin</code> listesiyle eşleşmiyor.</td>
+        <td>İstemci adresini sunucu <code>--origin</code> parametresine ekleyin.</td>
+      </tr>
+      <tr>
+        <td><code>CSRF_FAILED (403)</code></td>
+        <td><code>x-copypatch-csrf</code> başlığı eksik veya oturum çerezi engellendi.</td>
+        <td>Oturumun aktif olduğunu ve tarayıcı eklentilerinin çerezleri engellemediğini doğrulayın.</td>
+      </tr>
+      <tr>
+        <td><code>REVISION_CONFLICT (409)</code></td>
+        <td>Başka bir kullanıcı siz düzenleme yaparken değişiklik kaydetti veya yayınladı.</td>
+        <td>Değişiklikleri kaybetmemek için güncel anlık görüntüyü yenileyip tekrar kaydedin.</td>
+      </tr>
+      <tr>
+        <td><code>SQLITE_BUSY (500)</code></td>
+        <td>Veritabanı kilitlendi veya dizin yazma izinleri yetersiz.</td>
+        <td>Veritabanının WAL modunda olduğunu ve klasörün yazma yetkilerini kontrol edin.</td>
+      </tr>
+      <tr>
+        <td><strong>Araç çubuğu açılmıyor</strong></td>
+        <td>URL'de <code>?copypatch=1</code> eksik veya Provider ağaca bağlanmadı.</td>
+        <td>Bileşen ağacının <code>CopyPatchProvider</code> ile sarıldığını doğrulayın.</td>
+      </tr>
+      <tr>
+        <td><strong>Next.js Hidrasyon Uyarısı</strong></td>
+        <td>Sunucu varsayılan metni, istemci ise güncellenmiş metni oluşturdu.</td>
+        <td>Sunucu bileşeninde <code>fetchServerSnapshot()</code> fonksiyonunu kullanın.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>1. Düzenleme Modu (?copypatch=1) Açılmıyor</h2>
+  <p><strong>Belirtiler:</strong> Sayfaya <code>?copypatch=1</code> ile girildiğinde araç çubuğu veya parola penceresi görünmüyor.</p>
+  <p><strong>Kontrol Listesi:</strong></p>
+  <ul>
+    <li>Kök bileşeninizin <code>&lt;CopyPatchProvider&gt;</code> ile sarmalandığından emin olun.</li>
+    <li>URL arama parametresinin tam olarak <code>?copypatch=1</code> yazıldığını kontrol edin.</li>
+    <li>Tarayıcı konsolunda betik veya ağ hatası olup olmadığını inceleyin.</li>
+  </ul>
+
+  <h2>2. CORS veya Origin Hatası (403 ORIGIN_REJECTED)</h2>
+  <p><strong>Belirtiler:</strong> Değişiklikleri kaydederken <code>403 Forbidden: ORIGIN_REJECTED</code> hatası alınıyor.</p>
+  <p><strong>Neden:</strong> CopyPatch, yetkisiz alan adlarından gelen yazma isteklerini engeller.</p>
+  <p><strong>Çözüm:</strong> Ön yüz alan adlarınızı sunucu CLI parametresine ekleyin:</p>
+
+  <CodeBlock code={originFixCode} lang="bash" title="Terminal" />
+
+  <p>
+    Vite kullanıyorsanız, proxy ayarı ile istekleri aynı kökene yönlendirebilirsiniz:
+  </p>
+
+  <CodeBlock code={viteProxyCode} lang="ts" title="vite.config.ts" />
+
+  <h2>3. Parola Sıfırlama ve Oturumları Kapatma</h2>
+  <p><strong>Belirtiler:</strong> Parolayı unuttunuz veya aktif tüm düzenleyici oturumlarını acilen kapatmak istiyorsunuz.</p>
+  <p><strong>Çözüm:</strong> Parola sıfırlama komutunu çalıştırın:</p>
+
+  <CodeBlock code={passwordResetCode} lang="bash" title="Terminal" />
+
+  <h2>4. Next.js SSR Hidrasyon Uyumsuzluğu</h2>
+  <p><strong>Belirtiler:</strong> Tarayıcı konsolunda <code>Warning: Text content did not match</code> uyarısı çıkıyor.</p>
+  <p><strong>Neden:</strong> Sunucu varsayılan JSX metnini, tarayıcı ise veritabanındaki güncel metni yükledi.</p>
+  <p><strong>Çözüm:</strong> Sunucu tarafında anlık görüntüyü çekip <code>initialSnapshot</code> olarak aktarın:</p>
+
+  <CodeBlock code={nextHydrationFixCode} lang="tsx" title="app/page.tsx" />
+</DocsLayout>

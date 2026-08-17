@@ -1,0 +1,165 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section class="comparison-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? 'Neden geleneksel bir CMS yerine CopyPatch?' : 'Why not just use a traditional CMS?'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? "Headless CMS'ler ve sayfa oluşturucular geniş içerik modelleme problemlerini çözer. CopyPatch ise odaklanmış tek bir sorunu çözer: müşterilerin kodu ve tasarımı bozmadan metinleri düzeltmesi."
+            : 'Headless CMSs and page builders solve large content modeling problems. CopyPatch solves a focused one: letting clients fix copy without breaking the app.'
+        }
+      </p>
+    </div>
+
+    <div class="comparison-table-wrapper" tabindex="0" role="region" aria-label={lang === 'tr' ? 'CMS Karşılaştırma Tablosu' : 'CMS Comparison Table'}>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th class="col-feature">{lang === 'tr' ? 'Özellik' : 'Feature'}</th>
+            <th class="col-copypatch">CopyPatch</th>
+            <th class="col-cms">{lang === 'tr' ? 'Geleneksel Headless CMS' : 'Traditional Headless CMS'}</th>
+            <th class="col-builder">{lang === 'tr' ? 'Görsel Sayfa Oluşturucu' : 'Visual Page Builder'}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'Düzenleme Deneyimi' : 'Editing Experience'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? 'Canlı sayfada doğrudan' : 'Inline on real website'}</strong> (?copypatch=1)
+            </td>
+            <td>{lang === 'tr' ? 'Ayrı yönetim paneli & formlar' : 'Separate administrative dashboard'}</td>
+            <td>{lang === 'tr' ? 'Karmaşık sürükle-bırak tuvali' : 'Complex drag-and-drop canvas'}</td>
+          </tr>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'Kod & Tasarım Sahipliği' : 'Code & Layout Ownership'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? "%100 geliştiricinin React kodu & CSS'i" : '100% developer React code & CSS'}</strong>
+            </td>
+            <td>{lang === 'tr' ? 'Katı şemalarla API veri bağlama' : 'API data binding with rigid schemas'}</td>
+            <td>{lang === 'tr' ? 'Kendi ürettiği hantal HTML çıktısı' : 'Proprietary exported markup'}</td>
+          </tr>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'Ziyaretçi Çalışma Zamanı Yükü' : 'Visitor Runtime Cost'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? '< 1 kB gzip (sıfır ek yük)' : '< 1 kB gzip (zero overhead)'}</strong>
+            </td>
+            <td>{lang === 'tr' ? "SDK'ya bağlı olarak (10-50 kB)" : 'Varies by SDK (10-50 kB)'}</td>
+            <td>{lang === 'tr' ? '150-500+ kB şişkin scriptler' : '150-500+ kB bloated scripts'}</td>
+          </tr>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'İçerik Güvenliği' : 'Content Security'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? 'Kesin düz metin değişmezi (XSS imkansız)' : 'Strict plain-text invariant (XSS immune)'}</strong>
+            </td>
+            <td>{lang === 'tr' ? 'Depolanan HTML / Markdown riskleri' : 'Stored HTML / Markdown risk'}</td>
+            <td>{lang === 'tr' ? 'Keyfi script enjeksiyon riskleri' : 'Arbitrary script injection risks'}</td>
+          </tr>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'Veri Bağımsızlığı' : 'Data Sovereignty'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? 'Kendi sunucunuzda tek dosya SQLite' : 'Self-hosted SQLite file on your server'}</strong>
+            </td>
+            <td>{lang === 'tr' ? 'Üçüncü taraf SaaS bağımlılığı & API kotaları' : 'Third-party SaaS lock-in / API quotas'}</td>
+            <td>{lang === 'tr' ? 'Sağlayıcıya kilitli platform' : 'Vendor-hosted platform'}</td>
+          </tr>
+          <tr>
+            <td class="feature-title">{lang === 'tr' ? 'Fiyatlandırma' : 'Pricing'}</td>
+            <td class="copypatch-val">
+              <strong>{lang === 'tr' ? '%100 Ücretsiz & MIT Açık Kaynak' : '100% Free & MIT Open-Source'}</strong>
+            </td>
+            <td>{lang === 'tr' ? 'Kullanıcı / koltuk başına aylık ücret' : 'Monthly tier per user / seat'}</td>
+            <td>{lang === 'tr' ? 'Alan adı başına aylık abonelik' : 'Monthly subscription per domain'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<style>
+  .comparison-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-surface);
+    border-top: 1px solid var(--cp-border);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .comparison-table-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    overflow-x: auto;
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    background-color: var(--cp-bg);
+  }
+
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    text-align: left;
+  }
+
+  .comparison-table th,
+  .comparison-table td {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--cp-border-subtle);
+  }
+
+  .comparison-table th {
+    background-color: var(--cp-surface-elevated);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--cp-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .comparison-table th.col-copypatch {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+    border-left: 1px solid var(--cp-border);
+    border-right: 1px solid var(--cp-border);
+    font-weight: 700;
+  }
+
+  .comparison-table td.copypatch-val {
+    background-color: var(--cp-surface);
+    border-left: 1px solid var(--cp-border);
+    border-right: 1px solid var(--cp-border);
+    color: var(--cp-text);
+  }
+
+  .feature-title {
+    font-weight: 600;
+    color: var(--cp-text);
+  }
+
+  .comparison-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+</style>

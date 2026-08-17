@@ -1,0 +1,115 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const cliCommands = `# Veritabanı şemasını başlat ve yönetici parolası belirle
+npx copypatch init --db ./copypatch.sqlite
+
+# Yüksek performanslı sunucuyu başlat
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://alanadiniz.com" --mode direct
+
+# Parolayı değiştir ve tüm aktif oturumları anında sonlandır
+npx copypatch password --db ./copypatch.sqlite
+
+# Bekleyen veritabanı şema güncellemelerini uygula
+npx copypatch migrate --db ./copypatch.sqlite`;
+
+const embeddedServer = `import { createCopyPatchApp } from '@copypatch/server';
+import { serve } from '@hono/node-server';
+
+const app = createCopyPatchApp({
+  dbPath: './copypatch.sqlite',
+  publicOrigins: ['http://localhost:5173', 'https://alanadiniz.com'],
+  sessionSecret: process.env.COPYPATCH_SECRET || 'en-az-32-karakterli-guvenli-gizli-anahtar',
+  publishingMode: 'direct',
+});
+
+serve({
+  fetch: app.fetch,
+  port: 4040,
+});
+
+console.log('CopyPatch API http://localhost:4040/__copypatch/api/v1 adresinde çalışıyor');`;
+---
+
+<DocsLayout
+  title="Sunucu & CLI Referansı"
+  description="CopyPatch arka uç sunucusu, CLI parametreleri, SQLite şeması ve gömülü Hono rotaları."
+>
+  <h1>Sunucu & CLI Referansı</h1>
+
+  <p class="lead">
+    <code>@copypatch/server</code> paketi Hono, SQLite (<code>better-sqlite3</code>) ve Drizzle ORM ile geliştirilmiş hafif ve kurumsal standartta bir arka uç sunar. Ziyaretçi isteklerini bellek içi önbellekle 0.2ms altında yanıtlar.
+  </p>
+
+  <h2>CLI Komutları</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Komut</th>
+        <th>İşlev</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>copypatch init</code></td>
+        <td>SQLite şemasını başlatır, geçişleri çalıştırır ve parola belirlemenizi ister.</td>
+      </tr>
+      <tr>
+        <td><code>copypatch serve</code></td>
+        <td>HTTP API sunucusunu belirtilen portta çalıştırır.</td>
+      </tr>
+      <tr>
+        <td><code>copypatch password</code></td>
+        <td>Yönetici parolasını yeniler ve aktif oturumları anında sonlandırır.</td>
+      </tr>
+      <tr>
+        <td><code>copypatch migrate</code></td>
+        <td>Bekleyen şema güncellemelerini kesintisiz uygular.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>CLI Kullanım Örnekleri</h2>
+  <CodeBlock code={cliCommands} lang="bash" title="Terminal" />
+
+  <h2>CLI Parametreleri</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Parametre</th>
+        <th>Açıklama</th>
+        <th>Varsayılan</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>--port, -p</code></td>
+        <td>Sunucunun dinleyeceği TCP portu.</td>
+        <td><code>4040</code></td>
+      </tr>
+      <tr>
+        <td><code>--db, -d</code></td>
+        <td>SQLite veritabanı dosyasının disk yolu.</td>
+        <td><code>"./copypatch.sqlite"</code></td>
+      </tr>
+      <tr>
+        <td><code>--origin, -o</code></td>
+        <td>İzin verilen ön yüz alan adı adresleri (virgülle ayrılmış).</td>
+        <td><code>"http://localhost:5173"</code></td>
+      </tr>
+      <tr>
+        <td><code>--mode, -m</code></td>
+        <td>Yayınlama modu: <code>direct</code> (doğrudan canlı) veya <code>draft</code> (taslak).</td>
+        <td><code>"direct"</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Mevcut Node.js Sunucularına Gömme</h2>
+  <p>
+    Ayrı bir işlem olarak çalıştırmak yerine mevcut Express veya Hono uygulamanıza gömmek isterseniz:
+  </p>
+
+  <CodeBlock code={embeddedServer} lang="typescript" title="server.ts" />
+</DocsLayout>

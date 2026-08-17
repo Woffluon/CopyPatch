@@ -1,0 +1,297 @@
+---
+import CodeBlock from '../ui/CodeBlock.astro';
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+
+const viteCode = lang === 'tr' ? `import React from 'react';
+import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function LandingPage() {
+  return (
+    <CopyPatchProvider locale="tr" apiBase="/__copypatch/api/v1">
+      <header>
+        <EditableText contentKey="nav.brand" as="span">
+          Acme Stüdyo
+        </EditableText>
+      </header>
+
+      <main>
+        <EditableText contentKey="hero.title" as="h1">
+          Üretken ekipler için modern geliştirme araçları.
+        </EditableText>
+        
+        <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true}>
+          Modern React projeleri için hızlı, erişilebilir ve kendi sunucunuzda çalışan sayfa içi metin düzenleme.
+        </EditableText>
+      </main>
+    </CopyPatchProvider>
+  );
+}` : `import React from 'react';
+import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function LandingPage() {
+  return (
+    <CopyPatchProvider locale="en" apiBase="/__copypatch/api/v1">
+      <header>
+        <EditableText contentKey="nav.brand" as="span">
+          Acme Studio
+        </EditableText>
+      </header>
+
+      <main>
+        <EditableText contentKey="hero.title" as="h1">
+          Crafting tools that empower creative developers.
+        </EditableText>
+        
+        <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true}>
+          Fast, accessible, and self-hosted inline copy editing for modern React teams.
+        </EditableText>
+      </main>
+    </CopyPatchProvider>
+  );
+}`;
+
+const nextCode = lang === 'tr' ? `// app/page.tsx (Next.js App Router Sunucu Bileşeni)
+import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+import { fetchServerSnapshot } from '@copypatch/next/server';
+
+export default async function Page() {
+  const locale = 'tr';
+  // 0ms hidrasyon uyumu için anlık görüntüyü SSR aşamasında çekin
+  const snapshot = await fetchServerSnapshot(locale, {
+    apiBaseUrl: 'http://localhost:4040',
+  });
+
+  return (
+    <NextCopyPatchProvider
+      locale={locale}
+      apiBase="/__copypatch/api/v1"
+      initialSnapshot={snapshot}
+    >
+      <EditableText contentKey="hero.title" as="h1">
+        Next.js ile Sunucuda Önceden Render Edilen Metin
+      </EditableText>
+    </NextCopyPatchProvider>
+  );
+}` : `// app/page.tsx (Next.js App Router Server Component)
+import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+import { fetchServerSnapshot } from '@copypatch/next/server';
+
+export default async function Page() {
+  const locale = 'en';
+  // Fetch snapshot at build/SSR time for 0ms hydration warning
+  const snapshot = await fetchServerSnapshot(locale, {
+    apiBaseUrl: 'http://localhost:4040',
+  });
+
+  return (
+    <NextCopyPatchProvider
+      locale={locale}
+      apiBase="/__copypatch/api/v1"
+      initialSnapshot={snapshot}
+    >
+      <EditableText contentKey="hero.title" as="h1">
+        Next.js Pre-rendered Copy
+      </EditableText>
+    </NextCopyPatchProvider>
+  );
+}`;
+
+const serverCode = lang === 'tr' ? `# 1. SQLite veritabanını başlatın ve yönetici parolasını belirleyin
+npx copypatch init --db ./copypatch.sqlite
+
+# 2. Bağımsız sunucuyu ayağa kaldırın
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173` : `# 1. Initialize SQLite database & set administrative passphrase
+npx copypatch init --db ./copypatch.sqlite
+
+# 2. Start standalone server
+npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173`;
+---
+
+<section class="integration-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? 'Temiz koda değer veren geliştiriciler için tasarlandı' : 'Designed for developers who value clean code'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? 'Mevcut React ve Next.js projelerinize iki dakikadan kısa sürede sorunsuzca entegre olur.'
+            : 'Integrates seamlessly into existing React and Next.js applications in under two minutes.'
+        }
+      </p>
+    </div>
+
+    <div class="code-showcase-card">
+      <div class="tab-header" role="tablist" aria-label={lang === 'tr' ? 'Entegrasyon Kodu Sekmeleri' : 'Integration Code Tabs'}>
+        <button
+          type="button"
+          id="tab-btn-vite"
+          class="tab-btn active"
+          data-tab="vite"
+          role="tab"
+          aria-selected="true"
+          aria-controls="tab-vite"
+          tabindex="0"
+        >
+          React & Vite
+        </button>
+        <button
+          type="button"
+          id="tab-btn-next"
+          class="tab-btn"
+          data-tab="next"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-next"
+          tabindex="-1"
+        >
+          Next.js App Router (SSR)
+        </button>
+        <button
+          type="button"
+          id="tab-btn-server"
+          class="tab-btn"
+          data-tab="server"
+          role="tab"
+          aria-selected="false"
+          aria-controls="tab-server"
+          tabindex="-1"
+        >
+          {lang === 'tr' ? 'Sunucu & CLI Kurulumu' : 'Server & CLI Setup'}
+        </button>
+      </div>
+
+      <div class="tab-content" id="tab-vite" role="tabpanel" aria-labelledby="tab-btn-vite">
+        <CodeBlock code={viteCode} lang="tsx" title="src/App.tsx" />
+      </div>
+
+      <div class="tab-content" id="tab-next" role="tabpanel" aria-labelledby="tab-btn-next" style="display: none;">
+        <CodeBlock code={nextCode} lang="tsx" title="app/page.tsx" />
+      </div>
+
+      <div class="tab-content" id="tab-server" role="tabpanel" aria-labelledby="tab-btn-server" style="display: none;">
+        <CodeBlock code={serverCode} lang="bash" title="Terminal" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = Array.from(document.querySelectorAll('.tab-btn')) as HTMLButtonElement[];
+  const contents = document.querySelectorAll('.tab-content');
+
+  function activateTab(index: number) {
+    tabs.forEach((t, i) => {
+      const isSelected = i === index;
+      t.classList.toggle('active', isSelected);
+      t.setAttribute('aria-selected', String(isSelected));
+      t.setAttribute('tabindex', isSelected ? '0' : '-1');
+    });
+
+    const activeTab = tabs[index];
+    if (activeTab) {
+      activeTab.focus();
+      const targetId = `tab-${activeTab.getAttribute('data-tab')}`;
+      contents.forEach((content) => {
+        if (content.id === targetId) {
+          (content as HTMLElement).style.display = 'block';
+        } else {
+          (content as HTMLElement).style.display = 'none';
+        }
+      });
+    }
+  }
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener('click', () => {
+      activateTab(index);
+    });
+
+    tab.addEventListener('keydown', (e) => {
+      let targetIndex = -1;
+      if (e.key === 'ArrowRight') {
+        targetIndex = (index + 1) % tabs.length;
+      } else if (e.key === 'ArrowLeft') {
+        targetIndex = (index - 1 + tabs.length) % tabs.length;
+      } else if (e.key === 'Home') {
+        targetIndex = 0;
+      } else if (e.key === 'End') {
+        targetIndex = tabs.length - 1;
+      }
+
+      if (targetIndex !== -1) {
+        e.preventDefault();
+        activateTab(targetIndex);
+      }
+    });
+  });
+</script>
+
+<style>
+  .integration-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-bg);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .code-showcase-card {
+    max-width: 860px;
+    margin: 0 auto;
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-6);
+  }
+
+  .tab-header {
+    display: flex;
+    gap: 0.5rem;
+    border-bottom: 1px solid var(--cp-border-subtle);
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    overflow-x: auto;
+  }
+
+  .tab-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--cp-text-muted);
+    padding: 0.4rem 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: var(--cp-radius-sm);
+    cursor: pointer;
+    transition: all var(--cp-transition-fast);
+    white-space: nowrap;
+  }
+
+  .tab-btn:hover {
+    color: var(--cp-text);
+  }
+
+  .tab-btn.active {
+    background-color: var(--cp-surface-elevated);
+    border-color: var(--cp-border);
+    color: var(--cp-accent-hover);
+    font-weight: 600;
+  }
+</style>

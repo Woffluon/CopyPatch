@@ -1,0 +1,73 @@
+---
+import DocsLayout from '../../layouts/DocsLayout.astro';
+import CodeBlock from '../../components/ui/CodeBlock.astro';
+
+const quickExample = `import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function App() {
+  return (
+    <CopyPatchProvider locale="en" apiBase="/__copypatch/api/v1">
+      <EditableText contentKey="hero.title" as="h1">
+        Build something people actually use.
+      </EditableText>
+    </CopyPatchProvider>
+  );
+}`;
+---
+
+<DocsLayout
+  title="Introduction"
+  description="Overview and core principles of CopyPatch inline copy editing system."
+>
+  <h1>Introduction to CopyPatch</h1>
+
+  <p class="lead">
+    <strong>CopyPatch</strong> is a lightweight, self-hosted, open-source inline copy editing system designed specifically for React applications.
+  </p>
+
+  <p>
+    The core philosophy behind CopyPatch is simple: <strong>Let clients edit the copy, not the website.</strong>
+  </p>
+
+  <h2>The Core Problem</h2>
+  <p>
+    When client websites go live, clients inevitably request minor copy tweaks: typos, adjusted taglines, updated pricing sentences, or new announcements. Traditionally, teams face two imperfect extremes:
+  </p>
+
+  <ul>
+    <li>
+      <strong>Developer bottleneck:</strong> Every sentence change requires a developer commit, pull request, build, and production deployment.
+    </li>
+    <li>
+      <strong>Overpowered CMS:</strong> Installing a heavy headless CMS or visual page builder introduces massive complexity, complex content modeling schemas, disconnected editor dashboards, and risks client breakage of layouts and styles.
+    </li>
+  </ul>
+
+  <h2>The CopyPatch Approach</h2>
+  <p>
+    CopyPatch provides a surgical alternative. Developers explicitly mark approved text directly in their React components using <code>&lt;EditableText&gt;</code>. Authorized content editors open the live site with <code>?copypatch=1</code>, click directly into the text on screen, type their adjustments, and hit Save.
+  </p>
+
+  <CodeBlock code={quickExample} lang="tsx" title="Quick Preview" />
+
+  <h2>Key Invariants</h2>
+  <ul>
+    <li>
+      <strong>Strict Plain Text:</strong> CopyPatch stores only plain text strings. HTML, markdown, script tags, and JSX are completely rejected on both client and server, guaranteeing 100% XSS immunity.
+    </li>
+    <li>
+      <strong>Zero Layout Shift:</strong> Styles, typography, and container structures remain 100% owned by your React and CSS codebase.
+    </li>
+    <li>
+      <strong>Sub-millisecond Visitor Reads:</strong> Public visitors download &lt; 1 kB gzip of runtime with zero per-element network traffic.
+    </li>
+    <li>
+      <strong>Data Sovereignty:</strong> Runs entirely on your own server with a single-file SQLite database in WAL mode.
+    </li>
+  </ul>
+
+  <h2>Next Steps</h2>
+  <p>
+    Ready to get started? Head over to the <a href="/docs/installation">Installation Guide</a> to set up CopyPatch in your project.
+  </p>
+</DocsLayout>

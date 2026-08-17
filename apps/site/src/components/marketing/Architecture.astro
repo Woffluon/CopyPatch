@@ -1,0 +1,300 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section id="architecture" class="arch-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>{lang === 'tr' ? 'Milisaniyenin altında okuma performansı' : 'Engineered for sub-millisecond efficiency'}</h2>
+      <p class="section-subhead">
+        {
+          lang === 'tr'
+            ? 'Sürekli yoklama (polling) yok, WebSocket yok, eleman başına ayrı ağ isteği yok. Önbelleğe alınan tek bir dil anlık görüntüsü tüm sayfayı besler.'
+            : 'Zero polling, zero WebSockets, and zero per-element network requests. One cached locale snapshot powers the entire page.'
+        }
+      </p>
+    </div>
+
+    <div class="arch-grid">
+      <!-- Visual Flow Diagram -->
+      <div class="arch-diagram-card">
+        <h3 class="card-heading">{lang === 'tr' ? 'Okuma & Önbellek Hattı' : 'Read & Cache Pipeline'}</h3>
+        <div class="ascii-diagram">
+          <div class="flow-step">
+            <span class="flow-badge">1</span>
+            <div class="flow-content">
+              <strong>{lang === 'tr' ? 'Ziyaretçi Sayfa İsteği' : 'Public Visitor Request'}</strong>
+              <span class="flow-sub">
+                {lang === 'tr' ? 'Tarayıcı standart URL ile sayfayı açar' : 'Browser opens website with standard URL'}
+              </span>
+            </div>
+          </div>
+          <div class="flow-line">│</div>
+          <div class="flow-step">
+            <span class="flow-badge">2</span>
+            <div class="flow-content">
+              <strong>{lang === 'tr' ? 'Tekil Anlık Görüntü İsteği' : 'Single Snapshot Request'}</strong>
+              <span class="flow-sub">
+                <code>{lang === 'tr' ? 'GET /snapshot/tr' : 'GET /snapshot/en'}</code> {lang === 'tr' ? '(ETag / 304 Not Modified ile)' : 'with ETag / 304 Not Modified'}
+              </span>
+            </div>
+          </div>
+          <div class="flow-line">│</div>
+          <div class="flow-step highlight">
+            <span class="flow-badge">3</span>
+            <div class="flow-content">
+              <strong>{lang === 'tr' ? 'Bellek İçi Anlık Görüntü Haritası' : 'In-Memory Snapshot Map'}</strong>
+              <div class="snapshot-keys">
+                {
+                  lang === 'tr' ? (
+                    <>
+                      <span><code>hero.title</code> → "Metinleri müşterileriniz..."</span>
+                      <span><code>hero.subtitle</code> → "React projelerinizde..."</span>
+                      <span><code>footer.copyright</code> → "© 2026 CopyPatch"</span>
+                    </>
+                  ) : (
+                    <>
+                      <span><code>hero.title</code> → "Build something..."</span>
+                      <span><code>hero.subtitle</code> → "Let clients edit..."</span>
+                      <span><code>footer.copyright</code> → "© 2026 CopyPatch"</span>
+                    </>
+                  )
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Performance Invariants -->
+      <div class="arch-features">
+        <div class="arch-feat-item">
+          <div class="feat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+          <div>
+            <h4 class="feat-title">{lang === 'tr' ? 'Eleman Başına Sıfır Ek Yük' : 'Zero Per-Element Overhead'}</h4>
+            <p class="feat-desc">
+              {
+                lang === 'tr' ? (
+                  <>Her bir <code>&lt;EditableText&gt;</code>, ayrı API sorguları çalıştırmadan paylaşılan bellek içi React deposundan anında okur.</>
+                ) : (
+                  <>Every <code>&lt;EditableText&gt;</code> reads instantly from a shared in-memory React store without firing separate API queries.</>
+                )
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="arch-feat-item">
+          <div class="feat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+          </div>
+          <div>
+            <h4 class="feat-title">{lang === 'tr' ? 'Atomik Sunucu Önbelleği' : 'Atomic Server Cache'}</h4>
+            <p class="feat-desc">
+              {
+                lang === 'tr'
+                  ? 'Bağımsız Hono sunucusu, yazma işlemlerinde atomik olarak yenilenen sabit bir bellek önbelleği tutar; okuma isteklerine < 1 ms hızında yanıt verir.'
+                  : 'The standalone Hono server maintains an immutable memory cache rebuilt atomically upon writes for < 1 ms read responses.'
+              }
+            </p>
+          </div>
+        </div>
+
+        <div class="arch-feat-item">
+          <div class="feat-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h4 class="feat-title">{lang === 'tr' ? 'Tembel Düzenleyici İzolasyonu' : 'Lazy Editor Isolation'}</h4>
+            <p class="feat-desc">
+              {
+                lang === 'tr' ? (
+                  <>Normal ziyaretçiler &lt; 1 kB çalışma zamanı yükler. Düzenleme araç çubukları, yetkilendirme modalları ve form kancaları yalnızca <code>?copypatch=1</code> istendiğinde yüklenir.</>
+                ) : (
+                  <>Public visitors load &lt; 1 kB of runtime. Editing toolbars, auth modals, and form hooks load exclusively when <code>?copypatch=1</code> is requested.</>
+                )
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .arch-section {
+    padding: var(--cp-space-20) 0;
+    background-color: var(--cp-bg);
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 640px;
+    margin: 0 auto var(--cp-space-12);
+  }
+
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subhead {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .arch-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: var(--cp-space-8);
+    max-width: 1000px;
+    margin: 0 auto;
+    align-items: center;
+  }
+
+  .arch-diagram-card {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-lg);
+    padding: var(--cp-space-6);
+  }
+
+  .card-heading {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--cp-text);
+    margin-bottom: 1.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .ascii-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.25rem;
+  }
+
+  .flow-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border-subtle);
+    padding: 0.75rem 1rem;
+    border-radius: var(--cp-radius-md);
+  }
+
+  .flow-step.highlight {
+    border-color: var(--cp-accent);
+    background-color: var(--cp-accent-subtle);
+  }
+
+  .flow-badge {
+    width: 20px;
+    height: 20px;
+    background-color: var(--cp-text);
+    color: var(--cp-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .flow-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .flow-content strong {
+    font-size: 0.875rem;
+    color: var(--cp-text);
+  }
+
+  .flow-sub {
+    font-size: 0.75rem;
+    color: var(--cp-text-muted);
+  }
+
+  .flow-line {
+    text-align: center;
+    color: var(--cp-border-hover);
+    font-size: 0.875rem;
+    margin: -2px 0;
+  }
+
+  .snapshot-keys {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    color: var(--cp-text-dim);
+  }
+
+  .arch-features {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .arch-feat-item {
+    display: flex;
+    gap: 1rem;
+  }
+
+  .feat-icon {
+    width: 36px;
+    height: 36px;
+    background-color: var(--cp-surface-elevated);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--cp-text-muted);
+    flex-shrink: 0;
+  }
+
+  .feat-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cp-text);
+    margin-bottom: 0.25rem;
+  }
+
+  .feat-desc {
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: var(--cp-text-muted);
+  }
+
+  @media (max-width: 860px) {
+    .arch-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

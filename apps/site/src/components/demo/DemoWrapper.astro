@@ -1,0 +1,114 @@
+---
+import InteractiveDemo from './InteractiveDemo';
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang = 'en' } = Astro.props;
+---
+
+<section id="demo" class="demo-section">
+  <div class="container">
+    <div class="demo-header">
+      <h2 class="demo-title">{lang === 'tr' ? "CopyPatch'i doğrudan tarayıcınızda deneyin" : 'Try CopyPatch directly in your browser'}</h2>
+      <p class="demo-subtitle">
+        {
+          lang === 'tr'
+            ? 'Aşağıdaki çerçeveli metinlere tıklayarak doğrudan sayfa içinde düzenleme yapın. Diller arasında geçiş yapın veya ziyaretçi modunu açıp kapatarak gerçek deneyimi test edin.'
+            : 'Click any outlined text below to place your caret and edit copy inline. Switch languages or toggle visitor mode to test the exact workflow.'
+        }
+      </p>
+    </div>
+
+    <div class="demo-wrapper">
+      <InteractiveDemo client:visible defaultLocale={lang} siteLang={lang} />
+    </div>
+
+    <div class="demo-hints">
+      <div class="hint-item">
+        <span class="hint-dot"></span>
+        <span>
+          {
+            lang === 'tr'
+              ? 'Sayfa yenileme yok: düzenlemeler yalnızca düz metin dizgeleriyle sınırlıdır'
+              : 'Zero page refresh: edits stay scoped to plain strings'
+          }
+        </span>
+      </div>
+      <div class="hint-item">
+        <span class="hint-dot"></span>
+        <span>
+          {
+            lang === 'tr'
+              ? 'Yerel contentEditable ile tam imleç ve seçim kararlılığı'
+              : 'Full caret & selection persistence via native contentEditable'
+          }
+        </span>
+      </div>
+      <div class="hint-item">
+        <span class="hint-dot"></span>
+        <span>
+          {
+            lang === 'tr'
+              ? 'Bağımsız dil anlık görüntüleri (TR, EN, DE)'
+              : 'Independent locale snapshots (EN, TR, DE)'
+          }
+        </span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .demo-section {
+    padding: var(--cp-space-20) 0;
+    border-top: 1px solid var(--cp-border-subtle);
+    border-bottom: 1px solid var(--cp-border-subtle);
+    background-color: var(--cp-surface);
+  }
+
+  .demo-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto var(--cp-space-10);
+  }
+
+  .demo-title {
+    margin-bottom: 0.75rem;
+  }
+
+  .demo-subtitle {
+    font-size: 1.0625rem;
+    color: var(--cp-text-muted);
+  }
+
+  .demo-wrapper {
+    margin: 0 auto;
+    max-width: 960px;
+  }
+
+  .demo-hints {
+    display: flex;
+    justify-content: center;
+    gap: var(--cp-space-8);
+    margin-top: var(--cp-space-8);
+    flex-wrap: wrap;
+  }
+
+  .hint-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--cp-text-dim);
+  }
+
+  .hint-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--cp-border-hover);
+  }
+</style>

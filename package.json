@@ -1,0 +1,33 @@
+{
+  "name": "copypatch-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open-Source Inline Copy Editing System for React",
+  "type": "module",
+  "packageManager": "pnpm@11.10.0",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "dev:server": "node packages/server/dist/cli/bin.js serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173",
+    "dev:vite": "pnpm --filter \"example-vite-react\" run dev",
+    "dev:next": "pnpm --filter \"example-next-app\" run dev",
+    "dev:site": "pnpm --filter \"site\" run dev",
+    "init:db": "node packages/server/dist/cli/bin.js init --db ./copypatch.sqlite",
+    "build": "pnpm --filter \"./packages/*\" run build",
+    "build:site": "pnpm --filter \"site\" run build",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
+    "lint": "pnpm run typecheck",
+    "typecheck": "pnpm --filter \"./packages/*\" --filter \"./examples/*\" --filter \"./apps/*\" run typecheck",
+    "clean": "pnpm -r --parallel exec rm -rf dist .turbo node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7",
+    "playwright": "^1.50.1",
+    "@playwright/test": "^1.50.1"
+  }
+}

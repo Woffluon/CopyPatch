@@ -1,0 +1,343 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Header from '../components/header/Header.astro';
+import Footer from '../components/footer/Footer.astro';
+import { getDocsNav, type Locale } from '../config/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  currentPath?: string;
+  lang?: Locale;
+}
+
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/docs';
+const isTr = pathname.startsWith('/tr');
+const currentLang: Locale = Astro.props.lang || (isTr ? 'tr' : 'en');
+const { title, description } = Astro.props;
+
+// Find current section and neighboring prev/next pages
+const docsNav = getDocsNav(currentLang);
+const allDocItems = docsNav.flatMap((section) => section.items);
+const currentIndex = allDocItems.findIndex((item) => item.href === pathname);
+const prevItem = currentIndex > 0 ? allDocItems[currentIndex - 1] : null;
+const nextItem = currentIndex < allDocItems.length - 1 ? allDocItems[currentIndex + 1] : null;
+
+const docsHomeHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
+const docsRootLabel = currentLang === 'tr' ? 'Dokümanlar' : 'Docs';
+const prevLabel = currentLang === 'tr' ? '← Önceki' : '← Previous';
+const nextLabel = currentLang === 'tr' ? 'Sonraki →' : 'Next →';
+const sidebarTitle = currentLang === 'tr' ? 'Dokümantasyon' : 'Documentation';
+const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPatch Docs';
+---
+
+<BaseLayout title={`${title} - ${titleSuffix}`} description={description} isDocs={true} lang={currentLang}>
+  <Header isDocs={true} lang={currentLang} />
+
+  <div class="docs-container container">
+    <!-- Desktop Docs Sidebar Navigation -->
+    <aside class="docs-sidebar" aria-label={sidebarTitle}>
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="sidebar-title">{sidebarTitle}</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          {
+            docsNav.map((section) => (
+              <div class="nav-group">
+                <h4 class="group-title">{section.title}</h4>
+                <ul class="group-list">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    return (
+                      <li>
+                        <a href={item.href} class:list={['group-link', { active: isActive }]} aria-current={isActive ? 'page' : undefined}>
+                          {item.title}
+                        </a>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))
+          }
+        </nav>
+      </div>
+    </aside>
+
+    <!-- Main Documentation Content -->
+    <main id="main-content" class="docs-main">
+      <!-- Breadcrumb & Mobile Doc Selector -->
+      <div class="docs-mobile-nav">
+        <label for="docs-mobile-select" class="sr-only">Select Documentation Page</label>
+        <select id="docs-mobile-select" class="docs-select" aria-label="Select Documentation Page">
+          {
+            docsNav.map((section) => (
+              <optgroup label={section.title}>
+                {section.items.map((item) => (
+                  <option value={item.href} selected={pathname === item.href}>
+                    {item.title}
+                  </option>
+                ))}
+              </optgroup>
+            ))
+          }
+        </select>
+      </div>
+
+      <nav class="docs-breadcrumb" aria-label={currentLang === 'tr' ? 'Gezinme Yolu' : 'Breadcrumbs'}>
+        <a href={docsHomeHref}>{docsRootLabel}</a>
+        <span class="breadcrumb-sep">/</span>
+        <span class="breadcrumb-current">{title}</span>
+      </nav>
+
+      <article class="prose docs-article">
+        <slot />
+      </article>
+
+      <!-- Prev / Next Pagination -->
+      <nav class="docs-pagination" aria-label={currentLang === 'tr' ? 'Sayfa gezintisi' : 'Page navigation'}>
+        {
+          prevItem ? (
+            <a href={prevItem.href} class="pagination-link prev">
+              <span class="pagination-sub">{prevLabel}</span>
+              <span class="pagination-title">{prevItem.title}</span>
+            </a>
+          ) : <div />
+        }
+        {
+          nextItem ? (
+            <a href={nextItem.href} class="pagination-link next">
+              <span class="pagination-sub">{nextLabel}</span>
+              <span class="pagination-title">{nextItem.title}</span>
+            </a>
+          ) : <div />
+        }
+      </nav>
+    </main>
+  </div>
+
+  <Footer lang={currentLang} />
+</BaseLayout>
+
+<script>
+  const mobileSelect = document.getElementById('docs-mobile-select') as HTMLSelectElement | null;
+  if (mobileSelect) {
+    mobileSelect.addEventListener('change', (e) => {
+      const target = (e.target as HTMLSelectElement).value;
+      if (target) {
+        window.location.href = target;
+      }
+    });
+  }
+</script>
+
+<style>
+  .docs-container {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    gap: var(--cp-space-10);
+    padding-top: var(--cp-space-8);
+    padding-bottom: var(--cp-space-16);
+    flex: 1;
+  }
+
+  .docs-sidebar {
+    position: sticky;
+    top: calc(var(--cp-header-height) + 2rem);
+    height: calc(100vh - var(--cp-header-height) - 4rem);
+    overflow-y: auto;
+    padding-right: 1rem;
+    border-right: 1px solid var(--cp-border-subtle);
+  }
+
+  .sidebar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--cp-border-subtle);
+  }
+
+  .sidebar-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--cp-text);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .sidebar-badge {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    color: var(--cp-accent-hover);
+    background-color: var(--cp-accent-subtle);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    border: 1px solid var(--cp-accent-border);
+  }
+
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .group-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--cp-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .group-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .group-link {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--cp-text-muted);
+    padding: 0.35rem 0.625rem;
+    border-radius: var(--cp-radius-sm);
+    transition: all var(--cp-transition-fast);
+  }
+
+  .group-link:hover {
+    color: var(--cp-text);
+    background-color: var(--cp-surface);
+  }
+
+  .group-link.active {
+    color: var(--cp-text);
+    background-color: var(--cp-surface-elevated);
+    font-weight: 700;
+  }
+
+  .docs-main {
+    max-width: var(--cp-prose-width);
+  }
+
+  .docs-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--cp-text-dim);
+    margin-bottom: 1.5rem;
+  }
+
+  .docs-breadcrumb a {
+    color: var(--cp-text-muted);
+  }
+
+  .docs-breadcrumb a:hover {
+    color: var(--cp-text);
+  }
+
+  .breadcrumb-sep {
+    color: var(--cp-border-hover);
+  }
+
+  .breadcrumb-current {
+    color: var(--cp-text);
+  }
+
+  .docs-article {
+    margin-bottom: var(--cp-space-12);
+  }
+
+  .docs-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid var(--cp-border);
+    padding-top: var(--cp-space-8);
+    margin-top: var(--cp-space-12);
+    gap: 1rem;
+  }
+
+  .pagination-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    background-color: var(--cp-surface);
+    transition: all var(--cp-transition-fast);
+    max-width: 240px;
+    flex: 1;
+  }
+
+  .pagination-link.next {
+    text-align: right;
+    margin-left: auto;
+  }
+
+  .pagination-link:hover {
+    border-color: var(--cp-border-hover);
+    background-color: var(--cp-surface-elevated);
+  }
+
+  .pagination-sub {
+    font-size: 0.75rem;
+    color: var(--cp-text-dim);
+    font-weight: 500;
+  }
+
+  .pagination-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--cp-text);
+  }
+
+  .docs-mobile-nav {
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+
+  .docs-select {
+    width: 100%;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: var(--cp-text);
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  @media (max-width: 860px) {
+    .docs-container {
+      grid-template-columns: 1fr;
+    }
+    .docs-sidebar {
+      display: none;
+    }
+    .docs-mobile-nav {
+      display: block;
+    }
+  }
+</style>
