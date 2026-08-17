@@ -43,42 +43,46 @@ Most content tools introduce unacceptable tradeoffs for engineering teams:
 
 **CopyPatch provides a surgical third path:** developers write standard React components and wrap editable text in `<EditableText>`. When an authorized team member opens the site with `?copypatch=1`, they log in with an Argon2id passphrase, click directly into the text, type naturally with native caret preservation, and save. The underlying layout, CSS, and component logic remain strictly untouched.
 
-```text
-+===================================================================================+
-|                              REACT / NEXT.JS HOST APP                             |
-+===================================================================================+
-|                                                                                   |
-|  [ PUBLIC VISITOR PLANE ]                                                         |
-|  * Normal visitors download < 1 kB gzip client runtime.                           |
-|  * Pre-rendered SSR snapshots ensure 0ms React hydration drift.                   |
-|  * Pure text node interpolation -> 0% Stored XSS risk -> Zero DB queries.         |
-|                                                                                   |
-|  [ AUTHORIZED EDIT PLANE: ?copypatch=1 ]                                          |
-|  * Lazy-loads editing bundle (~12 kB gzip) only upon explicit query flag.         |
-|  * Argon2id Passphrase Modal -> 256-bit Session Cookie + Memory CSRF Token.       |
-|  * contenteditable="plaintext-only" caret preserving inline editing.              |
-|  * Floating Toolbar: Save (Cmd+S), Save Draft, Discard, Locale Switcher.          |
-+===================================================================================+
-                                         |
-                       HTTP API (Hono)   |   /__copypatch/api/v1
-                                         v
-+===================================================================================+
-|                               COPYPATCH SERVER                                    |
-+===================================================================================+
-|  * In-Memory Snapshot Cache   -> Sub-0.2ms responses for public visitors          |
-|  * Dual-Token CSRF Engine     -> Cookie + 'x-copypatch-csrf' header verification  |
-|  * Origin & Referer Shield    -> Strict allowlist check against --origin          |
-|  * Optimistic Concurrency     -> Revision validation (409 Conflict rejection)     |
-+===================================================================================+
-                                         |
-                       Drizzle + WAL     |   Atomic Disk Persistence
-                                         v
-+===================================================================================+
-|                          SINGLE-FILE SQLITE PERSISTENCE                           |
-|  * PRAGMA journal_mode = WAL  * PRAGMA synchronous = NORMAL                       |
-|  * PRAGMA busy_timeout = 5000 * PRAGMA cache_size = -64000 (64MB)                 |
-|  * Tables: auth_credentials, sessions, content_state, content_entries             |
-+===================================================================================+
+```mermaid
+flowchart TD
+    subgraph Host["React / Next.js Host Application"]
+        direction TB
+        subgraph VisitorPlane["Public Visitor Plane"]
+            VP1["Visitor Browser (less than 1 kB gzip runtime)"]
+            VP2["Pre-rendered SSR / RSC Snapshot (0ms drift)"]
+            VP3["Pure String Interpolation (0% Stored XSS)"]
+        end
+
+        subgraph EditPlane["Authorized Edit Plane (?copypatch=1)"]
+            EP1["Argon2id Passphrase Auth Modal"]
+            EP2["Native Caret Editing (contenteditable=plaintext-only)"]
+            EP3["Floating Toolbar (Save Cmd+S / Draft / Discard / Locale)"]
+            EP4["In-Memory Store with Optimistic Concurrency"]
+        end
+    end
+
+    subgraph Server["CopyPatch Standalone / Embedded Server (Hono)"]
+        direction TB
+        S1["In-Memory Snapshot Cache (Sub-0.2ms Visitor Reads)"]
+        S2["Security Shield (Origin/Referer Allowlist + Rate Limiting)"]
+        S3["Dual-Token CSRF Engine (HttpOnly Cookie + Header)"]
+        S4["Optimistic Concurrency Gate (409 Conflict Rejection)"]
+    end
+
+    subgraph Database["Single-File SQLite Storage (WAL Mode)"]
+        direction TB
+        DB1[("SQLite Database: copypatch.sqlite")]
+        DB2["PRAGMA journal_mode = WAL, PRAGMA synchronous = NORMAL"]
+        DB3["Tables: auth_credentials, sessions, content_state, content_entries"]
+    end
+
+    VisitorPlane -->|"1. GET /__copypatch/api/v1/content/:locale"| S1
+    EditPlane -->|"2. POST /session (Argon2id Auth)"| S2
+    EditPlane -->|"3. PUT /patches (Dual-Token CSRF + Cmd+S)"| S3
+    S3 --> S4
+    S4 -->|"4. Atomic Transaction"| DB1
+    DB1 -.->|"5. Write-Ahead Log"| DB2
+    S4 -->|"6. Atomic Snapshot Swap"| S1
 ```
 
 ---

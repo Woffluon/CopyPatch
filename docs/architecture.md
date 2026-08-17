@@ -6,44 +6,46 @@ CopyPatch is a lightweight, self-hosted inline copy editing architecture for Rea
 
 ## 1. High-Level Architecture
 
-```text
-+===================================================================================+
-|                              REACT / NEXT.JS HOST APP                             |
-+===================================================================================+
-|                                                                                   |
-|  [ PUBLIC VISITOR RUNTIME ]                                                       |
-|  - Bundle overhead: < 1 kB gzip (0.2 kB core runtime)                             |
-|  - Pre-rendered Server Component snapshots -> 0ms React hydration drift           |
-|  - Pure text interpolation -> 0% Stored XSS surface -> Zero DB queries            |
-|                                                                                   |
-|  [ LAZY-LOADED EDIT RUNTIME: ?copypatch=1 ]                                       |
-|  - Dynamically fetched (~12 kB gzip) only upon explicit query flag                |
-|  - Argon2id Password Modal & Session Token Verification                           |
-|  - Native contenteditable="plaintext-only" Caret Preserving Surface               |
-|  - Floating Toolbar: Save (Cmd+S), Draft Staging, Discard, Locale Selector        |
-|  - Optimistic Concurrency Tracking (expectedPublishedRevision)                   |
-+===================================================================================+
-                                         |
-                       HTTP API (Hono)   |   /__copypatch/api/v1
-                                         v
-+===================================================================================+
-|                               HONO HTTP SERVER                                    |
-+===================================================================================+
-|  - In-Memory Snapshot Cache   -> Sub-0.2ms responses for public visitors          |
-|  - Strict Origin / Referer    -> Matched against configured publicOrigins         |
-|  - Dual-Token CSRF Engine     -> HttpOnly Cookie + 'x-copypatch-csrf' memory token|
-|  - Sliding-Window Rate Limiter-> 10 requests / minute on /session endpoint        |
-|  - Concurrency Gatekeeper     -> Rejects stale mutations with 409 Conflict        |
-+===================================================================================+
-                                         |
-                       Drizzle + WAL     |   Atomic Disk Persistence
-                                         v
-+===================================================================================+
-|                          SINGLE-FILE SQLITE PERSISTENCE                           |
-|  - PRAGMA journal_mode = WAL  - PRAGMA synchronous = NORMAL                       |
-|  - PRAGMA busy_timeout = 5000 - PRAGMA cache_size = -64000 (64MB)                 |
-|  - Tables: auth_credentials, sessions, content_state, content_entries             |
-+===================================================================================+
+```mermaid
+flowchart TD
+    subgraph Host["React / Next.js Host Application"]
+        direction TB
+        subgraph VisitorPlane["Public Visitor Plane"]
+            VP1["Visitor Browser (less than 1 kB gzip runtime)"]
+            VP2["Pre-rendered SSR / RSC Snapshot (0ms drift)"]
+            VP3["Pure String Interpolation (0% Stored XSS)"]
+        end
+
+        subgraph EditPlane["Authorized Edit Plane (?copypatch=1)"]
+            EP1["Argon2id Passphrase Auth Modal"]
+            EP2["Native Caret Editing (contenteditable=plaintext-only)"]
+            EP3["Floating Toolbar (Save Cmd+S / Draft / Discard / Locale)"]
+            EP4["In-Memory Store with Optimistic Concurrency"]
+        end
+    end
+
+    subgraph Server["CopyPatch Standalone / Embedded Server (Hono)"]
+        direction TB
+        S1["In-Memory Snapshot Cache (Sub-0.2ms Visitor Reads)"]
+        S2["Security Shield (Origin/Referer Allowlist + Rate Limiting)"]
+        S3["Dual-Token CSRF Engine (HttpOnly Cookie + Header)"]
+        S4["Optimistic Concurrency Gate (409 Conflict Rejection)"]
+    end
+
+    subgraph Database["Single-File SQLite Storage (WAL Mode)"]
+        direction TB
+        DB1[("SQLite Database: copypatch.sqlite")]
+        DB2["PRAGMA journal_mode = WAL, PRAGMA synchronous = NORMAL"]
+        DB3["Tables: auth_credentials, sessions, content_state, content_entries"]
+    end
+
+    VisitorPlane -->|"1. GET /__copypatch/api/v1/content/:locale"| S1
+    EditPlane -->|"2. POST /session (Argon2id Auth)"| S2
+    EditPlane -->|"3. PUT /patches (Dual-Token CSRF + Cmd+S)"| S3
+    S3 --> S4
+    S4 -->|"4. Atomic Transaction"| DB1
+    DB1 -.->|"5. Write-Ahead Log"| DB2
+    S4 -->|"6. Atomic Snapshot Swap"| S1
 ```
 
 ---
@@ -51,32 +53,43 @@ CopyPatch is a lightweight, self-hosted inline copy editing architecture for Rea
 ## 2. Execution Sequences
 
 ### Public Visitor Request Flow (Sub-0.2ms)
-```text
-Browser / CDN                  CopyPatch Host App                   Server Memory Cache
-      |                                |                                     |
-      |--- 1. HTTP GET / ------------- |                                     |
-      |                                |--- 2. Read In-Memory Snapshot ----->|
-      |                                |<-- 3. Return JSON Snapshot (0.1ms) -|
-      |                                |                                     |
-      |<-- 4. HTML with SSR Copy ------|                                     |
-      |                                |                                     |
-      |=== 5. Zero DB queries, zero client fetch, 0ms hydration drift ======|
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Visitor as Visitor Browser
+    participant App as Host App (SSR / RSC)
+    participant Cache as In-Memory Cache (0.2ms)
+
+    Visitor->>App: HTTP GET /
+    App->>Cache: Read Published Locale Snapshot
+    Cache-->>App: Snapshot JSON (< 0.2ms)
+    App-->>Visitor: HTML with Pre-Rendered Copy
+    Note over Visitor,App: Zero hydration drift, zero disk I/O queries
 ```
 
 ### Authorized Editor Flow (`?copypatch=1`)
-```text
-Editor Browser                      Auth / Middleware                   SQLite WAL
-      |                                     |                                |
-      |--- 1. Open ?copypatch=1 ----------->|                                |
-      |--- 2. POST /session (Passphrase) -->|                                |
-      |                                     |--- 3. Verify Argon2id Hash --->|
-      |<-- 4. Set-Cookie (__Host-Session) --|                                |
-      |       + Return CSRF Token In Memory |                                |
-      |                                     |                                |
-      |--- 5. Edit text inline (Cmd+S) ---->|                                |
-      |       Header: x-copypatch-csrf      |--- 6. Verify Revision Match -->|
-      |       Body: expectedRevision: 4     |--- 7. Write WAL Transaction -->|
-      |<-- 8. 200 OK (New Revision: 5) -----|<-- 8. Atomic Cache Swap -------|
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Editor as Editor Browser (?copypatch=1)
+    participant Server as CopyPatch API (Hono)
+    participant Cache as In-Memory Cache
+    participant DB as SQLite WAL
+
+    Editor->>Server: POST /session (Passphrase)
+    Server->>DB: Verify Argon2id Password Hash
+    DB-->>Server: Credentials Valid
+    Server-->>Editor: Set-Cookie (__Host-Session) + Memory CSRF Token
+
+    Note over Editor: Inline editing with plaintext caret preservation
+
+    Editor->>Server: PUT /patches (x-copypatch-csrf header + Cmd+S)
+    Server->>DB: Verify Revision Match & Execute WAL Transaction
+    DB-->>Server: Transaction Committed
+    Server->>Cache: Atomic In-Memory Snapshot Swap
+    Server-->>Editor: 200 OK (New Published Revision)
 ```
 
 ---
