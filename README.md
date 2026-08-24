@@ -114,12 +114,12 @@ flowchart TD
 
 ## Package Matrix
 
-| Package | Version | Description | Target Environment |
-| :--- | :--- | :--- | :--- |
-| [`@copypatch/react`](packages/react) | `0.1.0` | React context provider, `<EditableText>`, and hooks | React / Vite / Next.js Client |
-| [`@copypatch/core`](packages/core) | `0.1.0` | Shared interfaces, normalization, and constants | Universal (Node.js / Browser) |
-| [`@copypatch/next`](packages/next) | `0.1.0` | Next.js App Router (RSC) snapshot pre-rendering | Next.js Server & Client |
-| [`@copypatch/server`](packages/server) | `0.1.0` | Hono HTTP server, SQLite WAL storage, and CLI | Node.js Server (`>= 20`) |
+| Package | Description | Target Environment |
+| :--- | :--- | :--- |
+| [`@copypatch/react`](packages/react) | React context provider, `<EditableText>`, and hooks | React / Vite / Next.js Client |
+| [`@copypatch/core`](packages/core) | Shared interfaces, normalization, and constants | Universal (Node.js / Browser) |
+| [`@copypatch/next`](packages/next) | Next.js App Router (RSC) snapshot pre-rendering | Next.js Server & Client |
+| [`@copypatch/server`](packages/server) | Hono HTTP server, SQLite WAL storage, and CLI | Node.js Server (`>= 20`) |
 
 ---
 
@@ -128,8 +128,7 @@ flowchart TD
 ### 1. Install Dependencies
 
 ```bash
-pnpm add @copypatch/react @copypatch/core
-pnpm add -D @copypatch/server
+pnpm add @copypatch/core @copypatch/react @copypatch/server
 ```
 
 ### 2. Initialize Database & Set Editor Passphrase

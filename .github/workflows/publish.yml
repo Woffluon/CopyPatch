@@ -1,0 +1,237 @@
+name: Publish
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      target_sha:
+        description: "Commit on main to release (defaults to current main)"
+        required: false
+        type: string
+
+concurrency:
+  group: stable-npm-release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    name: Release Gate
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.gate.outputs.enabled }}
+    steps:
+      - name: Evaluate trigger
+        id: gate
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          CI_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          CI_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          CI_EVENT: ${{ github.event.workflow_run.event }}
+          CI_REPOSITORY: ${{ github.event.workflow_run.head_repository.full_name }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          enabled=false
+          reason="CI run is not a successful push on main; release skipped."
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            enabled=true
+            reason="Manual release discovery requested."
+          elif [[ "$CI_CONCLUSION" == "success" && "$CI_BRANCH" == "main" && "$CI_EVENT" == "push" && "$CI_REPOSITORY" == "$REPOSITORY" ]]; then
+            enabled=true
+            reason="Successful main CI push is eligible for release discovery."
+          fi
+          echo "enabled=$enabled" >> "$GITHUB_OUTPUT"
+          printf '### Release gate\n%s\n' "$reason" >> "$GITHUB_STEP_SUMMARY"
+
+  discover:
+    name: Discover Release
+    needs: gate
+    if: needs.gate.outputs.enabled == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      needed: ${{ steps.release.outputs.needed }}
+      sha: ${{ steps.release.outputs.sha }}
+      version: ${{ steps.release.outputs.version }}
+      tag: ${{ steps.release.outputs.tag }}
+      registry_state: ${{ steps.registry.outputs.state }}
+      publish_needed: ${{ steps.registry.outputs.publish_needed }}
+      release_allowed: ${{ steps.registry.outputs.release_allowed }}
+    steps:
+      - name: Checkout main history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Resolve target commit
+        id: target
+        env:
+          DISPATCH_SHA: ${{ inputs.target_sha }}
+          CI_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [[ "$GITHUB_EVENT_NAME" == "workflow_run" ]]; then
+            requested="$CI_SHA"
+          elif [[ -n "$DISPATCH_SHA" ]]; then
+            requested="$DISPATCH_SHA"
+          else
+            requested="origin/main"
+          fi
+          target="$(git rev-parse --verify --end-of-options "${requested}^{commit}")"
+          git merge-base --is-ancestor "$target" origin/main || {
+            echo "Release target must be reachable from main: $target" >&2
+            exit 1
+          }
+          git checkout --detach "$target"
+          echo "sha=$target" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Validate version history
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        run: node scripts/release/check-version.mjs --history "$TARGET_SHA"
+
+      - name: Discover unreleased version
+        id: release
+        env:
+          TARGET_SHA: ${{ steps.target.outputs.sha }}
+        run: node scripts/release/discover-release.mjs --target "$TARGET_SHA"
+
+      - name: Inspect public npm state
+        id: registry
+        if: steps.release.outputs.needed == 'true'
+        run: node scripts/release/registry-status.mjs
+
+  publish:
+    name: Publish npm Packages
+    needs: discover
+    if: needs.discover.outputs.needed == 'true' && needs.discover.outputs.release_allowed == 'true' && needs.discover.outputs.publish_needed == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.discover.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@ff378ebe6b225b0680b81c1ad4498ae0d1d3a5e3 # v6.0.10
+        with:
+          version: 11.10.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+
+      - name: Install trusted-publishing npm
+        run: npm install --global npm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Run unit and release tests
+        run: pnpm test
+
+      - name: Measure bundle sizes
+        run: node scripts/measure-bundle.mjs
+
+      - name: Pack and publish missing exact versions
+        env:
+          PACK_DIR: ${{ runner.temp }}/copypatch-packs
+        run: node scripts/release/publish-packages.mjs --out "$PACK_DIR"
+
+  release:
+    name: Create Immutable GitHub Release
+    needs: [discover, publish]
+    if: always() && needs.discover.result == 'success' && needs.discover.outputs.needed == 'true' && needs.discover.outputs.release_allowed == 'true' && (needs.publish.result == 'success' || needs.publish.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.discover.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate or create tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ needs.discover.outputs.sha }}
+          RELEASE_TAG: ${{ needs.discover.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.discover.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [[ "$RELEASE_TAG" != "v$RELEASE_VERSION" || ! "$RELEASE_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "Release tag/version contract is invalid." >&2
+            exit 1
+          fi
+
+          tag_exists=false
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null 2>&1; then
+            tag_exists=true
+            git fetch --force origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+            tagged_sha="$(git rev-list -n 1 "$RELEASE_TAG")"
+            if [[ "$tagged_sha" != "$RELEASE_SHA" ]]; then
+              echo "Conflicting immutable tag $RELEASE_TAG points to $tagged_sha, not $RELEASE_SHA." >&2
+              exit 1
+            fi
+          fi
+
+          release_json="$RUNNER_TEMP/copypatch-release.json"
+          if gh api "repos/$GITHUB_REPOSITORY/releases/tags/$RELEASE_TAG" > "$release_json" 2>/dev/null; then
+            if [[ "$tag_exists" != true ]]; then
+              echo "Conflicting GitHub Release $RELEASE_TAG exists without its remote tag." >&2
+              exit 1
+            fi
+            jq -e --arg tag "$RELEASE_TAG" '.tag_name == $tag and .draft == false and .prerelease == false and .published_at != null' "$release_json" >/dev/null || {
+              echo "Conflicting GitHub Release $RELEASE_TAG is not a published stable release." >&2
+              exit 1
+            }
+            printf '### GitHub Release\nExisting matching %s validated; no-op.\n' "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY" >/dev/null
+
+          if [[ "$tag_exists" != true ]]; then
+            if ! gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$RELEASE_TAG" -f sha="$RELEASE_SHA" >/dev/null; then
+              git fetch --force origin "refs/tags/$RELEASE_TAG:refs/tags/$RELEASE_TAG"
+              tagged_sha="$(git rev-list -n 1 "$RELEASE_TAG")"
+              [[ "$tagged_sha" == "$RELEASE_SHA" ]] || {
+                echo "Concurrent tag creation conflicted for $RELEASE_TAG." >&2
+                exit 1
+              }
+            fi
+          fi
+
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --target "$RELEASE_SHA" \
+            --title "CopyPatch $RELEASE_TAG" \
+            --generate-notes \
+            --latest
+          printf '### GitHub Release\nCreated immutable %s at %s.\n' "$RELEASE_TAG" "$RELEASE_SHA" >> "$GITHUB_STEP_SUMMARY"

@@ -1,6 +1,6 @@
 {
   "name": "copypatch-monorepo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Open-Source Inline Copy Editing System for React",
   "type": "module",
@@ -16,12 +16,16 @@
     "init:db": "node packages/server/dist/cli/bin.js init --db ./copypatch.sqlite",
     "build": "pnpm --filter \"./packages/*\" run build",
     "build:site": "pnpm --filter \"site\" run build",
-    "test": "vitest run",
+    "test": "vitest run && pnpm run test:release",
+    "test:release": "node --test scripts/release/release.test.mjs",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
     "lint": "pnpm run typecheck",
     "typecheck": "pnpm --filter \"./packages/*\" --filter \"./examples/*\" --filter \"./apps/*\" run typecheck",
-    "clean": "pnpm -r --parallel exec rm -rf dist .turbo node_modules"
+    "clean": "pnpm -r --parallel exec rm -rf dist .turbo node_modules",
+    "release:prepare": "node scripts/release/prepare-version.mjs",
+    "release:verify": "node scripts/release/check-version.mjs",
+    "release:check": "node scripts/release/check-version.mjs --history HEAD"
   },
   "devDependencies": {
     "@types/node": "^24.13.3",

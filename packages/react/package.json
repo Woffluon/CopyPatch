@@ -1,9 +1,26 @@
 {
   "name": "@copypatch/react",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Lightweight, production-ready inline copy editing library for React",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://copypatch.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/react"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "react",
+    "inline-editing",
+    "content-editing",
+    "cms",
+    "typescript"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -23,6 +40,13 @@
     "dist"
   ],
   "sideEffects": false,
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",

@@ -1,9 +1,26 @@
 {
   "name": "@copypatch/server",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Embedded and standalone backend server & CLI for CopyPatch",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://copypatch.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/server"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "server",
+    "cli",
+    "sqlite",
+    "hono",
+    "content-editing"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -25,6 +42,13 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",

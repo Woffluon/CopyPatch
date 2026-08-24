@@ -1,9 +1,26 @@
 {
   "name": "@copypatch/next",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Next.js App Router and SSR integration package for CopyPatch",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://copypatch.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/next"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "nextjs",
+    "app-router",
+    "rsc",
+    "ssr",
+    "inline-editing"
+  ],
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -22,6 +39,13 @@
   "files": [
     "dist"
   ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
