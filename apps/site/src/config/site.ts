@@ -25,7 +25,7 @@ export const SITE_CONFIG = {
     en: 'A lightweight, self-hosted, open-source inline copy editing system for React applications. Mark approved text, let clients edit directly on the live page, and keep your layout and code completely untouched.',
     tr: 'React uygulamaları için hafif, kendi sunucunuzda barındırılan, açık kaynak sayfa içi metin düzenleme sistemi. Onaylanan metinleri işaretleyin, müşterileriniz canlı sayfada doğrudan düzenlesin; kod ve tasarımınız korunsun.',
   },
-  url: 'https://copypatch.dev',
+  url: 'https://copypatch.vercel.app',
   githubUrl: 'https://github.com/woffluon/CopyPatch',
   author: 'Efe Arabacı',
   license: 'MIT',

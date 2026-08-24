@@ -1,10 +1,10 @@
 {
   "name": "@copypatch/react",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight, production-ready inline copy editing library for React",
   "license": "MIT",
   "type": "module",
-  "homepage": "https://copypatch.dev",
+  "homepage": "https://copypatch.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Woffluon/CopyPatch.git",

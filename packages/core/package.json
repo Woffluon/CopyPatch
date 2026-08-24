@@ -1,10 +1,10 @@
 {
   "name": "@copypatch/core",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Shared types, contracts, constants, and validation for CopyPatch",
   "license": "MIT",
   "type": "module",
-  "homepage": "https://copypatch.dev",
+  "homepage": "https://copypatch.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Woffluon/CopyPatch.git",

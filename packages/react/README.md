@@ -44,7 +44,7 @@ export function App() {
 
 ## Links
 
-- Docs: [copypatch.dev](https://copypatch.dev)
+- Docs: [copypatch.vercel.app](https://copypatch.vercel.app/)
 - Source: [github.com/Woffluon/CopyPatch](https://github.com/Woffluon/CopyPatch)
 - Issues: [github.com/Woffluon/CopyPatch/issues](https://github.com/Woffluon/CopyPatch/issues)
 

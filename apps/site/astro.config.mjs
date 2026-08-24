@@ -3,7 +3,7 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://copypatch.dev',
+  site: 'https://copypatch.vercel.app',
   output: 'static',
   integrations: [react()],
   markdown: {

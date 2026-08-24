@@ -1,10 +1,10 @@
 {
   "name": "@copypatch/server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Embedded and standalone backend server & CLI for CopyPatch",
   "license": "MIT",
   "type": "module",
-  "homepage": "https://copypatch.dev",
+  "homepage": "https://copypatch.vercel.app",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Woffluon/CopyPatch.git",

@@ -1,6 +1,6 @@
 {
   "name": "copypatch-monorepo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "private": true,
   "description": "Open-Source Inline Copy Editing System for React",
   "type": "module",

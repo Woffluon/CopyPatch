@@ -84,7 +84,11 @@ desktop.ini
 !.vscode/extensions.json
 
 # --- AI & Temporary Tool Folders ---
+.codegraph
 .claude/
 analizler
 temp/
+
+# Astro runtime cache; generated from the active local configuration.
+apps/site/.astro/data-store.json
 tmp/
