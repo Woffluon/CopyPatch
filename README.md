@@ -2,51 +2,62 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-CopyPatch adds secure inline copy editing to an application that you already
-own. Mark approved strings with React components, mount CopyPatch inside the
-same application, and let authorized editors update copy at
-`?copypatch=1`. It does not run a separate service, port, reverse proxy, or
-CORS configuration.
+CopyPatch adds secure, inline copy editing to an existing web application. Mark editable strings with React components, mount CopyPatch inside the host application, and let authorized editors update copy directly on the page at `?copypatch=1`.
 
-## v2 at a glance
+CopyPatch runs embedded inside your application runtime. It does not require a standalone API server, additional open ports, reverse proxies, or external CORS configuration.
 
-- The API is mounted by the host application at `/__copypatch/api/v2`.
-- Browser requests stay same-origin. CopyPatch does not use a standalone API
-  server or proxy.
-- Use SQLite for a local or single-node deployment, or PostgreSQL when several
-  application instances need shared persistence.
-- Authenticate with the built-in passphrase flow or connect CopyPatch to the
-  host application's auth and mutation verification.
-- CopyPatch is for server-capable applications. A fully static export can
-  render its fallback copy, but cannot serve editing, authentication, or
-  persistence without a server runtime.
+```mermaid
+flowchart LR
+  Browser[Browser: ?copypatch=1] --> Host[Host Application]
+  Host --> ReactView[React: CopyPatchProvider & EditableText]
+  Host --> ApiRoute[/__copypatch/api/v2/*]
+  ApiRoute --> Backend[@copypatch/backend]
+  Backend --> Storage[(SQLite / PostgreSQL)]
+```
 
-## Packages
+---
 
-| Package | Purpose |
+## Core Capabilities
+
+- **Same-origin architecture:** The API route mounts directly under `/__copypatch/api/v2`. All requests stay on the page origin, removing CORS complexity and external port exposure.
+- **Zero bundle overhead for visitors:** Public visitors receive only lightweight React components. The full visual editor, diff inspectors, and authentication modals load dynamically only when `?copypatch=1` is present.
+- **Server snapshot rendering:** Server components and SSR routes fetch published snapshots directly from persistence, preventing layout shifts or client hydration waterfalls.
+- **Storage flexibility:** Single-node setups use SQLite (`@copypatch/storage-sqlite`), while multi-instance horizontal clusters connect via PostgreSQL (`@copypatch/storage-postgres`).
+- **Role-based security:** Built-in Argon2id sessions or custom host authentication adapters enforce `editor` (save drafts) and `publisher` (publish live revisions) permissions with strict CSRF verification.
+
+---
+
+## Package Ecosystem
+
+CopyPatch publishes seven lockstep packages under the `@copypatch` scope:
+
+| Package | Role |
 | --- | --- |
-| [`@copypatch/core`](packages/core) | Shared contracts, validation, and API constants. |
-| [`@copypatch/react`](packages/react) | `CopyPatchProvider`, editable React components, hooks, and editor UI. |
-| [`@copypatch/backend`](packages/backend) | Storage-independent backend runtime and authentication contract. |
-| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | SQLite persistence adapter. |
-| [`@copypatch/storage-postgres`](packages/storage-postgres) | PostgreSQL persistence adapter. |
-| [`@copypatch/node`](packages/node) | Native Node, Express, Fastify, Hono adapters and the project CLI. |
-| [`@copypatch/next`](packages/next) | Next.js App Router route-handler and server-rendering helpers. |
+| [`@copypatch/core`](packages/core) | Shared TypeScript contracts, validation schemas, and API constants. |
+| [`@copypatch/react`](packages/react) | `<CopyPatchProvider>`, `<EditableText>`, headless hooks, and on-demand editor UI. |
+| [`@copypatch/backend`](packages/backend) | Storage-agnostic HTTP controller, session handling, CSRF checks, and auth contracts. |
+| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | SQLite persistence adapter built with `better-sqlite3`. |
+| [`@copypatch/storage-postgres`](packages/storage-postgres) | PostgreSQL persistence adapter with transaction and connection pool support. |
+| [`@copypatch/node`](packages/node) | Adapters for Express, Fastify, Hono, native Node HTTP, and the project CLI. |
+| [`@copypatch/next`](packages/next) | Next.js App Router route handlers, server snapshot helpers, and provider wrappers. |
 
-`@copypatch/server` is the v1 standalone-server package. It is deprecated for
-new integrations and will be retired in a later major release. Existing users
-should migrate deliberately; published package versions will never be
-unpublished.
+> [!NOTE]
+> `@copypatch/server` represents the legacy v1 standalone server. It is deprecated and maintained solely for backwards compatibility. All v2 integrations use embedded backend instances.
 
-## Quick start: Next.js with SQLite
+---
+
+## Quick Start: Next.js App Router with SQLite
+
+### 1. Install dependencies
 
 ```bash
 pnpm add @copypatch/core @copypatch/react @copypatch/backend \
   @copypatch/storage-sqlite @copypatch/next
 ```
 
-Create one backend instance that your route handler and server components can
-share:
+### 2. Create the shared backend instance
+
+Initialize persistence and the backend controller in a shared server utility:
 
 ```ts
 // lib/copypatch.ts
@@ -62,8 +73,9 @@ export const copypatch = createCopyPatchBackend({
 });
 ```
 
-Mount it inside the application. The generated v2 route owns the same-origin
-`/__copypatch/api/v2` path:
+### 3. Mount the same-origin API route
+
+Create a catch-all route handler to serve `/__copypatch/api/v2/*`:
 
 ```ts
 // app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
@@ -74,15 +86,17 @@ export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
   createCopyPatchRouteHandlers(copypatch);
 ```
 
-Generate the Argon2id value once, then store only its output in your host
-environment or secret manager:
+### 4. Generate the Argon2id passphrase hash
+
+Generate the hash once and store it in your environment secrets (`COPYPATCH_PASSPHRASE_HASH`):
 
 ```bash
-printf '%s' "$COPYPATCH_PASSPHRASE" | pnpm exec copypatch hash --stdin
+printf '%s' "your-secure-editor-passphrase" | pnpm exec copypatch hash --stdin
 ```
 
-Use the same backend to render a snapshot and let the React provider use its
-default API path:
+### 5. Render server components with snapshots
+
+Fetch the published snapshot on the server and wrap your UI in the provider:
 
 ```tsx
 // app/page.tsx
@@ -95,44 +109,246 @@ export default async function Page() {
 
   return (
     <NextCopyPatchProvider locale="en" initialSnapshot={snapshot}>
-      <EditableText contentKey="hero.title" as="h1">
-        Welcome
-      </EditableText>
+      <main className="container">
+        <EditableText contentKey="home.hero.title" as="h1">
+          Welcome to Our Platform
+        </EditableText>
+        <EditableText contentKey="home.hero.body" as="p" allowLineBreaks>
+          Edit this text inline by visiting this page with ?copypatch=1.
+        </EditableText>
+      </main>
     </NextCopyPatchProvider>
   );
 }
 ```
 
-For a working scaffold, run `copypatch init --framework next --storage sqlite`.
-The CLI creates project files only; it does not start a server.
+---
 
-## Framework matrix
+## Persistence Adapters
 
-| Host | Server integration | Notes |
+### SQLite (`@copypatch/storage-sqlite`)
+
+Ideal for local development, desktop applications, or single-container deployments:
+
+```ts
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
+
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+```
+
+### PostgreSQL (`@copypatch/storage-postgres`)
+
+Designed for distributed deployments across multiple serverless instances or server containers:
+
+```ts
+import { createPostgresPersistence } from '@copypatch/storage-postgres';
+
+const persistence = createPostgresPersistence(process.env.DATABASE_URL!);
+await persistence.migrate();
+```
+
+---
+
+## Multi-Framework Server Adapters
+
+`@copypatch/node` provides first-class middleware for popular Node.js frameworks:
+
+### Express
+
+```ts
+import express from 'express';
+import { expressMiddleware } from '@copypatch/node';
+import { copypatch } from './copypatch.js';
+
+const app = express();
+
+// Mount CopyPatch middleware before general body parsers
+app.use(expressMiddleware(copypatch));
+```
+
+### Fastify
+
+```ts
+import Fastify from 'fastify';
+import { fastifyPlugin } from '@copypatch/node';
+import { copypatch } from './copypatch.js';
+
+const fastify = Fastify();
+await fastify.register(fastifyPlugin, { backend: copypatch });
+```
+
+### Hono (Node.js runtime)
+
+```ts
+import { Hono } from 'hono';
+import { honoMiddleware } from '@copypatch/node';
+import { copypatch } from './copypatch.js';
+
+const app = new Hono();
+app.use('*', honoMiddleware(copypatch));
+```
+
+### Astro SSR & React Router
+
+For Astro SSR or React Router server entries, use `handleNodeRequest` directly inside your HTTP handler:
+
+```ts
+import { handleNodeRequest } from '@copypatch/node';
+import { copypatch } from './copypatch.js';
+
+export async function handleRequest(req, res) {
+  const handled = await handleNodeRequest(copypatch, req, res);
+  if (handled) return;
+  // Proceed with host application rendering
+}
+```
+
+---
+
+## React Component & Hook Reference
+
+### `<EditableText>`
+
+Renders plain text in visitor mode and an uncontrolled `contentEditable` surface in editor mode:
+
+```tsx
+import { EditableText } from '@copypatch/react';
+
+<EditableText
+  contentKey="pricing.plan.pro.description"
+  as="p"
+  allowLineBreaks={false}
+  className="text-muted"
+>
+  Standard team plan including all core features.
+</EditableText>
+```
+
+- `contentKey` (required): Unique string identifier for the copy entry.
+- `as` (optional): HTML element type (e.g. `'span'`, `'h1'`, `'p'`). Defaults to `'span'`.
+- `allowLineBreaks` (optional): Set to `true` to allow multiline editing via Shift+Enter.
+- `children` (required): Fallback copy rendered when no published copy exists in persistence.
+
+### `useCopyPatch`
+
+Accesses active editor state, authentication status, and locale information:
+
+```tsx
+import { useCopyPatch } from '@copypatch/react';
+
+function StatusIndicator() {
+  const { isEditorActive, isAuthorized, role, locale } = useCopyPatch();
+
+  if (!isEditorActive) return null;
+
+  return (
+    <aside className="editor-status">
+      Locale: {locale} | Role: {role ?? 'Guest'}
+    </aside>
+  );
+}
+```
+
+### `useEditableText` (Headless Hook)
+
+Build custom editing components or integrations without `<EditableText>`:
+
+```tsx
+import { useEditableText } from '@copypatch/react';
+
+function CustomField({ contentKey, defaultValue }: { contentKey: string; defaultValue: string }) {
+  const { text, isEditing, elementRef, onFocus, onBlur, onInput } =
+    useEditableText(contentKey, defaultValue);
+
+  return (
+    <div
+      ref={elementRef}
+      contentEditable={isEditing}
+      onFocus={onFocus}
+      onBlur={onBlur}
+      onInput={onInput}
+    >
+      {text}
+    </div>
+  );
+}
+```
+
+---
+
+## Authentication & Security
+
+CopyPatch supports two authentication models:
+
+### 1. Built-in Argon2id Passphrase
+
+Configure `passphraseHash` when instantiating the backend. CopyPatch sets a signed, HTTP-only session cookie (`copypatch_session`) on successful login.
+
+All state-mutating requests (saving drafts, publishing, rollbacks) validate the custom `x-copypatch-csrf` header to prevent cross-site request forgery.
+
+### 2. Host Application Auth Adapter
+
+Connect CopyPatch to your existing authentication system (e.g. NextAuth, Clerk, Auth0, Supabase):
+
+```ts
+import { createCopyPatchBackend, type AuthAdapter } from '@copypatch/backend';
+
+const authAdapter: AuthAdapter = {
+  async resolveUser(request) {
+    const session = await getHostSession(request);
+    if (!session?.user) return null;
+
+    return {
+      id: session.user.id,
+      name: session.user.name,
+      role: session.user.isAdmin ? 'publisher' : 'editor',
+    };
+  },
+  async verifyMutation(request, user) {
+    // Verify host CSRF token or session integrity
+    return isValidHostCsrf(request);
+  },
+};
+
+export const copypatch = createCopyPatchBackend({
+  persistence,
+  authAdapter,
+});
+```
+
+### Role Hierarchy
+
+- `guest`: Read published copy only.
+- `editor`: Read published copy, preview drafts, save draft revisions.
+- `publisher`: Full editor capabilities plus publishing draft revisions to live production.
+
+---
+
+## CLI Reference
+
+The `@copypatch/node` package includes the `copypatch` CLI tool:
+
+| Command | Usage | Description |
 | --- | --- | --- |
-| Next.js App Router | `@copypatch/next` | Mount a catch-all route and pass the shared backend to `readPublishedSnapshot`. |
-| Astro SSR | `@copypatch/node` native adapter | Mount the generated API route in an SSR adapter. Static output alone cannot host CopyPatch. |
-| React Router | `@copypatch/node` native adapter | Mount the handler in the framework's server entry. |
-| Vite + Node | `@copypatch/node` native, Express, Fastify, or Hono adapter | Vite is the client build tool; mount CopyPatch in the Node server that serves the app. |
+| `init` | `copypatch init --framework <framework> --storage <storage>` | Generates scaffold configuration and route files. |
+| `hash` | `printf '%s' "$SECRET" \| copypatch hash --stdin` | Generates a cryptographically secure Argon2id hash. |
+| `migrate` | `copypatch migrate --storage <sqlite\|postgres>` | Runs database schema migrations for the chosen storage engine. |
+| `doctor` | `copypatch doctor` | Audits current directory, configuration files, and environment variables. |
 
-## Authentication
+Supported framework options for `init`: `next`, `astro`, `react-router`, `vite-node`.
 
-The backend accepts one of two mutually exclusive strategies:
+---
 
-- `passphraseHash`: CopyPatch creates a secure, same-origin session and checks
-  the CSRF header for mutations.
-- `authAdapter`: the host application resolves its own user and roles. The
-  adapter also verifies every mutation, which is where the host's CSRF or
-  request-integrity protection belongs.
+## Documentation & Architecture
 
-Both approaches require `editor` to save drafts and `publisher` to publish.
+- [Architecture Map](docs/architecture.md): Runtime flow and package dependency rules.
+- [Threat Model & Security](docs/threat-model.md): Security analysis, session policies, and mitigation details.
+- [Security Policy](SECURITY.md): Vulnerability reporting and disclosure guidelines.
+- [Contributing Guide](CONTRIBUTING.md): Monorepo setup, lockstep release protocol, and testing instructions.
+- [Online Documentation](https://copypatch.vercel.app/docs): Full API guides, live component playground, and tutorials.
 
-## Documentation
-
-- [Architecture map](docs/architecture.md)
-- [Threat model and security status](docs/threat-model.md)
-- [Security policy](SECURITY.md)
-- [Documentation site](https://copypatch.vercel.app/docs)
+---
 
 ## License
 

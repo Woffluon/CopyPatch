@@ -37,6 +37,10 @@ export function getVersionBump(message) {
     return 'major';
   }
 
+  if (match.groups.scope === 'ci') {
+    return 'none';
+  }
+
   switch (match.groups.type) {
     case 'feat':
       return 'minor';

@@ -96,6 +96,7 @@ test('Conventional Commit policy maps exact SemVer bumps', () => {
   assert.equal(getVersionBump('build: update artifacts'), 'patch');
   assert.equal(getVersionBump('security(auth): reject replay'), 'patch');
   for (const type of ['docs', 'ci', 'test', 'chore']) assert.equal(getVersionBump(`${type}: routine update`), 'none');
+  assert.equal(getVersionBump('fix(ci): update workflow actions'), 'none');
   assert.equal(getVersionBump('feat!: initial stable API'), 'major');
   assert.equal(getVersionBump('fix: migrate format\n\nBREAKING CHANGE: old files are unsupported'), 'major');
   assert.equal(getNextVersion('0.1.0', 'major'), '1.0.0');
