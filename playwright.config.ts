@@ -2,7 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-const e2eRuntimeDirectory = join(tmpdir(), 'copypatch-playwright-v2');
+const e2eRuntimeDirectory = process.env.COPYPATCH_E2E_RUNTIME_DIR
+  ?? join(tmpdir(), 'copypatch-playwright-v2');
 
 export default defineConfig({
   testDir: './tests/e2e',
@@ -12,7 +13,7 @@ export default defineConfig({
   },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: 0,
+  retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: [
     ['list'],
