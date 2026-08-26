@@ -1,14 +1,110 @@
 ---
 import DocsLayout from '../../../layouts/DocsLayout.astro';
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+const quickExample = `// 1. Sunucunuza route handler'ı ekleyin (Örn. Next.js, Express, Fastify, Hono)
+// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch);
+
+// 2. İstemci bileşenlerinizi sağlayıcı ile sarın
+import { CopyPatchProvider, EditableText } from '@copypatch/react';
+
+export function Hero() {
+  return (
+    <CopyPatchProvider locale="tr">
+      <EditableText contentKey="hero.title" as="h1">
+        Metinleri müşterileriniz düzenlesin. Kodları ve tasarımı değil.
+      </EditableText>
+    </CopyPatchProvider>
+  );
+}`;
 ---
 
-<DocsLayout title="CopyPatch belgeleri" description="Same-origin, embedded CopyPatch v2 entegrasyonu.">
-  <h1>CopyPatch v2</h1>
-  <p class="lead">Müşteri metni düzenler, uygulamanızın kodu ve tasarımı yerinde kalır.</p>
+<DocsLayout
+  title="CopyPatch v2 Dokümantasyonu"
+  description="Sunucu destekli React uygulamanıza aynı kökenden (same-origin) çalışan güvenli satır içi metin düzenleme yeteneği kazandırın."
+  lang="tr"
+>
+  <h1>CopyPatch v2 Dokümantasyonu</h1>
+  <p class="lead">
+    CopyPatch, sahip olduğunuz React uygulamalarına güvenli satır içi (inline) metin düzenleme yeteneği ekler. Yetkili editörler ve müşteriler canlı web sayfasında <code>?copypatch=1</code> adresi üzerinden metinlere tıklayıp düzenleme yapabilir ve anında yayınlayabilir; kod yapınız, JSX bileşenleriniz ve CSS stilleriniz tamamen korunur.
+  </p>
+
+  <blockquote>
+    <strong>Temel İlke:</strong> CopyPatch harici bir SaaS veya bağımsız bir sunucu değil, uygulamanızın içine gömülen bir kütüphane çalışma zamanıdır. Uygulamanızla aynı kökende (same-origin) <code>/__copypatch/api/v2</code> yolu altında çalışır; CORS yapılandırması, harici proxy katmanları veya ek sunucu maliyeti gerektirmez.
+  </blockquote>
+
+  <h2>Nasıl Çalışır?</h2>
   <ol>
-    <li>Metni <code>EditableText</code> veya <code>data-copypatch</code> ile işaretleyin.</li>
-    <li>Backend'i uygulamanızın aynı originindeki <code>/__copypatch/api/v2</code> yoluna mount edin.</li>
-    <li>Editörler <code>?copypatch=1</code> ile taslak kaydeder, publisher rolüyle yayınlar.</li>
+    <li><strong>Onaylanan Alanları İşaretleyin:</strong> Metin düğümlerini <code>&lt;EditableText contentKey="..."&gt;</code> ile sarın veya öznitelik değerleri için <code>useCopyPatch()</code> kancasını kullanın.</li>
+    <li><strong>Backend'i Gömün:</strong> v2 backend'ini çerçevenizin (Next.js App Router, Astro SSR, React Router, Express, Fastify veya Hono) içine <code>/__copypatch/api/v2</code> rotasıyla mount edin.</li>
+    <li><strong>Kalıcılık Katmanını Seçin:</strong> Tek sunuculu veya konteyner ortamları için <code>@copypatch/storage-sqlite</code>, yatayda ölçeklenen çoklu sunucular için <code>@copypatch/storage-postgres</code> kullanın.</li>
+    <li><strong>Canlı Sayfada Düzenleyin:</strong> Yetkili kullanıcılar <code>?copypatch=1</code> parametresiyle sayfayı açar, Argon2id parolası veya mevcut oturumla giriş yaparak doğrudan satır içinde düzenleme yapar.</li>
+    <li><strong>Taslak Kaydedin veya Yayınlayın:</strong> Değişiklikleri onay için taslak (draft) modunda saklayın veya <code>publisher</code> rolüyle tek tıkla canlıya alın.</li>
   </ol>
-  <p>SQLite tek Node deployment için, PostgreSQL ise birden fazla instance için uygundur. Tam statik deployment editör çalıştıramaz.</p>
+
+  <h2>Hızlı Entegrasyon Önizlemesi</h2>
+  <CodeBlock code={quickExample} lang="tsx" title="HizliBaslangic.tsx" />
+
+  <h2>Çerçeve Uyumluluk Matrisi</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Host Çerçevesi</th>
+        <th>Sunucu Entegrasyonu</th>
+        <th>Dağıtım ve Çalışma Notları</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Next.js App Router</strong></td>
+        <td><code>@copypatch/next</code> catch-all rota işleyicileri</td>
+        <td>SSR/RSC için <code>readPublishedSnapshot()</code> ile doğrudan sunucu içi anlık görüntü okuma.</td>
+      </tr>
+      <tr>
+        <td><strong>Astro SSR</strong></td>
+        <td><code>@copypatch/node</code> yerel adaptörü</td>
+        <td>Astro SSR uç noktasına bağlanır; salt statik çıktı yalnızca yedek (fallback) metinleri gösterir.</td>
+      </tr>
+      <tr>
+        <td><strong>React Router v7</strong></td>
+        <td><code>@copypatch/node</code> yerel adaptörü</td>
+        <td>Framework Mode sunucu giriş noktası ile tam entegrasyon.</td>
+      </tr>
+      <tr>
+        <td><strong>Vite + Node / Express / Fastify / Hono</strong></td>
+        <td><code>@copypatch/node</code> ara yazılım ve işleyicileri</td>
+        <td>Body parser ve SPA catch-all kurallarından önce mount edilmelidir.</td>
+      </tr>
+      <tr>
+        <td><strong>Salt Statik Dağıtım (SSG)</strong></td>
+        <td><em>Düzenleme İçin Desteklenmez</em></td>
+        <td>Paketlenmiş metinleri render edebilir ancak API ve veritabanı olmadan düzenleme yapamaz.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>v1 Sürümünden Temel Farklar</h2>
+  <ul>
+    <li><strong>Gömülü Aynı Köken (Same-Origin) Çalışma Zamanı:</strong> v2, ayrı bir süreç veya port yerine mevcut Node/Next sunucunuzda <code>/__copypatch/api/v2</code> altında çalışır. CORS veya harici proxy gerekmez.</li>
+    <li><strong>Gelişmiş Depolama Adaptörleri:</strong> SQLite (<code>better-sqlite3</code>) ve PostgreSQL (<code>pg</code>) için sürüm takipli ve idempotent migrasyonlar.</li>
+    <li><strong>Çift Kimlik Doğrulama Desteği:</strong> Dahili Argon2id parola oturumu (CSRF korumalı) veya mevcut kullanıcılarınızı kullanan <code>authAdapter</code> seçeneği.</li>
+    <li><strong>Rol Ayrımı:</strong> Taslak güncellemesi için <code>editor</code>, canlıya alma için <code>publisher</code> rolleri.</li>
+    <li><strong>İyimser Eşzamanlılık Denetimi (CAS):</strong> Çoklu editörlerin birbirlerinin değişikliklerini ezmesini önleyen revizyon doğrulaması.</li>
+  </ul>
+
+  <h2>Sonraki Adımlar</h2>
+  <p>
+    Kendi projenize en uygun kılavuzla kuruluma başlayın:
+  </p>
+  <ul>
+    <li><a href="/tr/docs/installation"><strong>Kurulum ve CLI Kılavuzu</strong></a> – Paket kurulumu ve başlangıç şablonu oluşturma.</li>
+    <li><a href="/tr/docs/nextjs"><strong>Next.js App Router Entegrasyonu</strong></a> – Rota işleyicileri ve sunucu bileşeni anlık görüntüleri.</li>
+    <li><a href="/tr/docs/react"><strong>React Entegrasyon Kılavuzu</strong></a> – Sağlayıcı, metin bileşenleri ve kancalar.</li>
+    <li><a href="/tr/docs/security"><strong>Güvenlik Mimarisi</strong></a> – Same-origin koruması ve güvenlik kontrolleri.</li>
+  </ul>
 </DocsLayout>

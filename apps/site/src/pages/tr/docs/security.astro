@@ -2,17 +2,18 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self' https://copypatch-api.sitem.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;`;
+const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';`;
 ---
 
 <DocsLayout
   title="Güvenlik Mimarisi ve Tehdit Modeli"
-  description="Kriptografik temeller, Argon2id parametreleri, oturum güvenliği, CSRF koruması ve XSS bağışıklığı."
+  description="Kriptografik temeller, Argon2id parametreleri, aynı köken (same-origin) güvenliği, CSRF savunması ve XSS bağışıklığı."
+  lang="tr"
 >
   <h1>Güvenlik Mimarisi ve Tehdit Modeli</h1>
 
   <p class="lead">
-    Güvenlik, CopyPatch'in temel tasarım sütunlarından biridir. Rastgele HTML veya Markdown depolayan geleneksel CMS platformlarının aksine CopyPatch, depolanmış XSS açıklarını önlemek, kaba kuvvet saldırılarını engellemek ve yönetim oturumlarını yalıtmak için sıkı mimari sınırlar uygular.
+    Güvenlik, CopyPatch'in temel tasarım sütunlarından biridir. Rastgele HTML veya Markdown depolayan geleneksel CMS platformlarının aksine CopyPatch; depolanmış XSS açıklarını önlemek, kaba kuvvet saldırılarını engellemek ve yönetim oturumlarını yalıtmak için sıkı mimari sınırlar uygular.
   </p>
 
   <h2>Temel Güvenlik İlkeleri</h2>
@@ -23,14 +24,23 @@ const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'sel
   </p>
   <ul>
     <li>HTML etiketleri (örneğin <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;img onerror&gt;</code>) hiçbir zaman DOM üzerinde aktif eleman olarak yorumlanmaz veya çalıştırılmaz.</li>
-    <li>React metin enterpolasyonu, değerleri standart güvenli metin düğümü olarak render eder.</li>
-    <li>Sunucu tarafı doğrulaması Unicode boşluklarını normalize eder ve 64 KB üzerindeki aşırı büyük yükleri reddeder.</li>
-    <li>Düzenleme alanlarına girilen XSS kodları zararsız düz metin dizgisi olarak işlenir.</li>
+    <li>React metin enterpolasyonu, değerleri standart güvenli metin düğümü olarak render eder (%0 <code>dangerouslySetInnerHTML</code>).</li>
+    <li>Sunucu tarafı doğrulaması Unicode boşluklarını normalize eder ve 64 KB üzerindeki aşırı büyük yükleri anında reddeder.</li>
+    <li>Düzenleme alanlarına girilen potansiyel XSS kodları tamamen zararsız düz metin dizgisi olarak işlenir.</li>
   </ul>
 
-  <h3>2. Argon2id Parola Hashleme</h3>
+  <h3>2. Aynı Köken (Same-Origin) Sınırı</h3>
   <p>
-    Yönetici parolası, GPU ve ASIC donanımlı kaba kuvvet saldırılarına karşı yüksek bellek direnci sağlayan <strong>Argon2id</strong> (RFC 9106 önerisi) ile hashlenir:
+    CopyPatch v2 yalnızca ana uygulamanızın kendi kökeni içinde çalışır:
+  </p>
+  <ul>
+    <li>Gömülü API rotası, <code>Origin</code> başlığı host etki alanıyla tam olarak eşleşmeyen tüm değişiklik (mutasyon) isteklerini <code>403 ORIGIN_REJECTED</code> ile reddeder.</li>
+    <li>CopyPatch harici CORS izin başlıkları üretmez ve güvensiz etki alanları arası proxy yapılandırmalarını desteklemez.</li>
+  </ul>
+
+  <h3>3. Argon2id Parola Hashleme Parametreleri</h3>
+  <p>
+    Dahili parola kimlik doğrulaması, GPU ve ASIC donanımlı kaba kuvvet saldırılarına karşı yüksek bellek direnci sağlayan <strong>Argon2id</strong> (RFC 9106 standart önerisi) ile korunur:
   </p>
   <table>
     <thead>
@@ -44,56 +54,46 @@ const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'sel
       <tr>
         <td><strong>Algoritma</strong></td>
         <td><code>Argon2id</code></td>
-        <td>Hem yan kanal hem de GPU kaba kuvvet saldırılarına karşı hibrit koruma.</td>
+        <td>Hem yan kanal hem de GPU kaba kuvvet saldırılarına karşı hibrit direnç.</td>
       </tr>
       <tr>
         <td><strong>Bellek Maliyeti (m)</strong></td>
         <td><code>19 MiB (19456 KiB)</code></td>
-        <td>Özel donanımlarda tahmin başına ciddi RAM tahsisine zorlar.</td>
+        <td>Saldırı donanımlarında tahmin denemesi başına yüksek RAM tahsisine zorlar.</td>
       </tr>
       <tr>
         <td><strong>Zaman Maliyeti (t)</strong></td>
         <td><code>2 yineleme</code></td>
-        <td>Giriş gecikmesi yaşatmadan yeterli işlem yükü sağlar.</td>
+        <td>Giriş gecikmesi yaşatmadan sağlam bir işlem yükü sağlar.</td>
       </tr>
       <tr>
         <td><strong>Paralellik (p)</strong></td>
         <td><code>1 hat (lane)</code></td>
-        <td>Standart VPS sunucularında tek iş parçacıklı kararlı yürütme.</td>
+        <td>Tek çekirdekli bulut ortamlarında kararlı ve öngörülebilir yürütme.</td>
       </tr>
       <tr>
         <td><strong>Tuz (Salt) Uzunluğu</strong></td>
-        <td><code>256 bit (32 bayt)</code></td>
+        <td><code>32 bayt (256 bit)</code></td>
         <td>Her hash için kriptografik rastgele tuz üretilir.</td>
       </tr>
     </tbody>
   </table>
 
-  <h3>3. Sertleştirilmiş Oturum Yönetimi</h3>
+  <h3>4. Sertleştirilmiş Oturum Yönetimi</h3>
   <ul>
-    <li><strong>Entropi:</strong> Oturum belirteçleri <code>crypto.randomBytes(32)</code> ile üretilir (256 bit entropi).</li>
-    <li><strong>Veritabanı Saklama:</strong> Oturum token'ları SQLite içine SHA-256 ile hashlenerek yazılır. Veritabanı dosyası ele geçirilse bile ham oturum token'ları kurtarılamaz.</li>
-    <li><strong>Çerez Güvenliği:</strong> <code>HttpOnly</code>, <code>SameSite=Strict</code> ve <code>Secure</code> bayraklarıyla iletilir.</li>
-    <li><strong>Host Öneki:</strong> HTTPS üretim ortamlarında <code>__Host-</code> öneki zorunlu tutularak alt alan adı enjeksiyonu engellenir.</li>
-    <li><strong>Son Kullanma:</strong> Oturumlar 7 gün işlem yapılmadığında otomatik olarak düşer. <code>copypatch password</code> komutuyla parola yenilendiğinde tüm oturumlar anında iptal edilir.</li>
+    <li><strong>Yüksek Entropi:</strong> Oturum belirteçleri <code>node:crypto</code> ile üretilen 256 bit kriptografik rastgelelik içerir.</li>
+    <li><strong>Veritabanında Hashli Saklama:</strong> Depolama adaptörleri oturum ve hız sınırı belirteçlerinin yalnızca SHA-256 özetlerini saklar. Veritabanı dosyası sızsa bile geçerli oturum token'ları kurtarılamaz.</li>
+    <li><strong>Güvenli Çerezler:</strong> <code>HttpOnly</code>, <code>SameSite=Strict</code> ve <code>Secure</code> bayraklarıyla korunur. HTTPS ortamında <code>__Host-</code> öneki zorunlu kılınarak alt alan adı enjeksiyonu engellenir.</li>
   </ul>
 
-  <h3>4. Çift Belirteçli (Dual-Token) CSRF Koruması</h3>
+  <h3>5. Çift Belirteçli (Dual-Token) CSRF Koruması</h3>
   <p>
-    Tüm durum değiştiren istekler (<code>POST /session</code>, <code>PUT /patches</code>, <code>POST /publish</code>, <code>POST /draft</code>) iki bağımsız doğrulama faktörü gerektirir:
+    Tüm durum değiştiren mutasyon istekleri (taslak kaydetme, yayınlama) iki bağımsız doğrulama faktörü gerektirir:
   </p>
   <ol>
-    <li>Tarayıcı tarafından otomatik gönderilen geçerli <code>HttpOnly</code> oturum çerezi.</li>
-    <li>JavaScript belleğinde tutulan ve özel <code>x-copypatch-csrf</code> başlığıyla gönderilen benzersiz CSRF belirteci.</li>
+    <li>Tarayıcı tarafından otomatik iletilen <code>HttpOnly</code> oturum çerezi.</li>
+    <li>JavaScript belleğinde tutulan ve özel <code>x-copypatch-csrf</code> başlığıyla gönderilen CSRF belirteci.</li>
   </ol>
-  <p>
-    Siteler arası komut dosyaları diğer etki alanlarındaki başlıkları okuyamadığı veya belleği inceleyemediği için Siteler Arası İstek Sahteciliği (CSRF) matematiksel olarak engellenir.
-  </p>
-
-  <h3>5. Origin ve Referer Doğrulaması</h3>
-  <p>
-    CopyPatch API sunucusu gelen <code>Origin</code> ve <code>Referer</code> başlıklarını her istekte izin verilenler listesine göre doğrular. Beklenmeyen kaynaklardan gelen istekler anında <code>403 Forbidden (ORIGIN_REJECTED)</code> hatasıyla reddedilir.
-  </p>
 
   <h2>Tehdit Analiz Matrisi</h2>
   <table>
@@ -101,47 +101,46 @@ const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'sel
       <tr>
         <th>Saldırı Türü</th>
         <th>Kritiklik</th>
-        <th>CopyPatch Koruması</th>
+        <th>CopyPatch Mimari Koruması</th>
       </tr>
     </thead>
     <tbody>
       <tr>
         <td><strong>Depolanmış XSS (Stored XSS)</strong></td>
         <td>Kritik</td>
-        <td>Sıkı düz metin ilkesi; React metin enterpolasyonu; %0 <code>dangerouslySetInnerHTML</code>.</td>
-      </tr>
-      <tr>
-        <td><strong>Kaba Kuvvet (Brute-Force)</strong></td>
-        <td>Yüksek</td>
-        <td>IP bazlı hız sınırlama + Argon2id bellek sertliği (19 MiB).</td>
+        <td>Sıkı düz metin normalizasyonu; standart React metin düğümü enterpolasyonu; sıfır HTML çalıştırma.</td>
       </tr>
       <tr>
         <td><strong>CSRF Saldırısı</strong></td>
         <td>Yüksek</td>
-        <td><code>SameSite=Strict</code> çerezler + zorunlu <code>x-copypatch-csrf</code> bellek başlığı.</td>
+        <td>Tam same-origin kontrolü + <code>SameSite=Strict</code> çerezler + zorunlu <code>x-copypatch-csrf</code> bellek başlığı.</td>
+      </tr>
+      <tr>
+        <td><strong>Kaba Kuvvet (Brute-Force)</strong></td>
+        <td>Yüksek</td>
+        <td>Kalıcı IP ve anahtar bazlı hız sınırlama + 19 MiB Argon2id bellek sertliği.</td>
       </tr>
       <tr>
         <td><strong>SQL Enjeksiyonu</strong></td>
         <td>Kritik</td>
-        <td>Drizzle ORM parametreli sorgular + sıkı anahtar/dil regex denetimi.</td>
+        <td><code>better-sqlite3</code> ve <code>pg</code> içinde %100 parametreli sorgular; sıkı anahtar ve dil regex denetimi.</td>
       </tr>
       <tr>
-        <td><strong>Oturum Çalma</strong></td>
+        <td><strong>Oturum Sızıntısı</strong></td>
         <td>Yüksek</td>
-        <td><code>HttpOnly</code> + <code>Secure</code> + <code>__Host-</code> öneki + SHA-256 hashli veritabanı kaydı.</td>
+        <td>Veritabanında SHA-256 token hashleme; <code>HttpOnly</code> + <code>Secure</code> + <code>__Host-</code> önekleri.</td>
       </tr>
       <tr>
-        <td><strong>Clickjacking</strong></td>
+        <td><strong>Revizyon Ezilmesi</strong></td>
         <td>Orta</td>
-        <td>Düzenleme arayüzü ana uygulama içinde yaşar; araç çubuğu z-index izolasyonuna sahiptir.</td>
+        <td>Taslak ve yayın revizyon sayaçlarında atomik karşılaştır-ve-değiştir (CAS) doğrulaması.</td>
       </tr>
     </tbody>
   </table>
 
   <h2>Önerilen İçerik Güvenlik Politikası (CSP)</h2>
   <p>
-    Üretim ortamında sunucunuza aşağıdaki CSP yanıt başlığını eklemeniz önerilir:
+    Üretim ortamındaki sunucunuza aşağıdaki CSP yanıt başlığını eklemeniz önerilir:
   </p>
-
   <CodeBlock code={cspExample} lang="http" title="HTTP Yanıt Başlığı" />
 </DocsLayout>

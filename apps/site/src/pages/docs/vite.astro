@@ -2,7 +2,7 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const express = `import express from 'express';
+const expressExample = `import express from 'express';
 import { createCopyPatchBackend } from '@copypatch/backend';
 import { expressMiddleware } from '@copypatch/node';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
@@ -10,17 +10,92 @@ import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 const app = express();
 const persistence = createSQLitePersistence('./data/copypatch.sqlite');
 await persistence.migrate();
-const backend = createCopyPatchBackend({ persistence, passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH! });
 
-// Mount before body parsers and the SPA fallback.
+const backend = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});
+
+// CRITICAL: Mount CopyPatch BEFORE express.json() / body-parsers and SPA catch-all fallbacks
 app.use('/__copypatch/api/v2', expressMiddleware(backend));
+
+// Host application body parsers & routes
+app.use(express.json());
 app.use(express.static('dist'));
-app.listen(3000);`;
+
+// SPA Fallback
+app.get('*', (req, res) => {
+  res.sendFile('dist/index.html', { root: '.' });
+});
+
+app.listen(3000, () => {
+  console.log('App running on http://localhost:3000');
+});`;
+
+const honoExample = `import { Hono } from 'hono';
+import { serve } from '@hono/node-server';
+import { createHonoHandler } from '@copypatch/node';
+import { backend } from './lib/copypatch';
+
+const app = new Hono();
+
+// Mount CopyPatch at canonical v2 path
+app.all('/__copypatch/api/v2/*', createHonoHandler(backend));
+
+serve(app, (info) => {
+  console.log(\`Listening on http://localhost:\${info.port}\`);
+});`;
+
+const fastifyExample = `import Fastify from 'fastify';
+import { fastifyCopyPatchHandler } from '@copypatch/node';
+import { backend } from './lib/copypatch';
+
+const fastify = Fastify();
+
+// Fastify uses request.raw and reply.hijack(); register before content parsers
+fastify.all('/__copypatch/api/v2/*', fastifyCopyPatchHandler(backend));
+
+await fastify.listen({ port: 3000 });`;
 ---
 
-<DocsLayout title="Vite and Node" description="Use Vite for the client build and mount CopyPatch in the Node application server.">
-  <h1>Vite + Node</h1>
-  <p class="lead">Vite builds the client. A Node server owns the same-origin CopyPatch route, storage, and authentication. Do not configure a Vite development proxy for CopyPatch v2.</p>
-  <CodeBlock code={express} lang="ts" title="server.ts" />
-  <p>Use the native, Fastify, or Hono adapter instead when that matches the host server. Mount the handler before any middleware that consumes request bodies.</p>
+<DocsLayout
+  title="Vite + Node Server Integration"
+  description="Mount CopyPatch v2 in Express, Fastify, Hono, or native Node servers alongside Vite client builds."
+>
+  <h1>Vite + Node Server Integration</h1>
+  <p class="lead">
+    Vite is a fast frontend build tool, not a server API runtime. To use CopyPatch with a Vite-built React frontend, mount the CopyPatch backend in the Node.js server that hosts your application and API.
+  </p>
+
+  <h2>Express Integration</h2>
+  <p>
+    Use <code>expressMiddleware(backend)</code> from <code>@copypatch/node</code> to mount the handler.
+  </p>
+  <CodeBlock code={expressExample} lang="ts" title="server.ts (Express)" />
+
+  <blockquote>
+    <strong>Critical Middleware Order:</strong> Always mount <code>expressMiddleware(backend)</code> <em>before</em> any body-parsing middleware (such as <code>express.json()</code> or <code>bodyParser.urlencoded()</code>) and before the SPA wildcard route (<code>app.get('*')</code>). CopyPatch requires the unconsumed incoming request stream.
+  </blockquote>
+
+  <h2>Hono Integration</h2>
+  <p>
+    Hono handles native standard Web <code>Request</code>/<code>Response</code> objects:
+  </p>
+  <CodeBlock code={honoExample} lang="ts" title="server.ts (Hono)" />
+
+  <h2>Fastify Integration</h2>
+  <p>
+    Fastify leverages <code>request.raw</code> and <code>reply.hijack()</code>:
+  </p>
+  <CodeBlock code={fastifyExample} lang="ts" title="server.ts (Fastify)" />
+
+  <h2>Why Not a Vite Dev Proxy?</h2>
+  <p>
+    Do not configure a cross-origin reverse proxy in <code>vite.config.ts</code> for CopyPatch. CopyPatch v2 enforces strict same-origin security:
+  </p>
+  <ul>
+    <li>Mutating requests require an exact same-origin <code>Origin</code> header matching the host domain.</li>
+    <li>Session cookies are configured with <code>SameSite=Strict</code> and <code>HttpOnly</code>.</li>
+    <li>For local development, run your Node server with Vite in middleware mode (see <code>examples/vite-node</code>) so the React app and API share the exact same <code>http://localhost:3000</code> origin.</li>
+  </ul>
 </DocsLayout>

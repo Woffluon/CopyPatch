@@ -1,5 +1,7 @@
 # CopyPatch v2 threat model and security status
 
+[English](threat-model.md) | [Türkçe](threat-model.tr.md)
+
 This document records the current security boundary and material design
 decisions. Update it when authentication, persistence, API behavior, or a
 threat boundary changes.

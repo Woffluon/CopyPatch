@@ -2,30 +2,100 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const route = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+const backendSingleton = `// lib/copypatch.ts
+import { createCopyPatchBackend } from '@copypatch/backend';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
+
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+
+export const copypatch = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});`;
+
+const routeHandler = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
 import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
 export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
-  createCopyPatchRouteHandlers(copypatch);`;
+  createCopyPatchRouteHandlers(copypatch, {
+    // İsteğe bağlı: oturum çözümleme veya hız sınırlaması için istemci IP'si alma
+    resolveContext: async (request) => ({
+      clientAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+    }),
+  });`;
 
-const page = `import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+const serverPage = `// app/[locale]/page.tsx
+import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
 import { readPublishedSnapshot } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
-export default async function Page() {
-  const snapshot = await readPublishedSnapshot(copypatch, 'tr');
-  return <NextCopyPatchProvider locale="tr" initialSnapshot={snapshot}>
-    <EditableText contentKey="hero.title" as="h1">Başlık</EditableText>
-  </NextCopyPatchProvider>;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+
+  // Sunucu Bileşeni içinde doğrudan veritabanı okuması (Sıfır HTTP gecikmesi)
+  const initialSnapshot = await readPublishedSnapshot(copypatch, locale, {
+    fallback: { 'home.hero.title': 'Platformumuza Hoş Geldiniz' },
+  });
+
+  return (
+    <NextCopyPatchProvider locale={locale} initialSnapshot={initialSnapshot}>
+      <main className="container">
+        <EditableText contentKey="home.hero.title" as="h1">
+          Platformumuza Hoş Geldiniz
+        </EditableText>
+      </main>
+    </NextCopyPatchProvider>
+  );
 }`;
 ---
 
-<DocsLayout title="Next.js App Router" description="CopyPatch v2'yi Next.js App Router içinde aynı origin altında çalıştırın.">
-  <h1>Next.js App Router</h1>
-  <p class="lead">Yüzde kodlu klasör adı, Next'in alt çizgi ile başlayan klasörleri private saymasına rağmen public <code>/__copypatch/api/v2</code> yolunun çalışmasını sağlar.</p>
-  <CodeBlock code={route} lang="ts" title="route.ts" />
-  <h2>Doğrudan sunucu okuması</h2>
-  <p>Server Component, kendi backend nesnesini kullanır; localhost adresine HTTP isteği veya <code>next.config</code> rewrite gerekmez.</p>
-  <CodeBlock code={page} lang="tsx" title="page.tsx" />
+<DocsLayout
+  title="Next.js App Router Entegrasyonu"
+  description="CopyPatch v2 rota işleyicilerini Next.js App Router'a ekleyin ve React Server Components (RSC) ile sıfır gecikmeli anlık görüntüler oluşturun."
+  lang="tr"
+>
+  <h1>Next.js App Router Entegrasyonu</h1>
+  <p class="lead">
+    <code>@copypatch/next</code> paketi, CopyPatch v2'yi Next.js App Router (React Server Components) ile doğrudan entegre eder. Same-origin rota işleyicilerini sağlar ve sunucu tarafı render sırasında doğrudan veritabanından yayınlanmış metinleri okur.
+  </p>
+
+  <h2>1. Paylaşılan Backend Singleton Nesnesini Tanımlayın</h2>
+  <p>
+    Kalıcılık adaptörünü ve CopyPatch backend çalışma zamanını başlatan bir sunucu modülü oluşturun:
+  </p>
+  <CodeBlock code={backendSingleton} lang="ts" title="lib/copypatch.ts" />
+
+  <h2>2. Same-Origin Rota İşleyicisini (Route Handler) Mount Edin</h2>
+  <p>
+    <code>app/%5F%5Fcopypatch/api/v2/[...path]/route.ts</code> dosya yolunda catch-all bir rota işleyicisi oluşturun:
+  </p>
+  <CodeBlock code={routeHandler} lang="ts" title="app/%5F%5Fcopypatch/api/v2/[...path]/route.ts" />
+
+  <blockquote>
+    <strong>Neden <code>%5F%5Fcopypatch</code>?</strong> Next.js dosya sisteminde alt çizgi ile başlayan klasörleri (örn. <code>_copypatch</code>) özel (private) kabul eder ve bunları URL yönlendirmesinden hariç tutar. Alt çizgileri yüzde kodlamasıyla (URL percent-encoding) <code>%5F%5Fcopypatch</code> olarak adlandırarak, Next.js'in standart genel <code>/__copypatch/api/v2/...</code> yolunu sorunsuz sunması sağlanır.
+  </blockquote>
+
+  <h2>3. Sunucu Bileşenlerinde Önceden Render Etme (SSR/RSC)</h2>
+  <p>
+    Sayfa veya Sunucu Bileşenlerinizde <code>readPublishedSnapshot()</code> fonksiyonunu çağırın. Bu fonksiyon dahili bir HTTP isteği yapmadan doğrudan depolama katmanından okuma yapar ve anlık görüntüyü <code>NextCopyPatchProvider</code> sağlayıcısına aktarır:
+  </p>
+  <CodeBlock code={serverPage} lang="tsx" title="app/[locale]/page.tsx" />
+
+  <h2>Next.js Entegrasyonunun Avantajları</h2>
+  <ul>
+    <li><strong>Sıfır Yerleşim Kayması (Zero Layout Shift):</strong> Metinler sunucu tarafında oluşturulan ilk HTML yanıtına gömülür.</li>
+    <li><strong>Sıfır HTTP Ek Yükü:</strong> Sunucu bileşeni <code>localhost</code> adresine istek göndermeden doğrudan bellek veya veritabanı havuzundan okur.</li>
+    <li><strong>Proxy veya Rewrite İhtiyacı Yok:</strong> Rota doğrudan Next.js uygulamanızın içinde yaşadığı için <code>next.config.js</code> içinde karmaşık yönlendirme kuralları gerekmez.</li>
+  </ul>
+
+  <h2>Statik Dışa Aktarma (Static Export) Uyarısı</h2>
+  <blockquote>
+    <strong>Önemli:</strong> CopyPatch bir sunucu çalışma zamanı (Node.js veya serverless/edge) gerektirir. Next.js projeniz <code>output: 'export'</code> olarak yapılandırılmışsa, dinamik düzenleme API'si ve veritabanı bağlantısı çalıştırılamaz.
+  </blockquote>
 </DocsLayout>

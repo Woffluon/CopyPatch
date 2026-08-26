@@ -1,5 +1,7 @@
 # Contributing to CopyPatch
 
+[English](CONTRIBUTING.md) | [Türkçe](CONTRIBUTING.tr.md)
+
 Thank you for your interest in contributing to **CopyPatch**!
 
 ## Development Setup

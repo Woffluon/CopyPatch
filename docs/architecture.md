@@ -1,5 +1,7 @@
 # CopyPatch v2 architecture map
 
+[English](architecture.md) | [Türkçe](architecture.tr.md)
+
 This document is the current architecture map for CopyPatch. Update it when a
 package boundary, public integration contract, or deployment boundary changes.
 

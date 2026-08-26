@@ -1,5 +1,7 @@
 # CopyPatch
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 CopyPatch adds secure inline copy editing to an application that you already
 own. Mark approved strings with React components, mount CopyPatch inside the
 same application, and let authorized editors update copy at

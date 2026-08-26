@@ -1,5 +1,7 @@
 # Security Policy
 
+[English](SECURITY.md) | [Türkçe](SECURITY.tr.md)
+
 ## Supported versions
 
 CopyPatch v2 is the supported release line. The v1 `@copypatch/server` package

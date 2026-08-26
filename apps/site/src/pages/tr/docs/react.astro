@@ -2,22 +2,148 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const provider = `import { CopyPatchProvider, EditableText } from '@copypatch/react';
+const providerExample = `import { CopyPatchProvider, EditableText, useCopyPatch } from '@copypatch/react';
 
-export function Hero() {
+export function HomePage() {
+  // Öznitelikler, yer tutucular veya buton etiketleri için düzenlenebilir metin okuma
+  const buttonLabel = useCopyPatch('home.cta.button', 'Ücretsiz Başlayın');
+  const searchPlaceholder = useCopyPatch('home.search.placeholder', 'Dokümantasyonda arayın...');
+
   return (
     <CopyPatchProvider locale="tr">
-      <EditableText contentKey="hero.title" as="h1">Başlık</EditableText>
+      <header className="hero">
+        <EditableText contentKey="home.hero.title" as="h1" className="hero-title">
+          Metinleri müşterileriniz düzenlesin. Kodları ve tasarımı değil.
+        </EditableText>
+        <EditableText contentKey="home.hero.subtitle" as="p" className="hero-desc">
+          React uygulamaları için güvenli, aynı kökenden (same-origin) satır içi metin düzenleme.
+        </EditableText>
+        <div className="hero-actions">
+          <input type="text" placeholder={searchPlaceholder} />
+          <button type="button">{buttonLabel}</button>
+        </div>
+      </header>
     </CopyPatchProvider>
+  );
+}`;
+
+const customHookExample = `import { useEditableText } from '@copypatch/react';
+
+export function OzelRozet({ contentKey, defaultLabel }: { contentKey: string; defaultLabel: string }) {
+  const { value, isEditing, editProps } = useEditableText(contentKey, defaultLabel);
+
+  return (
+    <span className="badge" {...editProps}>
+      {value}
+    </span>
   );
 }`;
 ---
 
-<DocsLayout title="React" description="React sağlayıcısını host uygulamanızdaki same-origin CopyPatch API'sine bağlayın.">
-  <h1>React entegrasyonu</h1>
-  <p class="lead">Sağlayıcının varsayılan API yolu <code>/__copypatch/api/v2</code>'dir. Ayrı bir URL, proxy veya CORS ayarı eklemeyin.</p>
-  <CodeBlock code={provider} lang="tsx" title="Hero.tsx" />
-  <p><code>?copypatch=1</code> editör arayüzünü gerektiğinde yükler. Host uygulaması backend'i aynı origin altında mount etmiş olmalıdır.</p>
-  <h2>Metin güvenliği</h2>
-  <p>CopyPatch metni düz metin olarak işler. <code>contentKey</code> değerleri locale başına ayrı tutulur; yayınlanan ve taslak değerler ayrı revision'larla yönetilir.</p>
+<DocsLayout
+  title="React İstemci Entegrasyonu"
+  description="CopyPatchProvider, EditableText ve React kancalarını (hooks) ön yüz bileşenlerinizle entegre edin."
+  lang="tr"
+>
+  <h1>React İstemci Entegrasyonu</h1>
+  <p class="lead">
+    <code>@copypatch/react</code> paketi; React context sağlayıcısını, satır içi düzenlenebilir metin bileşenlerini ve kancaları sunar. Varsayılan olarak uygulamanızın aynı kökenindeki <code>/__copypatch/api/v2</code> rotasına otomatik bağlanır.
+  </p>
+
+  <h2>CopyPatchProvider Sağlayıcısı</h2>
+  <p>
+    Bileşen ağacınızı (veya kök sayfa düzeninizi) <code>CopyPatchProvider</code> ile sarın. Sağlayıcı; aktif dili, yayınlanmış metin önbelleğini, taslak revizyonlarını ve düzenleyici arayüzünün tembel yüklenmesini yönetir:
+  </p>
+  <CodeBlock code={providerExample} lang="tsx" title="HomePage.tsx" />
+
+  <h2>Sağlayıcı Yapılandırma Özellikleri (Props)</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Özellik</th>
+        <th>Tip</th>
+        <th>Varsayılan</th>
+        <th>Açıklama</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>locale</code></td>
+        <td><code>string</code></td>
+        <td><strong>Zorunlu</strong></td>
+        <td>Aktif dil tanıtıcısı (örn. <code>"tr"</code>, <code>"en"</code>, <code>"de"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>initialSnapshot</code></td>
+        <td><code>ContentSnapshot</code></td>
+        <td><code>undefined</code></td>
+        <td>Sunucudan önceden oluşturulmuş içerik anlık görüntüsü (yükleme sırasında istemci yerleşim kaymalarını önler).</td>
+      </tr>
+      <tr>
+        <td><code>apiBase</code></td>
+        <td><code>string</code></td>
+        <td><code>"/__copypatch/api/v2"</code></td>
+        <td>Temel API yolu. Standart same-origin barındırmada boş bırakılmalıdır.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Bileşen ve Kanca Başvuru Kılavuzu</h2>
+
+  <h3><code>&lt;EditableText&gt;</code></h3>
+  <p>
+    Satır içi düzenlenebilir bir metin öğesi render eder. Normal ziyaretçiler gezinirken sıfır ek yükle standart React öğeleri oluşturur. Yetkili bir editör düzenleme modunu açtığında tıklanarak düzenlenebilir hale gelir:
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Özellik</th>
+        <th>Tip</th>
+        <th>Varsayılan</th>
+        <th>Açıklama</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>contentKey</code></td>
+        <td><code>string</code></td>
+        <td><strong>Zorunlu</strong></td>
+        <td>Noktayla ayrılmış benzersiz içerik anahtarı (örn. <code>"pricing.pro.title"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>as</code></td>
+        <td><code>string | ComponentType</code></td>
+        <td><code>"span"</code></td>
+        <td>Render edilecek HTML etiketi veya React bileşeni (örn. <code>"h1"</code>, <code>"h2"</code>, <code>"p"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>children</code></td>
+        <td><code>string</code></td>
+        <td><code>""</code></td>
+        <td>Veritabanında yayınlanmış metin bulunamadığında render edilecek varsayılan yedek metin.</td>
+      </tr>
+      <tr>
+        <td><code>className</code></td>
+        <td><code>string</code></td>
+        <td><code>undefined</code></td>
+        <td>DOM öğesine aktarılacak CSS sınıf isimleri.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3><code>useCopyPatch(contentKey, fallback)</code></h3>
+  <p>
+    HTML öğesi olarak doğrudan render edilemeyen öznitelikler (örn. <code>placeholder</code>, <code>aria-label</code>, <code>title</code>, <code>alt</code> veya buton etiketleri) için düzenlenebilir metin değerini okuyan React kancasıdır.
+  </p>
+
+  <h3><code>useEditableText(contentKey, fallback)</code></h3>
+  <p>
+    CopyPatch'in seçim ve mutasyon hattıyla entegre çalışan özel etkileşimli bileşenler oluşturmak için kullanılan alt seviye kancadır:
+  </p>
+  <CodeBlock code={customHookExample} lang="tsx" title="OzelRozet.tsx" />
+
+  <h2>Sıkı Düz Metin İlkesi (Sıfır XSS)</h2>
+  <blockquote>
+    <strong>XSS Korumalı Tasarım:</strong> CopyPatch yalnızca düz metin (plaintext) dizgilerini saklar ve işler. Düzenleme alanlarına girilen HTML etiketleri veya <code>&lt;script&gt;</code> kodları hiçbir zaman çalıştırılmaz; tamamen zararsız düz metin olarak işlenerek depolanmış XSS açıklarını kökten engeller.
+  </blockquote>
 </DocsLayout>
