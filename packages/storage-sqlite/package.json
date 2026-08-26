@@ -1,0 +1,59 @@
+{
+  "name": "@copypatch/storage-sqlite",
+  "version": "2.0.0",
+  "description": "SQLite persistence adapter for CopyPatch",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://copypatch.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/storage-sqlite"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "sqlite",
+    "persistence",
+    "content-editing"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --root ../.. packages/storage-sqlite/tests/storage-sqlite.test.ts",
+    "test:coverage": "vitest run --root ../.. --coverage packages/storage-sqlite/tests/storage-sqlite.test.ts",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@copypatch/core": "workspace:*",
+    "better-sqlite3": "^11.8.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.7"
+  }
+}

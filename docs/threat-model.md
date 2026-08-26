@@ -1,50 +1,64 @@
-# CopyPatch Threat Model & Security Posture
+# CopyPatch v2 threat model and security status
 
-This document provides a comprehensive security assessment of CopyPatch using the STRIDE methodology.
+This document records the current security boundary and material design
+decisions. Update it when authentication, persistence, API behavior, or a
+threat boundary changes.
 
----
+## Scope
 
-## 1. Assets to Protect
+CopyPatch v2 is embedded in a host application at
+`/__copypatch/api/v2`. The host owns transport, TLS, deployment, and access to
+the route. CopyPatch does not support a remote API, separate server, CORS
+allowlist, or proxy configuration.
 
-- **Visual and Structural Integrity**: Host application layout, typography, and React component tree.
-- **Content Modification Authorization**: Administrative credentials and active session states.
-- **Audit Trails and Revision History**: SQLite database persistence and historical revisions.
-- **Visitor Privacy**: CopyPatch collects zero tracking cookies, analytics identifiers, or visitor telemetry.
+## Assets
 
----
+- Published and draft copy, separated by locale and revision.
+- Editor and publisher authorization.
+- Session, CSRF, and rate-limit secrets.
+- SQLite database files or PostgreSQL records.
 
-## 2. STRIDE Threat Analysis Matrix
+## Controls
 
-| STRIDE Category | Threat Description | Severity | CopyPatch Defense Strategy | Residual Risk |
-| :--- | :--- | :--- | :--- | :--- |
-| **Spoofing** | Unauthorized user attempts to authenticate as administrator. | High | Memory-hard Argon2id passphrase verification (19 MiB RAM) + IP rate limiting (10 req/min). | Weak administrative passphrases. Teams must use passphrases >= 16 characters. |
-| **Tampering** | Attacker injects malicious HTML, script tags, or SQL payloads into copy. | Critical | Strict plain-text invariant (`normalizeText`), React text node interpolation, and parameterized SQL queries via Drizzle ORM. | None. Injected tags render as inert literal strings. |
-| **Repudiation** | Editor denies making unauthorized changes to live copy. | Low | Every mutation updates revision counters and records timestamps in SQLite. | Single shared passphrase does not identify individual team members. |
-| **Information Disclosure** | Database file leak exposes active session tokens or plain-text passwords. | High | Passwords hashed with Argon2id; session tokens hashed with SHA-256 before storage in SQLite. | Stolen database file exposes copy strings (which are already public). |
-| **Denial of Service** | Flooding backend with concurrent writes or huge payloads. | Medium | 64 KB maximum string size validation + SQLite WAL busy timeout (5000ms) + In-memory visitor cache. | Volumetric DDoS targeting network bandwidth (mitigated by upstream Cloudflare/Nginx). |
-| **Elevation of Privilege** | Cross-origin malicious website issues forged edit requests (CSRF). | High | Dual-Token CSRF (`HttpOnly` session cookie + in-memory `x-copypatch-csrf` header) + `Origin`/`Referer` validation. | None. Cross-origin scripts cannot read memory or set custom headers. |
+| Risk | Control |
+| --- | --- |
+| Stored markup injection | CopyPatch accepts and renders normalized plain text. |
+| Cross-site mutation | Every unsafe request must have an exact same-origin `Origin` header. Built-in auth also requires a CSRF header. |
+| Unauthorized editing | Built-in passphrase sessions or a host-auth adapter identify the principal; mutations require `editor` or `publisher` roles. |
+| Brute-force attempts | Built-in authentication uses Argon2id and persistent rate limiting. |
+| Session disclosure at rest | Persistence receives hashes for session, CSRF, and rate-limit identifiers. |
+| Concurrent overwrites | Draft and publish operations compare expected published and draft revisions and return `409 REVISION_CONFLICT` on mismatch. |
+| Storage failure | Published reads fail safely to the most recent in-memory snapshot or empty fallback. |
 
----
+## Authentication choices
 
-## 3. Cryptographic Primitives & Parameters
+`createCopyPatchBackend` accepts exactly one authentication strategy:
 
-### Argon2id Passphrase Hashing (RFC 9106)
-- **Memory Cost ($m$):** 19 MiB (19,456 KiB)
-- **Time Cost ($t$):** 2 iterations
-- **Parallelism ($p$):** 1 lane
-- **Salt Length:** 256 bits (32 bytes) cryptographically generated per credential record
+- Provide `passphraseHash` for CopyPatch-managed authentication. Deploy it only
+  over HTTPS because its cookie is secure and same-site.
+- Provide `authAdapter` when the host already authenticates users. The adapter
+  must return a principal with roles and verify each mutating request.
 
-### Session Token Security
-- **Entropy:** 256 bits generated via `crypto.randomBytes(32)`
-- **Database Storage:** SHA-256 hash digest
-- **Transport Flags:** `HttpOnly`, `SameSite=Strict`, `Secure`, and `__Host-` prefix on production HTTPS
+Host-auth adapters are responsible for integrating the host's CSRF protection,
+session lifecycle, authorization source, and trusted client address. Do not
+pass raw tokens to persistence implementations.
 
----
+## Deployment responsibilities
 
-## 4. Production Security Checklist
+- Keep the API route under the same HTTPS origin as the application.
+- Restrict database credentials and back up SQLite/PostgreSQL according to the
+  host's recovery policy.
+- Run storage migrations before serving traffic.
+- Mount Node middleware before body parsers when the selected adapter requires
+  the raw request body.
+- Do not expose a static-only deployment as an editable CopyPatch instance.
 
-- [ ] Run backend behind TLS/HTTPS to enforce `Secure` and `__Host-` cookie flags.
-- [ ] Configure `--origin` to match only trusted domains (e.g. `--origin https://my-site.com`).
-- [ ] Choose an administrative passphrase with at least 16 random characters.
-- [ ] Set `PRAGMA busy_timeout = 5000` (automatically managed by `@copypatch/server`).
-- [ ] Mount SQLite database directory with restricted OS permissions (`chmod 700 /data`).
+## Status and history
+
+v2 replaces the v1 standalone server model with embedded, same-origin adapters.
+`@copypatch/server` is deprecated for new integrations and is scheduled for
+retirement in a later major release. Existing published releases stay
+available; CopyPatch will not unpublish them.
+
+The intentionally removed npm-publishing and npm-readiness-audit documents are
+part of the documentation delete zone. Their deletion is not a gap to refill.

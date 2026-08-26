@@ -2,51 +2,16 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const viteConfig = `// vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+const host = `import { createNodeHandler } from '@copypatch/node';
+import { backend } from './copypatch.js';
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/__copypatch/api': {
-        target: 'http://localhost:4040',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-});`;
-
-const devScripts = `{
-  "scripts": {
-    "dev:site": "vite",
-    "dev:server": "copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173",
-    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:site\"",
-    "build": "tsc && vite build"
-  }
-}`;
+const handleCopyPatch = createNodeHandler(backend);
+// /__copypatch/api/v2 isteklerini Vite middleware ve SPA fallback öncesinde handleCopyPatch'e verin.`;
 ---
 
-<DocsLayout
-  title="Vite & React Kurulumu"
-  description="Vite geliştirme sunucusu proxy yapılandırması, eşzamanlı geliştirme betikleri ve üretim derlemesi."
->
-  <h1>Vite & React Kurulumu</h1>
-
-  <p class="lead">
-    CopyPatch'i bir Vite + React projesine entegre etmek 2 dakikadan kısa sürer. <code>vite.config.ts</code> dosyasına eklenen basit bir proxy ile tüm API istekleri aynı köken altında CopyPatch arka ucuna iletilir.
-  </p>
-
-  <h2>1. Vite Proxy Yapılandırması</h2>
-  <CodeBlock code={viteConfig} lang="typescript" title="vite.config.ts" />
-
-  <h2>2. package.json Geliştirme Betiği</h2>
-  <CodeBlock code={devScripts} lang="json" title="package.json" />
-
-  <h2>3. Geliştirmeye Başlayın</h2>
-  <pre><code>pnpm install -D concurrently
-pnpm run dev</code></pre>
+<DocsLayout title="Vite + Node" description="Vite istemci derlemesini, aynı deployment içindeki Node hostuyla kullanın.">
+  <h1>Vite + Node</h1>
+  <p class="lead">Vite yalnızca istemciyi derler. Düzenleme için CopyPatch'i uygulamanızı sunan aynı Node sürecine mount edin.</p>
+  <CodeBlock code={host} lang="ts" title="server.ts" />
+  <p>CopyPatch yolu için Vite development proxy tanımlamayın. Tam statik Vite çıktısı fallback metni gösterebilir, fakat düzenleme çalıştıramaz.</p>
 </DocsLayout>

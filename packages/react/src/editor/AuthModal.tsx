@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { SessionAuthResponse, ApiErrorResponse } from '@copypatch/core';
+import { SessionAuthResponse, ApiErrorResponse, PublishingMode } from '@copypatch/core';
 import { CopyPatchStore } from '../store/store.js';
 
 export interface AuthModalProps {
   apiBase: string;
   store: CopyPatchStore;
-  onSuccess: (csrfToken: string) => void;
+  onSuccess: (csrfToken: string | null, publishingMode?: PublishingMode) => void;
   onCancel: () => void;
 }
 
@@ -51,8 +51,8 @@ export function AuthModal({ apiBase, store, onSuccess, onCancel }: AuthModalProp
       }
 
       const data: SessionAuthResponse = await res.json();
-      if (data.authenticated && data.csrfToken) {
-        onSuccess(data.csrfToken);
+      if (isUsableSession(data)) {
+        onSuccess(data.csrfToken ?? null, data.publishingMode);
       } else {
         setError('Unexpected authentication response from server.');
       }
@@ -282,4 +282,8 @@ export function AuthModal({ apiBase, store, onSuccess, onCancel }: AuthModalProp
       </div>
     </div>
   );
+}
+
+function isUsableSession(data: SessionAuthResponse): boolean {
+  return data.authenticated && (data.requiresCsrf === false || Boolean(data.csrfToken));
 }

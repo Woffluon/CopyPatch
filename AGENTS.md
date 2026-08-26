@@ -4,8 +4,11 @@ CopyPatch is a pnpm monorepo for secure inline copy editing. Public npm packages
 
 - `@copypatch/core`: contracts, validation, and shared constants
 - `@copypatch/react`: provider, hooks, editable components, and editor runtime
-- `@copypatch/server`: Hono/SQLite server and `copypatch` CLI
-- `@copypatch/next`: Next.js App Router and server snapshot integration
+- `@copypatch/backend`: storage-independent backend runtime and auth contract
+- `@copypatch/storage-sqlite`: SQLite persistence adapter
+- `@copypatch/storage-postgres`: PostgreSQL persistence adapter
+- `@copypatch/node`: Node/Express/Fastify/Hono adapters and project CLI
+- `@copypatch/next`: Next.js App Router routes and snapshot integration
 
 `apps/site` is the private Astro documentation/demo site. `examples/` contains integration examples; neither is published to npm.
 
@@ -38,7 +41,7 @@ For a package-local change, run its build/typecheck first, then the narrowest re
 - Keep framework-agnostic types and validation in `packages/core`.
 - `packages/react` may depend on `core`; it must not import server-only code.
 - `packages/next` may depend on `core` and `react`; preserve its explicit client/server exports.
-- `packages/server` owns persistence, authentication, HTTP routes, and the CLI. Do not leak server runtime dependencies into browser packages.
+- `packages/backend` owns storage-independent HTTP behavior, authentication, and authorization. `packages/storage-*` own persistence; `packages/node` owns runtime adapters and the CLI. Do not leak these dependencies into browser packages.
 - Preserve ESM-only package output and the declared `exports` map. Do not add CommonJS support unless explicitly requested.
 - Publishable code belongs in `dist`; package manifests intentionally publish only built artifacts plus npm-required metadata files.
 
@@ -51,7 +54,7 @@ For a package-local change, run its build/typecheck first, then the narrowest re
 
 ## Git and release contract
 
-Use Conventional Commits. The release policy is lockstep across the root manifest and all four public packages:
+Use Conventional Commits. The release policy is lockstep across the root manifest and all seven public packages:
 
 | Commit type | Version effect |
 | --- | --- |
@@ -63,7 +66,7 @@ Use Conventional Commits. The release policy is lockstep across the root manifes
 Before committing a versioned change, prepare the exact message first:
 
 ```bash
-pnpm release:prepare -- "fix(server): describe the change"
+pnpm release:prepare -- "feat!: replace standalone server with embedded multi-framework backend"
 ```
 
 This updates all lockstep manifests atomically. Commit with the exact same full Conventional Commit message passed to `release:prepare`; CI validates the first-parent history. Prefer squash merges with a valid Conventional Commit message. GitHub's default `Merge pull request ...` message does not satisfy the contract.
@@ -72,7 +75,7 @@ Never reuse or alter a published `name@version`. Never manually rewrite `workspa
 
 ## npm publishing and GitHub Actions
 
-- The first publication of all four packages is a maintainer-controlled, interactive npm 2FA bootstrap.
+- The first publication of all seven packages is a maintainer-controlled, interactive npm 2FA bootstrap.
 - After each package has a GitHub trusted publisher configured for `.github/workflows/publish.yml`, later releases use GitHub OIDC. Do not add `NPM_TOKEN`, `NODE_AUTH_TOKEN`, `.npmrc` credentials, or long-lived registry tokens to this repository or workflow.
 - The publish workflow is deliberately idempotent: it skips exact versions already on npm, fails on partial first bootstrap, and creates the immutable GitHub tag/release only after the registry state is valid.
 - Keep workflow permissions minimal. The publish job needs `id-token: write`; the release job alone needs `contents: write`.
@@ -84,3 +87,4 @@ Never reuse or alter a published `name@version`. Never manually rewrite `workspa
 - Package README files are npm landing pages: keep install instructions, minimal valid usage, exports, runtime requirements, and links correct.
 - Keep the root README and site documentation aligned with public API and release behavior when the relevant surface changes.
 - Documentation intentionally removed by a maintainer must stay removed unless explicitly requested again.
+- `docs/architecture.md` is the architecture map. `docs/threat-model.md` records security status and design history. Do not restore the deliberate delete-zone files `docs/npm-publishing.md` or `docs/npm-readiness-audit-2026-08-24.md`.

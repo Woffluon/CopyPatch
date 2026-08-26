@@ -33,7 +33,10 @@ export const SITE_CONFIG = {
     react: '@copypatch/react',
     core: '@copypatch/core',
     next: '@copypatch/next',
-    server: '@copypatch/server',
+    backend: '@copypatch/backend',
+    sqlite: '@copypatch/storage-sqlite',
+    postgres: '@copypatch/storage-postgres',
+    node: '@copypatch/node',
   },
   nav: {
     en: [
@@ -63,25 +66,25 @@ export const SITE_CONFIG = {
       {
         title: 'Framework Integration',
         items: [
-          { title: 'React & Vite', href: '/docs/react', description: 'Client-side provider and EditableText components' },
-          { title: 'Next.js App Router', href: '/docs/nextjs', description: 'SSR snapshot pre-rendering with zero hydration shift' },
-          { title: 'Vite Setup', href: '/docs/vite', description: 'Configuring Vite dev proxy and builds' },
+          { title: 'React & Vite', href: '/docs/react', description: 'Client provider and inline text components' },
+          { title: 'Next.js App Router', href: '/docs/nextjs', description: 'Embedded route handlers and server snapshots' },
+          { title: 'Vite + Node', href: '/docs/vite', description: 'Mounting CopyPatch in the application server' },
         ],
       },
       {
         title: 'Editing & Publishing',
         items: [
-          { title: 'Edit Mode & Auth', href: '/docs/edit-mode', description: 'Activating ?copypatch=1 and Argon2id session auth' },
-          { title: 'Publishing Modes', href: '/docs/publishing', description: 'Direct live publishing vs Draft & Review workflows' },
+          { title: 'Edit Mode & Auth', href: '/docs/edit-mode', description: 'Activating ?copypatch=1 and authentication choices' },
+          { title: 'Publishing Modes', href: '/docs/publishing', description: 'Draft, publish, and revision-conflict workflows' },
           { title: 'Multi-Locale', href: '/docs/locales', description: 'Managing locale snapshots and translations independently' },
         ],
       },
       {
         title: 'Infrastructure & Security',
         items: [
-          { title: 'Server & CLI', href: '/docs/server', description: 'Standalone Hono server, CLI flags, and embedded routes' },
-          { title: 'Security Architecture', href: '/docs/security', description: 'Plaintext invariant, Argon2id, CSRF, and threat model' },
-          { title: 'Deployment Guide', href: '/docs/deployment', description: 'Docker, SQLite WAL, volume mounts, and production best practices' },
+          { title: 'Backend & adapters', href: '/docs/server', description: 'Embedded v2 backend, auth, storage, and host adapters' },
+          { title: 'Security Architecture', href: '/docs/security', description: 'Same-origin security, authentication, and threat model' },
+          { title: 'Deployment Guide', href: '/docs/deployment', description: 'SQLite, PostgreSQL, and server-capable deployment' },
           { title: 'Troubleshooting', href: '/docs/troubleshooting', description: 'Common debugging patterns and FAQs' },
         ],
       },
@@ -97,25 +100,25 @@ export const SITE_CONFIG = {
       {
         title: 'Çerçeve Entegrasyonu',
         items: [
-          { title: 'React & Vite', href: '/tr/docs/react', description: 'İstemci sağlayıcısı ve EditableText bileşenleri' },
-          { title: 'Next.js App Router', href: '/tr/docs/nextjs', description: 'Sıfır hidrasyon kayması ile SSR anlık görüntü ön işlemesi' },
-          { title: 'Vite Yapılandırması', href: '/tr/docs/vite', description: 'Vite geliştirme proxy ve derleme ayarları' },
+          { title: 'React & Vite', href: '/tr/docs/react', description: 'İstemci sağlayıcısı ve satır içi metin bileşenleri' },
+          { title: 'Next.js App Router', href: '/tr/docs/nextjs', description: 'Gömülü rota işleyicileri ve sunucu anlık görüntüleri' },
+          { title: 'Vite + Node', href: '/tr/docs/vite', description: 'CopyPatch’i uygulama sunucusuna bağlama' },
         ],
       },
       {
         title: 'Düzenleme ve Yayınlama',
         items: [
-          { title: 'Düzenleme Modu & Yetkilendirme', href: '/tr/docs/edit-mode', description: '?copypatch=1 aktivasyonu ve Argon2id oturum güvenliği' },
-          { title: 'Yayınlama Modları', href: '/tr/docs/publishing', description: 'Doğrudan canlı yayın vs Taslak & Onay iş akışları' },
+          { title: 'Düzenleme Modu & Yetkilendirme', href: '/tr/docs/edit-mode', description: '?copypatch=1 aktivasyonu ve kimlik doğrulama seçenekleri' },
+          { title: 'Yayınlama Modları', href: '/tr/docs/publishing', description: 'Taslak, yayınlama ve revizyon çakışması akışları' },
           { title: 'Çoklu Dil İzolasyonu', href: '/tr/docs/locales', description: 'Dil anlık görüntülerini ve çevirileri bağımsız yönetme' },
         ],
       },
       {
         title: 'Altyapı ve Güvenlik',
         items: [
-          { title: 'Sunucu & CLI Referansı', href: '/tr/docs/server', description: 'Bağımsız Hono sunucusu, CLI bayrakları ve gömülü rotalar' },
-          { title: 'Güvenlik Mimarisi', href: '/tr/docs/security', description: 'Düz metin değişmezi, Argon2id, CSRF ve tehdit modeli' },
-          { title: 'Dağıtım Rehberi', href: '/tr/docs/deployment', description: 'Docker, SQLite WAL, kalıcı diskler ve üretim pratikleri' },
+          { title: 'Backend & Adaptörler', href: '/tr/docs/server', description: 'Gömülü v2 backend, yetkilendirme, depolama ve host adaptörleri' },
+          { title: 'Güvenlik Mimarisi', href: '/tr/docs/security', description: 'Same-origin güvenliği, kimlik doğrulama ve tehdit modeli' },
+          { title: 'Dağıtım Rehberi', href: '/tr/docs/deployment', description: 'SQLite, PostgreSQL ve sunucu gerektiren dağıtım' },
           { title: 'Sorun Giderme & SSS', href: '/tr/docs/troubleshooting', description: 'Sık karşılaşılan hata ayıklama kalıpları ve yanıtlar' },
         ],
       },

@@ -2,148 +2,33 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const nextServerCode = `// app/[locale]/page.tsx (Server Component)
+const route = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch);`;
+
+const page = `// app/[locale]/page.tsx
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
-
-export default async function Page({ params }: PageProps) {
+export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-
-  // Pre-fetch published snapshot during SSR with ISR caching
-  const snapshot = await fetchServerSnapshot(locale, {
-    apiBaseUrl: process.env.COPYPATCH_INTERNAL_URL || 'http://127.0.0.1:4040',
-    next: {
-      revalidate: 60, // Revalidate snapshot every 60 seconds or on-demand
-      tags: [\`copypatch-snapshot-\${locale}\`],
-    },
-  });
-
-  return (
-    <NextCopyPatchProvider
-      locale={locale}
-      apiBase="/__copypatch/api/v1"
-      initialSnapshot={snapshot}
-    >
-      <main className="container mx-auto px-4 py-16">
-        <EditableText contentKey="hero.title" as="h1" className="text-5xl font-bold tracking-tight">
-          Next.js Pre-rendered Headline
-        </EditableText>
-
-        <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true} className="text-xl text-zinc-400 mt-4">
-          Rendered on the server with zero layout shift, perfect SEO indexing, and instant client hydration.
-        </EditableText>
-      </main>
-    </NextCopyPatchProvider>
-  );
+  const initialSnapshot = await readPublishedSnapshot(copypatch, locale);
+  return <NextCopyPatchProvider locale={locale} initialSnapshot={initialSnapshot}>
+    <EditableText contentKey="hero.title" as="h1">Welcome</EditableText>
+  </NextCopyPatchProvider>;
 }`;
-
-const revalidateAction = `// app/api/revalidate/route.ts (On-demand ISR webhook)
-import { revalidateTag } from 'next/cache';
-import { NextRequest, NextResponse } from 'next/server';
-
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== \`Bearer \${process.env.REVALIDATE_SECRET}\`) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const { locale } = await request.json().catch(() => ({ locale: 'en' }));
-  revalidateTag(\`copypatch-snapshot-\${locale}\`);
-
-  return NextResponse.json({ revalidated: true, locale, now: Date.now() });
-}`;
-
-const rewriteCode = `// next.config.mjs
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/__copypatch/api/:path*',
-        destination: process.env.NODE_ENV === 'production'
-          ? 'http://127.0.0.1:4040/__copypatch/api/:path*'
-          : 'http://localhost:4040/__copypatch/api/:path*',
-      },
-    ];
-  },
-};
-
-export default nextConfig;`;
 ---
 
-<DocsLayout
-  title="Next.js App Router & SSR"
-  description="How to integrate CopyPatch with Next.js App Router (RSC), pre-rendering snapshots on the server with zero hydration mismatches."
->
-  <h1>Next.js App Router & SSR Integration</h1>
-
-  <p class="lead">
-    The <code>@copypatch/next</code> package provides first-class support for Next.js App Router and React Server Components (RSC). It allows your server to pre-fetch published snapshots during SSR, completely eliminating flash-of-fallback-text and React hydration errors.
-  </p>
-
-  <h2>How It Works</h2>
-  <ol>
-    <li>During server render, <code>fetchServerSnapshot(locale)</code> queries the CopyPatch storage (or local in-memory cache) for the active locale snapshot.</li>
-    <li>The snapshot data is embedded into the Server Component markup and passed as <code>initialSnapshot</code> to <code>NextCopyPatchProvider</code>.</li>
-    <li>When the client mounts, React hydrates immediately using the pre-rendered text without triggering an extra network round-trip.</li>
-    <li>If an authorized editor opens the page with <code>?copypatch=1</code>, the client lazily mounts the edit toolbar and enables inline editing.</li>
-  </ol>
-
-  <h2>1. Server Component Setup</h2>
-  <p>
-    Use <code>fetchServerSnapshot</code> in any Server Component page or layout:
-  </p>
-
-  <CodeBlock code={nextServerCode} lang="tsx" title="app/[locale]/page.tsx" />
-
-  <h2>2. API Proxy Configuration in next.config.mjs</h2>
-  <p>
-    Route <code>/__copypatch/api</code> requests to your CopyPatch backend to preserve same-origin cookie policies and eliminate CORS overhead:
-  </p>
-
-  <CodeBlock code={rewriteCode} lang="javascript" title="next.config.mjs" />
-
-  <h2>3. On-Demand Incremental Static Regeneration (ISR)</h2>
-  <p>
-    If you use Next.js static generation or aggressive caching, invalidate stale snapshots on-demand when an editor publishes changes:
-  </p>
-
-  <CodeBlock code={revalidateAction} lang="typescript" title="app/api/revalidate/route.ts" />
-
-  <h2>Architectural Advantages</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Metric</th>
-        <th>Standard Headless CMS</th>
-        <th>Next.js + CopyPatch</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>SSR Hydration Drift</strong></td>
-        <td>Frequent (mismatched props / async fetches)</td>
-        <td><strong>0ms (Exact snapshot synchronization)</strong></td>
-      </tr>
-      <tr>
-        <td><strong>SEO Crawl Quality</strong></td>
-        <td>Requires heavy fetch waterfall</td>
-        <td><strong>Instant HTML output with custom copy</strong></td>
-      </tr>
-      <tr>
-        <td><strong>Client Bundle Impact</strong></td>
-        <td>15-50 kB CMS SDK</td>
-        <td><strong>&lt; 1 kB gzip client provider</strong></td>
-      </tr>
-      <tr>
-        <td><strong>Edit Experience</strong></td>
-        <td>External administrative portal</td>
-        <td><strong>Inline directly on live Next.js route</strong></td>
-      </tr>
-    </tbody>
-  </table>
+<DocsLayout title="Next.js App Router" description="Mount CopyPatch inside a Next.js App Router application without rewrites or a separate API service.">
+  <h1>Next.js App Router</h1>
+  <p class="lead">Create the v2 route in the application itself. The percent-encoded source folder keeps the public <code>/__copypatch/api/v2</code> URL routable because underscore-prefixed Next source folders are private. There is no <code>next.config</code> rewrite and no backend URL to proxy.</p>
+  <CodeBlock code={route} lang="ts" title="route.ts" />
+  <h2>Render a server snapshot</h2>
+  <p>Reuse the backend instance from the route handler. This reads storage directly during server rendering instead of making an internal HTTP request.</p>
+  <CodeBlock code={page} lang="tsx" title="page.tsx" />
+  <p>Static export cannot serve the catch-all route or write edits. Deploy as a server-capable Next.js application.</p>
 </DocsLayout>

@@ -2,240 +2,43 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const dockerfile = `# Multi-stage Production Dockerfile for CopyPatch Server
-FROM node:20-alpine AS base
-WORKDIR /app
-RUN npm install -g pnpm@11.10.0
+const sqlite = `import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-# Dependencies Stage
-FROM base AS deps
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY packages/core/package.json ./packages/core/
-COPY packages/server/package.json ./packages/server/
-RUN pnpm install --prod --frozen-lockfile
+const persistence = createSQLitePersistence({
+  filename: process.env.COPYPATCH_SQLITE_PATH ?? './data/copypatch.sqlite',
+  busyTimeoutMs: 5_000,
+});
+await persistence.migrate();`;
 
-# Runner Stage
-FROM node:20-alpine AS runner
-WORKDIR /app
+const postgres = `import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
-ENV NODE_ENV=production
-ENV PORT=4040
-ENV DB_PATH=/data/copypatch.sqlite
-
-# Create persistent storage volume mount
-RUN mkdir -p /data && chown -R node:node /data
-VOLUME /data
-
-COPY --from=deps --chown=node:node /app/node_modules ./node_modules
-COPY --from=deps --chown=node:node /app/packages/core/node_modules ./packages/core/node_modules
-COPY --from=deps --chown=node:node /app/packages/server/node_modules ./packages/server/node_modules
-COPY --chown=node:node packages/core/dist ./packages/core/dist
-COPY --chown=node:node packages/server/dist ./packages/server/dist
-COPY --chown=node:node package.json pnpm-workspace.yaml ./
-COPY --chown=node:node packages/core/package.json ./packages/core/
-COPY --chown=node:node packages/server/package.json ./packages/server/
-
-USER node
-EXPOSE 4040
-
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:4040/health || exit 1
-
-CMD ["node", "packages/server/dist/cli/bin.js", "serve", "--port", "4040", "--db", "/data/copypatch.sqlite", "--origin", "https://yourdomain.com"]`;
-
-const dockerCompose = `version: "3.8"
-
-services:
-  copypatch:
-    image: copypatch-server:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:4040:4040"
-    environment:
-      - NODE_ENV=production
-      - PORT=4040
-      - DB_PATH=/data/copypatch.sqlite
-      - ORIGIN=https://my-website.com
-      - MODE=direct
-    volumes:
-      - copypatch_data:/data
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4040/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-
-volumes:
-  copypatch_data:
-    driver: local`;
-
-const systemdUnit = `[Unit]
-Description=CopyPatch Standalone Server
-After=network.target
-
-[Service]
-Type=simple
-User=copypatch
-Group=copypatch
-WorkingDirectory=/var/www/copypatch
-ExecStart=/usr/bin/node packages/server/dist/cli/bin.js serve --port 4040 --db /var/lib/copypatch/copypatch.sqlite --origin https://my-website.com
-Restart=always
-RestartSec=10
-Environment=NODE_ENV=production
-
-# Security Sandbox Directives
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths=/var/lib/copypatch
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target`;
-
-const caddyfile = `my-website.com {
-    encode gzip zstd
-
-    # Route CopyPatch API endpoints directly to backend server
-    handle /__copypatch/api/v1/* {
-        reverse_proxy 127.0.0.1:4040 {
-            header_up Host {host}
-            header_up X-Real-IP {remote_host}
-            header_up X-Forwarded-Proto {scheme}
-        }
-    }
-
-    # Public static frontend or Next.js server
-    handle {
-        reverse_proxy 127.0.0.1:3000
-    }
-}`;
-
-const flyConfig = `app = "my-copypatch-server"
-primary_region = "fra"
-
-[mounts]
-  source = "copypatch_data"
-  destination = "/data"
-
-[http_service]
-  internal_port = 4040
-  force_https = true
-  auto_stop_machines = false
-  auto_start_machines = true
-  min_machines_running = 1
-
-[[vm]]
-  size = "shared-cpu-1x"
-  memory = "256mb"`;
-
-const litestreamConfig = `dbs:
-  - path: /data/copypatch.sqlite
-    replicas:
-      - type: s3
-        bucket: my-copypatch-backups
-        path: production/copypatch.sqlite
-        endpoint: s3.eu-central-1.amazonaws.com
-        access-key-id: \${AWS_ACCESS_KEY_ID}
-        secret-access-key: \${AWS_SECRET_ACCESS_KEY}
-        retention: 720h`;
+const persistence = createPostgresPersistence({
+  connectionString: process.env.DATABASE_URL!,
+  schema: 'copypatch',
+});
+await persistence.migrate();`;
 ---
 
-<DocsLayout
-  title="Deployment Guide"
-  description="Production self-hosting recipes for CopyPatch with Docker, systemd, Caddy, Nginx, Fly.io, Railway, and Litestream."
->
-  <h1>Self-Hosted Deployment Guide</h1>
+<DocsLayout title="Deployment" description="Deploy CopyPatch v2 with the host application, using SQLite or PostgreSQL persistence.">
+  <h1>Deployment</h1>
+  <p class="lead">Deploy CopyPatch inside the same server-capable application that renders your site. The host route at <code>/__copypatch/api/v2</code> receives browser requests directly.</p>
 
-  <p class="lead">
-    CopyPatch is designed for zero-dependency, deterministic self-hosting. Because persistence lives in a single SQLite database in Write-Ahead Logging (WAL) mode with zero external service dependencies, a standard single-node server handles millions of monthly requests for under $5/month.
-  </p>
-
-  <h2>Deployment Strategies</h2>
+  <h2>Choose storage</h2>
   <table>
-    <thead>
-      <tr>
-        <th>Method</th>
-        <th>Best For</th>
-        <th>Persistence Mechanism</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Storage</th><th>Use when</th><th>Operation</th></tr></thead>
     <tbody>
-      <tr>
-        <td><strong>Docker & Compose</strong></td>
-        <td>Containerized infrastructure (VPS, Coolify, Portainer)</td>
-        <td>Mounted Volume (<code>/data</code>)</td>
-      </tr>
-      <tr>
-        <td><strong>systemd Unit</strong></td>
-        <td>Bare-metal Linux / Ubuntu / Debian VM</td>
-        <td>Local Directory (<code>/var/lib/copypatch</code>)</td>
-      </tr>
-      <tr>
-        <td><strong>Fly.io / Railway</strong></td>
-        <td>Managed Cloud Containers</td>
-        <td>Attached Persistent Disk Volume</td>
-      </tr>
+      <tr><td>SQLite</td><td>One application instance or local deployment</td><td>Persist the database file and its WAL sidecar files.</td></tr>
+      <tr><td>PostgreSQL</td><td>Several application instances need the same copy and sessions</td><td>Provide a protected connection string and run migrations.</td></tr>
     </tbody>
   </table>
+  <CodeBlock code={sqlite} lang="ts" title="SQLite" />
+  <CodeBlock code={postgres} lang="ts" title="PostgreSQL" />
 
-  <h2>1. Docker Production Image</h2>
-  <p>
-    Use a multi-stage Docker build to keep your container slim and ensure the SQLite database directory is mounted as a persistent volume:
-  </p>
-
-  <CodeBlock code={dockerfile} lang="dockerfile" title="Dockerfile" />
-
-  <h2>2. Docker Compose Configuration</h2>
-  <p>
-    Deploy CopyPatch alongside your host application behind a reverse proxy using Docker Compose:
-  </p>
-
-  <CodeBlock code={dockerCompose} lang="yaml" title="docker-compose.yml" />
-
-  <h2>3. Native Linux systemd Service</h2>
-  <p>
-    For dedicated Linux virtual machines (DigitalOcean, Hetzner, AWS EC2, Linode), manage the process with systemd:
-  </p>
-
-  <CodeBlock code={systemdUnit} lang="ini" title="/etc/systemd/system/copypatch.service" />
-
-  <p>
-    Enable and start the service:
-  </p>
-  <pre><code>sudo systemctl daemon-reload
-sudo systemctl enable --now copypatch</code></pre>
-
-  <h2>4. Reverse Proxy Setup (Caddy / Nginx)</h2>
-  <p>
-    Serving both your frontend app and CopyPatch under the same origin (or cleanly routing <code>/__copypatch/api/v1</code>) ensures cookies, CSRF tokens, and SameSite validation operate reliably without cross-origin friction.
-  </p>
-
-  <CodeBlock code={caddyfile} lang="nginx" title="Caddyfile" />
-
-  <h2>5. Fly.io Deployment with Persistent Storage</h2>
-  <p>
-    Create a Fly.io persistent volume and deploy with <code>fly.toml</code>:
-  </p>
-  <pre><code>fly volumes create copypatch_data --region fra --size 1</code></pre>
-
-  <CodeBlock code={flyConfig} lang="toml" title="fly.toml" />
-
-  <h2>6. Continuous Backups with Litestream</h2>
-  <p>
-    Because CopyPatch runs SQLite in WAL mode, you can use <strong>Litestream</strong> to replicate changes to AWS S3, Cloudflare R2, or Backblaze B2 in real-time with zero read/write locks:
-  </p>
-
-  <CodeBlock code={litestreamConfig} lang="yaml" title="/etc/litestream.yml" />
-
-  <h2>Production Checklist</h2>
+  <h2>Production boundary</h2>
   <ul>
-    <li><strong>HTTPS:</strong> Always enable TLS/HTTPS in production to enforce <code>Secure</code> and <code>SameSite=Strict</code> session cookies.</li>
-    <li><strong>Passphrase Complexity:</strong> Use an editor passphrase with at least 16 random characters.</li>
-    <li><strong>Allowed Origin:</strong> Set <code>--origin https://yourdomain.com</code> to restrict write access exclusively to your legitimate domain.</li>
-    <li><strong>Disk Mounting:</strong> Verify that <code>copypatch.sqlite</code>, <code>copypatch.sqlite-wal</code>, and <code>copypatch.sqlite-shm</code> reside on persistent storage.</li>
+    <li>Serve the application over HTTPS and retain the same origin for page and API.</li>
+    <li>Do not add a separate CopyPatch container, reverse proxy rule, or CORS configuration.</li>
+    <li>Run storage migrations before accepting edits and include the database in your backup plan.</li>
+    <li>Static-only hosting cannot offer CopyPatch editing because it cannot run the route or storage adapter.</li>
   </ul>
 </DocsLayout>

@@ -63,8 +63,8 @@ export function CopyPatchEditor({ store, apiBase }: CopyPatchEditorProps) {
         });
         if (res.ok) {
           const data: SessionAuthResponse = await res.json();
-          if (data.authenticated && data.csrfToken) {
-            store.setAuthenticated(true, data.csrfToken, data.publishingMode);
+          if (isUsableSession(data)) {
+            store.setAuthenticated(true, data.csrfToken ?? null, data.publishingMode);
             // Fetch complete editor snapshot for active locale
             fetchEditorSnapshot();
           } else {
@@ -104,8 +104,8 @@ export function CopyPatchEditor({ store, apiBase }: CopyPatchEditorProps) {
   // Observe [data-copypatch] attributes
   useDataAttributeObserver(store);
 
-  const handleAuthSuccess = async (csrfToken: string) => {
-    store.setAuthenticated(true, csrfToken);
+  const handleAuthSuccess = async (csrfToken: string | null, publishingMode?: SessionAuthResponse['publishingMode']) => {
+    store.setAuthenticated(true, csrfToken, publishingMode);
     const state = store.getState();
     try {
       const res = await fetch(
@@ -169,4 +169,8 @@ export function CopyPatchEditor({ store, apiBase }: CopyPatchEditorProps) {
     </>,
     portalRoot
   );
+}
+
+function isUsableSession(data: SessionAuthResponse): boolean {
+  return data.authenticated && (data.requiresCsrf === false || Boolean(data.csrfToken));
 }

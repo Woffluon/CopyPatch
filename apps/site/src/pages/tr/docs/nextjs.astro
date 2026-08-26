@@ -2,148 +2,30 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const nextServerCode = `// app/[locale]/page.tsx (Sunucu Bileseni / Server Component)
-import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
+const route = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
 
-interface PageProps {
-  params: Promise<{ locale: string }>;
-}
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch);`;
 
-export default async function Page({ params }: PageProps) {
-  const { locale } = await params;
+const page = `import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
 
-  // SSR sirasinda yayinlanan anlik goruntuyu ISR onbellegiyle cekin
-  const snapshot = await fetchServerSnapshot(locale, {
-    apiBaseUrl: process.env.COPYPATCH_INTERNAL_URL || 'http://127.0.0.1:4040',
-    next: {
-      revalidate: 60, // 60 saniyede bir veya istege bagli webhook ile yenileyin
-      tags: [\`copypatch-snapshot-\${locale}\`],
-    },
-  });
-
-  return (
-    <NextCopyPatchProvider
-      locale={locale}
-      apiBase="/__copypatch/api/v1"
-      initialSnapshot={snapshot}
-    >
-      <main className="container mx-auto px-4 py-16">
-        <EditableText contentKey="hero.title" as="h1" className="text-5xl font-bold tracking-tight">
-          Next.js ile Sunucuda Önceden Render Edilen Başlık
-        </EditableText>
-
-        <EditableText contentKey="hero.subtitle" as="p" allowLineBreaks={true} className="text-xl text-zinc-400 mt-4">
-          Sıfır yerleşim kayması, tam SEO indeksleme ve anında istemci hidrasyonu ile sunucuda oluşturulur.
-        </EditableText>
-      </main>
-    </NextCopyPatchProvider>
-  );
+export default async function Page() {
+  const snapshot = await readPublishedSnapshot(copypatch, 'tr');
+  return <NextCopyPatchProvider locale="tr" initialSnapshot={snapshot}>
+    <EditableText contentKey="hero.title" as="h1">Başlık</EditableText>
+  </NextCopyPatchProvider>;
 }`;
-
-const revalidateAction = `// app/api/revalidate/route.ts (İsteğe bağlı ISR webhook rotası)
-import { revalidateTag } from 'next/cache';
-import { NextRequest, NextResponse } from 'next/server';
-
-export async function POST(request: NextRequest) {
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== \`Bearer \${process.env.REVALIDATE_SECRET}\`) {
-    return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 401 });
-  }
-
-  const { locale } = await request.json().catch(() => ({ locale: 'tr' }));
-  revalidateTag(\`copypatch-snapshot-\${locale}\`);
-
-  return NextResponse.json({ revalidated: true, locale, now: Date.now() });
-}`;
-
-const rewriteCode = `// next.config.mjs
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/__copypatch/api/:path*',
-        destination: process.env.NODE_ENV === 'production'
-          ? 'http://127.0.0.1:4040/__copypatch/api/:path*'
-          : 'http://localhost:4040/__copypatch/api/:path*',
-      },
-    ];
-  },
-};
-
-export default nextConfig;`;
 ---
 
-<DocsLayout
-  title="Next.js App Router ve SSR Entegrasyonu"
-  description="Next.js App Router (RSC) ile CopyPatch entegrasyonu, sunucu tarafında anlık görüntü ön yükleme ve 0ms hidrasyon uyumu."
->
-  <h1>Next.js App Router ve SSR Entegrasyonu</h1>
-
-  <p class="lead">
-    <code>@copypatch/next</code> paketi, Next.js App Router ve React Server Components (RSC) için birinci sınıf destek sağlar. Sunucunuzun SSR aşamasında yayınlanan içeriği önceden çekmesine olanak tanır; metin sıçramalarını ve React hidrasyon uyumsuzluklarını tamamen ortadan kaldırır.
-  </p>
-
-  <h2>Çalışma Mantığı</h2>
-  <ol>
-    <li>Sunucu render aşamasında, <code>fetchServerSnapshot(locale)</code> fonksiyonu aktif dil için CopyPatch depolamasından anlık görüntüyü çeker.</li>
-    <li>Anlık görüntü verisi Sunucu Bileşeni işaretlemesine gömülür ve <code>NextCopyPatchProvider</code> bileşenine <code>initialSnapshot</code> olarak aktarılır.</li>
-    <li>İstemci tarayıcıda yüklendiğinde, React ek bir ağ isteği atmadan sunucuda oluşturulan metinle anında hidrasyon sağlar.</li>
-    <li>Yetkili bir editör sayfayı <code>?copypatch=1</code> ile açtığında, düzenleme çubuğu dinamik olarak yüklenir ve sayfa içi düzenleme aktifleşir.</li>
-  </ol>
-
-  <h2>1. Sunucu Bileşeni Kurulumu</h2>
-  <p>
-    Herhangi bir Sunucu Bileşeni sayfası veya yerleşiminde <code>fetchServerSnapshot</code> fonksiyonunu kullanın:
-  </p>
-
-  <CodeBlock code={nextServerCode} lang="tsx" title="app/[locale]/page.tsx" />
-
-  <h2>2. next.config.mjs API Proxy Yapılandırması</h2>
-  <p>
-    Same-origin çerez politikalarını korumak ve CORS karmaşasını önlemek için <code>/__copypatch/api</code> isteklerini CopyPatch sunucusuna yönlendirin:
-  </p>
-
-  <CodeBlock code={rewriteCode} lang="javascript" title="next.config.mjs" />
-
-  <h2>3. İsteğe Bağlı Artımlı Statik Yenileme (ISR)</h2>
-  <p>
-    Next.js statik oluşturma veya önbellekleme kullanıyorsanız, bir editör değişiklik yayınladığında eski anlık görüntüleri isteğe bağlı olarak temizleyebilirsiniz:
-  </p>
-
-  <CodeBlock code={revalidateAction} lang="typescript" title="app/api/revalidate/route.ts" />
-
-  <h2>Mimari Karşılaştırma</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Metrik</th>
-        <th>Standart Headless CMS</th>
-        <th>Next.js + CopyPatch</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>SSR Hidrasyon Sapması</strong></td>
-        <td>Sık yaşanır (uyuşmayan prop'lar / gecikmeli istekler)</td>
-        <td><strong>0ms (Tam anlık görüntü eşleşmesi)</strong></td>
-      </tr>
-      <tr>
-        <td><strong>SEO Tarama Kalitesi</strong></td>
-        <td>Ağır veri çekme şelalesi gerektirir</td>
-        <td><strong>Özelleştirilmiş metinle anında HTML çıktısı</strong></td>
-      </tr>
-      <tr>
-        <td><strong>İstemci Paket Boyutu</strong></td>
-        <td>15-50 kB CMS SDK</td>
-        <td><strong>&lt; 1 kB gzip istemci sağlayıcısı</strong></td>
-      </tr>
-      <tr>
-        <td><strong>Düzenleme Deneyimi</strong></td>
-        <td>Harici yönetim paneli</td>
-        <td><strong>Doğrudan canlı Next.js rotasında satır içi</strong></td>
-      </tr>
-    </tbody>
-  </table>
+<DocsLayout title="Next.js App Router" description="CopyPatch v2'yi Next.js App Router içinde aynı origin altında çalıştırın.">
+  <h1>Next.js App Router</h1>
+  <p class="lead">Yüzde kodlu klasör adı, Next'in alt çizgi ile başlayan klasörleri private saymasına rağmen public <code>/__copypatch/api/v2</code> yolunun çalışmasını sağlar.</p>
+  <CodeBlock code={route} lang="ts" title="route.ts" />
+  <h2>Doğrudan sunucu okuması</h2>
+  <p>Server Component, kendi backend nesnesini kullanır; localhost adresine HTTP isteği veya <code>next.config</code> rewrite gerekmez.</p>
+  <CodeBlock code={page} lang="tsx" title="page.tsx" />
 </DocsLayout>

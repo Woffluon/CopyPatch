@@ -1,171 +1,165 @@
-import { test, expect } from '@playwright/test';
-import { spawn, ChildProcess } from 'node:child_process';
-import path from 'node:path';
-import fs from 'node:fs';
+import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
-const DB_PATH = path.resolve('e2e-copypatch.sqlite');
+const passphrase = 'copypatch-e2e-passphrase';
+const apiPath = '/__copypatch/api/v2';
 
-test.describe('CopyPatch End-to-End Browser & Acceptance Tests', () => {
-  let serverProcess: ChildProcess;
-  let viteProcess: ChildProcess;
+function heroTitle(page: Page) {
+  return page.locator('[data-copypatch="hero.title"]');
+}
 
-  test.beforeAll(async () => {
-    // 1. Clean test DB
-    if (fs.existsSync(DB_PATH)) {
-      try { fs.unlinkSync(DB_PATH); } catch {}
-    }
+function toolbar(page: Page) {
+  return page.getByRole('complementary', { name: 'CopyPatch Edit Toolbar' });
+}
 
-    // 2. Initialize database & admin password
-    const { initDatabase, hashPassword } = await import('../../packages/server/dist/index.js');
-    const passHash = await hashPassword('correct-horse-battery-staple-2026');
+async function openEditor(page: Page): Promise<void> {
+  await page.goto('/?copypatch=1');
+  await expect(page.getByRole('dialog', { name: 'CopyPatch Editor' })).toBeVisible();
 
-    const dbsToClean = [DB_PATH, path.resolve('copypatch.sqlite')];
-    for (const p of dbsToClean) {
-      try {
-        const dbConn = initDatabase(p);
-        dbConn.sqlite.exec(`
-          DELETE FROM content_entries;
-          DELETE FROM content_state;
-          DELETE FROM sessions;
-          INSERT OR REPLACE INTO auth_credentials (id, password_hash, updated_at)
-          VALUES (1, '${passHash}', ${Date.now()});
-        `);
-        dbConn.sqlite.close();
-      } catch {}
-    }
+  const sessionResponse = page.waitForResponse((response) =>
+    response.url().endsWith(`${apiPath}/session`) && response.request().method() === 'POST',
+  );
+  await page.getByLabel('Passphrase').fill(passphrase);
+  await page.getByRole('button', { name: 'Unlock Editor' }).click();
 
-    // 3. Start standalone CopyPatch server in direct mode
-    serverProcess = spawn(
-      'node',
-      [
-        path.resolve('packages/server/dist/cli/bin.js'),
-        'serve',
-        '--port', '4040',
-        '--db', DB_PATH,
-        '--origin', 'http://localhost:5173',
-        '--mode', 'direct',
-      ],
-      { stdio: 'pipe' }
+  const response = await sessionResponse;
+  expect(response.status()).toBe(200);
+  expect(new URL(response.url()).origin).toBe(new URL(page.url()).origin);
+  await expect(toolbar(page)).toBeVisible();
+}
+
+async function replaceHeroTitle(page: Page, text: string): Promise<void> {
+  const title = heroTitle(page);
+  await title.click();
+  await title.fill(text);
+  await title.blur();
+  await expect(toolbar(page)).toContainText('1 unsaved edit');
+}
+
+async function saveDraft(page: Page, expectedStatus = 200): Promise<void> {
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes('/editor/en/changes') && response.request().method() === 'PUT',
+  );
+  await toolbar(page).getByRole('button', { name: 'Save Draft' }).click();
+  expect((await responsePromise).status()).toBe(expectedStatus);
+}
+
+async function publishDraft(page: Page): Promise<void> {
+  const responsePromise = page.waitForResponse((response) =>
+    response.url().includes('/editor/en/publish') && response.request().method() === 'POST',
+  );
+  await toolbar(page).getByRole('button', { name: 'Publish' }).click();
+  expect((await responsePromise).status()).toBe(200);
+}
+
+async function visitorPage(context: BrowserContext, suffix: string): Promise<Page> {
+  const page = await context.newPage();
+  await page.goto(`/?e2e=${suffix}`);
+  return page;
+}
+
+test.describe('CopyPatch v2 same-origin editing', () => {
+  test('serves a public snapshot without loading editor controls', async ({ page }) => {
+    await page.goto('/');
+
+    await expect(heroTitle(page)).toBeVisible();
+    await expect(page.locator('#copypatch-portal-root')).toHaveCount(0);
+  });
+
+  test('authenticates on the host origin, saves a draft, and publishes it', async ({ page, context }) => {
+    const publishedText = `Published through v2 ${Date.now()}`;
+    await openEditor(page);
+    await replaceHeroTitle(page, publishedText);
+    await saveDraft(page);
+    await expect(toolbar(page)).toContainText('1 saved draft');
+
+    const beforePublish = await visitorPage(context, 'before-publish');
+    await expect(heroTitle(beforePublish)).not.toHaveText(publishedText);
+
+    await publishDraft(page);
+    const published = await visitorPage(context, 'after-publish');
+    await expect(heroTitle(published)).toHaveText(publishedText);
+  });
+
+  test('keeps markup-like copy inert after publishing', async ({ page, context }) => {
+    const inertText = '<script>window.__copypatchXss = true</script>';
+    await openEditor(page);
+    await replaceHeroTitle(page, inertText);
+    await saveDraft(page);
+    await publishDraft(page);
+
+    const visitor = await visitorPage(context, 'xss');
+    await expect(heroTitle(visitor)).toHaveText(inertText);
+    await expect(heroTitle(visitor).locator('script')).toHaveCount(0);
+    await expect(visitor.evaluate(() => (window as Window & { __copypatchXss?: boolean }).__copypatchXss)).resolves.toBeUndefined();
+  });
+
+  test('isolates drafts and published snapshots by locale', async ({ page, context }) => {
+    const turkishText = `Turkiye v2 ${Date.now()}`;
+    await openEditor(page);
+    await page.getByRole('button', { name: 'TR' }).click();
+    await expect(toolbar(page)).toContainText('tr');
+
+    const title = heroTitle(page);
+    await title.click();
+    await title.fill(turkishText);
+    await title.blur();
+
+    const saveResponse = page.waitForResponse((response) =>
+      response.url().includes('/editor/tr/changes') && response.request().method() === 'PUT',
     );
+    await toolbar(page).getByRole('button', { name: 'Save Draft' }).click();
+    expect((await saveResponse).status()).toBe(200);
 
-    // 4. Start Vite dev server directly via node
-    const viteBin = path.resolve('examples/vite-react/node_modules/vite/bin/vite.js');
-    viteProcess = spawn(
-      'node',
-      [viteBin, '--port', '5173'],
-      {
-        cwd: path.resolve('examples/vite-react'),
-        stdio: 'pipe',
-      }
+    const publishResponse = page.waitForResponse((response) =>
+      response.url().includes('/editor/tr/publish') && response.request().method() === 'POST',
     );
+    await toolbar(page).getByRole('button', { name: 'Publish' }).click();
+    expect((await publishResponse).status()).toBe(200);
 
-    // Wait for servers to be fully up and ready
-    await new Promise((resolve) => setTimeout(resolve, 4000));
+    await page.getByRole('button', { name: 'EN', exact: true }).click();
+    await expect(toolbar(page)).toContainText('en');
+    await expect(title).not.toHaveText(turkishText);
+
+    const englishVisitor = await visitorPage(context, 'english-locale');
+    await expect(heroTitle(englishVisitor)).not.toHaveText(turkishText);
   });
 
-  test.afterAll(async () => {
-    if (viteProcess) {
-      try { viteProcess.kill(); } catch {}
+  test('rejects a stale draft save without overwriting the newer draft', async ({ browser }) => {
+    const firstContext = await browser.newContext();
+    const secondContext = await browser.newContext();
+    const first = await firstContext.newPage();
+    const second = await secondContext.newPage();
+    const winningText = `Conflict winner ${Date.now()}`;
+    const staleText = `Conflict stale ${Date.now()}`;
+
+    try {
+      await openEditor(first);
+      await openEditor(second);
+
+      await replaceHeroTitle(first, winningText);
+      await saveDraft(first);
+
+      await replaceHeroTitle(second, staleText);
+      await saveDraft(second, 409);
+      await expect(toolbar(second)).toContainText('The editor snapshot has changed.');
+
+      await publishDraft(first);
+      const visitor = await visitorPage(firstContext, 'conflict');
+      await expect(heroTitle(visitor)).toHaveText(winningText);
+    } finally {
+      await firstContext.close();
+      await secondContext.close();
     }
-    if (serverProcess) {
-      try { serverProcess.kill(); } catch {}
-    }
-    if (fs.existsSync(DB_PATH)) {
-      try { fs.unlinkSync(DB_PATH); } catch {}
-    }
   });
 
-  test('1. Public visitor sees fallback text without editor UI overhead', async ({ page }) => {
-    await page.goto('http://localhost:5173');
+  test('keeps the public snapshot and mobile navigation usable on a phone viewport', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Covered by the mobile Chromium project.');
+    await page.goto('/');
+    await expect(heroTitle(page)).toBeVisible();
 
-    // Verify hero fallback title is visible
-    const heroTitle = page.locator('[data-copypatch="home.hero.title"]');
-    await expect(heroTitle).toHaveText('Build something people actually use.');
-
-    // Verify no editor toolbar or portal is loaded
-    const portal = page.locator('#copypatch-portal-root');
-    await expect(portal).toHaveCount(0);
-  });
-
-  test('2. Editor workflow: login, caret placement, inline text edit, persistence and XSS safety', async ({ page }) => {
-    // 1. Open with ?copypatch=1
-    await page.goto('http://localhost:5173?copypatch=1');
-
-    // 2. Expect login modal
-    const modalTitle = page.locator('#copypatch-login-title');
-    await expect(modalTitle).toBeVisible();
-
-    // 3. Login with password
-    await page.fill('#copypatch-password', 'correct-horse-battery-staple-2026');
-    await page.click('button:has-text("Unlock Editor")');
-
-    // 4. Toolbar appears
-    const toolbar = page.locator('aside[aria-label="CopyPatch Edit Toolbar"]');
-    await expect(toolbar).toBeVisible();
-
-    // 5. Select hero title and edit text directly inline
-    const heroTitle = page.locator('[data-copypatch="home.hero.title"]');
-    await heroTitle.click();
-    await heroTitle.fill('Production Ready Inline Copy Editing with CopyPatch!');
-
-    // 6. Save changes
-    const saveButton = page.locator('button:has-text("Save")');
-    await saveButton.click();
-
-    // Wait for save to complete
-    await expect(page.locator('text=Ready to edit')).toBeVisible({ timeout: 5000 });
-
-    // 7. Reload page in normal visitor mode (no ?copypatch=1)
-    await page.goto('http://localhost:5173');
-    await expect(heroTitle).toHaveText('Production Ready Inline Copy Editing with CopyPatch!');
-
-    // 8. Re-open editor to test XSS inert string
-    await page.goto('http://localhost:5173?copypatch=1');
-    await heroTitle.click();
-    await heroTitle.fill('<script>alert("XSS")</script>');
-    await page.click('button:has-text("Save")');
-    await expect(page.locator('text=Ready to edit')).toBeVisible({ timeout: 5000 });
-
-    // 9. Verify in normal visitor mode that the script is rendered strictly as inert literal text
-    await page.goto('http://localhost:5173');
-    await expect(heroTitle).toHaveText('<script>alert("XSS")</script>');
-  });
-
-  test('3. Multilingual isolation: Turkish editing does not alter English copy', async ({ page }) => {
-    // 1. Open page in edit mode & login
-    await page.goto('http://localhost:5173?copypatch=1');
-    await page.fill('#copypatch-password', 'correct-horse-battery-staple-2026');
-    await page.click('button:has-text("Unlock Editor")');
-    await expect(page.locator('aside[aria-label="CopyPatch Edit Toolbar"]')).toBeVisible();
-
-    // 2. Switch to Turkish locale
-    await page.click('button:has-text("TR")');
-
-    const heroTitle = page.locator('[data-copypatch="home.hero.title"]');
-    await expect(heroTitle).toHaveText('İnsanların gerçekten kullandığı şeyler üretin.');
-
-    // 3. Edit Turkish copy
-    await heroTitle.click();
-    await heroTitle.fill('Türkiye için özel olarak güncellenmiş başlık');
-
-    await page.click('button:has-text("Save")');
-    await expect(page.locator('text=Ready to edit')).toBeVisible({ timeout: 5000 });
-
-    // 4. Switch back to English and verify English copy remains completely unchanged
-    await page.click('button:has-text("EN")');
-    await expect(heroTitle).toHaveText('<script>alert("XSS")</script>');
-  });
-
-  test('4. Backend offline resilience: site remains fully usable on server outage', async ({ page }) => {
-    // 1. Kill backend server process
-    if (serverProcess) {
-      try { serverProcess.kill(); } catch {}
-    }
-
-    // 2. Open client page - must render fallback without blanking or throwing fatal error
-    await page.goto('http://localhost:5173');
-    const heroTitle = page.locator('[data-copypatch="home.hero.title"]');
-    await expect(heroTitle).toBeVisible();
-    await expect(page.locator('text=Features')).toBeVisible();
+    await page.getByRole('button', { name: 'Open navigation menu' }).click();
+    await expect(page.getByRole('dialog', { name: 'Mobile Navigation' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: 'Mobile Navigation' })).toHaveCount(0);
   });
 });

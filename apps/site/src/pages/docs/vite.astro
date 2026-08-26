@@ -2,68 +2,25 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const viteConfig = `// vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
+const express = `import express from 'express';
+import { createCopyPatchBackend } from '@copypatch/backend';
+import { expressMiddleware } from '@copypatch/node';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/__copypatch/api': {
-        target: 'http://localhost:4040',
-        changeOrigin: true,
-        secure: false,
-      },
-    },
-  },
-});`;
+const app = express();
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+const backend = createCopyPatchBackend({ persistence, passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH! });
 
-const devScripts = `{
-  "scripts": {
-    "dev:site": "vite",
-    "dev:server": "copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173",
-    "dev": "concurrently \"pnpm run dev:server\" \"pnpm run dev:site\"",
-    "build": "tsc && vite build"
-  }
-}`;
+// Mount before body parsers and the SPA fallback.
+app.use('/__copypatch/api/v2', expressMiddleware(backend));
+app.use(express.static('dist'));
+app.listen(3000);`;
 ---
 
-<DocsLayout
-  title="Vite & React Setup"
-  description="How to configure Vite dev server proxy, concurrent development scripts, and production builds with CopyPatch."
->
-  <h1>Vite & React Setup</h1>
-
-  <p class="lead">
-    Integrating CopyPatch into a Vite + React application takes less than 2 minutes. By configuring a lightweight proxy in <code>vite.config.ts</code>, all API requests route directly to your CopyPatch backend under the same origin.
-  </p>
-
-  <h2>1. Configure Vite Proxy</h2>
-  <p>
-    Update <code>vite.config.ts</code> to forward <code>/__copypatch/api</code> calls to your local CopyPatch server:
-  </p>
-
-  <CodeBlock code={viteConfig} lang="typescript" title="vite.config.ts" />
-
-  <h2>2. Concurrent Development Script</h2>
-  <p>
-    Add a unified dev command to your <code>package.json</code> using <code>concurrently</code>:
-  </p>
-
-  <CodeBlock code={devScripts} lang="json" title="package.json" />
-
-  <h2>3. Start Developing</h2>
-  <pre><code>pnpm install -D concurrently
-pnpm run dev</code></pre>
-
-  <p>
-    Open <code>http://localhost:5173?copypatch=1</code> in your browser to unlock the editor!
-  </p>
-
-  <h2>Production Static Build</h2>
-  <p>
-    When running <code>vite build</code>, Vite compiles pure static HTML, CSS, and JS. The visitor bundle contains only the minimal <code>&lt;CopyPatchProvider&gt;</code> runtime (&lt; 1 kB gzip). The editor toolbar and auth modal are code-split into a separate chunk and only downloaded when <code>?copypatch=1</code> is requested.
-  </p>
+<DocsLayout title="Vite and Node" description="Use Vite for the client build and mount CopyPatch in the Node application server.">
+  <h1>Vite + Node</h1>
+  <p class="lead">Vite builds the client. A Node server owns the same-origin CopyPatch route, storage, and authentication. Do not configure a Vite development proxy for CopyPatch v2.</p>
+  <CodeBlock code={express} lang="ts" title="server.ts" />
+  <p>Use the native, Fastify, or Hono adapter instead when that matches the host server. Mount the handler before any middleware that consumes request bodies.</p>
 </DocsLayout>

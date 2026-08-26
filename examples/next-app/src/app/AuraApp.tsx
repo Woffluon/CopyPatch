@@ -381,8 +381,8 @@ function AuraLandingPage({
                   </EditableText>
                   <EditableText contentKey="card3.desc" as="p" className="aura-card-desc">
                     {locale === 'en'
-                      ? 'Pre-renders snapshot with fetchServerSnapshot() for 0ms hydration mismatch and perfect SEO.'
-                      : '0ms hidrasyon uyumsuzluğu ve tam SEO için fetchServerSnapshot() ile anlık görüntüyü önceden oluşturur.'}
+                      ? 'Pre-renders a snapshot directly from the embedded backend for 0ms hydration mismatch and perfect SEO.'
+                      : '0ms hidrasyon uyumsuzluğu ve tam SEO için gömülü backend’den anlık görüntüyü doğrudan oluşturur.'}
                   </EditableText>
                 </div>
               </div>
@@ -431,10 +431,10 @@ function AuraLandingPage({
 
                 <div className="aura-rsc-code">
                   <div style={{ color: '#64748b', marginBottom: '8px' }}>// app/page.tsx (Server Component)</div>
-                  <div><span style={{ color: '#06b6d4' }}>import</span> &#123; fetchServerSnapshot &#125; <span style={{ color: '#06b6d4' }}>from</span> <span style={{ color: '#a7f3d0' }}>&apos;@copypatch/next/server&apos;</span>;</div>
+                  <div><span style={{ color: '#06b6d4' }}>import</span> &#123; readPublishedSnapshot &#125; <span style={{ color: '#06b6d4' }}>from</span> <span style={{ color: '#a7f3d0' }}>&apos;@copypatch/next/server&apos;</span>;</div>
                   <div style={{ marginTop: '8px' }}><span style={{ color: '#06b6d4' }}>export default async function</span> <span style={{ color: '#93c5fd' }}>Page</span>() &#123;</div>
                   <div style={{ paddingLeft: '16px' }}>
-                    <span style={{ color: '#06b6d4' }}>const</span> snapshot = <span style={{ color: '#06b6d4' }}>await</span> fetchServerSnapshot(<span style={{ color: '#a7f3d0' }}>&apos;en&apos;</span>);
+                    <span style={{ color: '#06b6d4' }}>const</span> snapshot = <span style={{ color: '#06b6d4' }}>await</span> readPublishedSnapshot(backend, <span style={{ color: '#a7f3d0' }}>&apos;en&apos;</span>);
                   </div>
                   <div style={{ paddingLeft: '16px' }}>
                     <span style={{ color: '#06b6d4' }}>return</span> &lt;<span style={{ color: '#f43f5e' }}>NextCopyPatchProvider</span> initialSnapshot=&#123;snapshot&#125;&gt;...&lt;/<span style={{ color: '#f43f5e' }}>NextCopyPatchProvider</span>&gt;;
@@ -540,7 +540,7 @@ export default function AuraApp({ initialSnapshot }: AuraAppProps) {
   return (
     <NextCopyPatchProvider
       locale={locale}
-      apiBase="/__copypatch/api/v1"
+      apiBase="/__copypatch/api/v2"
       initialSnapshot={initialSnapshot}
     >
       <AuraLandingPage locale={locale} setLocale={setLocale} />

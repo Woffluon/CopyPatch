@@ -1,6 +1,6 @@
 {
   "name": "copypatch-monorepo",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "private": true,
   "description": "Open-Source Inline Copy Editing System for React",
   "type": "module",
@@ -9,11 +9,11 @@
     "node": ">=20.0.0"
   },
   "scripts": {
-    "dev:server": "node packages/server/dist/cli/bin.js serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173",
     "dev:vite": "pnpm --filter \"example-vite-react\" run dev",
     "dev:next": "pnpm --filter \"example-next-app\" run dev",
     "dev:site": "pnpm --filter \"site\" run dev",
-    "init:db": "node packages/server/dist/cli/bin.js init --db ./copypatch.sqlite",
+    "copypatch:migrate:sqlite": "node packages/node/dist/cli/bin.js migrate --storage sqlite",
+    "copypatch:doctor": "node packages/node/dist/cli/bin.js doctor",
     "build": "pnpm --filter \"./packages/*\" run build",
     "build:site": "pnpm --filter \"site\" run build",
     "test": "vitest run && pnpm run test:release",
@@ -25,13 +25,17 @@
     "clean": "pnpm -r --parallel exec rm -rf dist .turbo node_modules",
     "release:prepare": "node scripts/release/prepare-version.mjs",
     "release:verify": "node scripts/release/check-version.mjs",
-    "release:check": "node scripts/release/check-version.mjs --history HEAD"
+    "release:check": "node scripts/release/check-version.mjs --history HEAD",
+    "release:pack": "node scripts/release/pack-packages.mjs"
   },
   "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@testing-library/react": "^16.3.2",
     "@types/node": "^24.13.3",
-    "typescript": "^5.9.3",
-    "vitest": "^3.2.7",
+    "@vitest/coverage-v8": "^3.2.7",
+    "jsdom": "^26.1.0",
     "playwright": "^1.50.1",
-    "@playwright/test": "^1.50.1"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
   }
 }

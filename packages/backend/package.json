@@ -1,0 +1,39 @@
+{
+  "name": "@copypatch/backend",
+  "version": "2.0.0",
+  "description": "Storage-independent CopyPatch backend runtime",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@copypatch/core": "workspace:*",
+    "@node-rs/argon2": "^2.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.0"
+  }
+}

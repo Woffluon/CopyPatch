@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/next",
-  "version": "1.0.1",
+  "version": "2.0.0",
   "description": "Next.js App Router and SSR integration package for CopyPatch",
   "license": "MIT",
   "type": "module",
@@ -68,6 +68,7 @@
     }
   },
   "dependencies": {
+    "@copypatch/backend": "workspace:*",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*"
   },

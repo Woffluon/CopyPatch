@@ -9,9 +9,11 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@copypatch/backend": "workspace:*",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*",
     "@copypatch/next": "workspace:*",
+    "@copypatch/storage-sqlite": "workspace:*",
     "next": "^15.1.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

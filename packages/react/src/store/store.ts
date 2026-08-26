@@ -151,6 +151,7 @@ export class CopyPatchStore {
       publishedRevision: snapshot?.revision ?? 1,
       drafts: {},
       unsaved: {},
+      activeEditingKey: null,
     };
     this.notify();
   }
@@ -184,11 +185,11 @@ export class CopyPatchStore {
     this.notify();
   }
 
-  setAuthenticated(authenticated: boolean, csrfToken?: string | null, mode?: PublishingMode) {
+  setAuthenticated(authenticated: boolean, csrfToken: string | null = null, mode?: PublishingMode) {
     this.state = {
       ...this.state,
       isAuthenticated: authenticated,
-      csrfToken: csrfToken ?? this.state.csrfToken,
+      csrfToken,
       publishingMode: mode ?? this.state.publishingMode,
     };
     this.notify();

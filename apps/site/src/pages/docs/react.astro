@@ -2,159 +2,35 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const providerCode = `import React from 'react';
-import { CopyPatchProvider } from '@copypatch/react';
+const provider = `import { CopyPatchProvider, EditableText, useCopyPatch } from '@copypatch/react';
 
-export function RootLayout({ children }: { children: React.ReactNode }) {
+export function App() {
+  const buttonLabel = useCopyPatch('hero.cta', 'Contact us');
   return (
-    <CopyPatchProvider
-      locale="en"
-      apiBase="/__copypatch/api/v1"
-    >
-      {children}
+    <CopyPatchProvider locale="en">
+      <EditableText contentKey="hero.title" as="h1">A clearer headline</EditableText>
+      <button type="button">{buttonLabel}</button>
     </CopyPatchProvider>
-  );
-}`;
-
-const editableTextCode = `import { EditableText } from '@copypatch/react';
-
-export function Hero() {
-  return (
-    <section className="hero">
-      {/* Renders as an <h1> element with custom styling */}
-      <EditableText
-        contentKey="home.hero.title"
-        as="h1"
-        className="text-4xl font-bold"
-      >
-        Build something people actually use.
-      </EditableText>
-
-      {/* Multiline paragraph with line breaks enabled */}
-      <EditableText
-        contentKey="home.hero.subtitle"
-        as="p"
-        allowLineBreaks={true}
-        className="text-lg text-gray-500"
-      >
-        A fast and reliable product description that clients can customize.
-      </EditableText>
-    </section>
-  );
-}`;
-
-const hookCode = `import { useCopyPatch } from '@copypatch/react';
-
-export function CustomButton() {
-  // Useful for attributes, button labels, or placeholders:
-  const label = useCopyPatch('home.cta.button', 'Get Started Now');
-
-  return (
-    <button type="button" aria-label={label}>
-      {label}
-    </button>
   );
 }`;
 ---
 
-<DocsLayout
-  title="React & Vite Integration"
-  description="How to use CopyPatchProvider, EditableText, and hooks in React applications."
->
-  <h1>React & Vite Integration</h1>
+<DocsLayout title="React integration" description="Use CopyPatchProvider and editable React components with the default same-origin v2 API path.">
+  <h1>React integration</h1>
+  <p class="lead">The provider defaults to <code>/__copypatch/api/v2</code>. Leave <code>apiBase</code> unset for a normal same-origin host integration.</p>
+  <CodeBlock code={provider} lang="tsx" title="App.tsx" />
 
-  <p>
-    The <code>@copypatch/react</code> package provides components and hooks to mark editable surfaces inside your React tree.
-  </p>
-
-  <h2>1. Configure CopyPatchProvider</h2>
-  <p>
-    Wrap your application tree (or specific editable sections) with <code>CopyPatchProvider</code>. It fetches the published snapshot for the given locale once on mount and manages in-memory caching.
-  </p>
-
-  <CodeBlock code={providerCode} lang="tsx" title="RootLayout.tsx" />
-
-  <h3>Provider Props</h3>
+  <h2>Components and hooks</h2>
   <table>
-    <thead>
-      <tr>
-        <th>Prop</th>
-        <th>Type</th>
-        <th>Default</th>
-        <th>Description</th>
-      </tr>
-    </thead>
+    <thead><tr><th>API</th><th>Purpose</th></tr></thead>
     <tbody>
-      <tr>
-        <td><code>locale</code></td>
-        <td><code>string</code></td>
-        <td><em>Required</em></td>
-        <td>Active language code (e.g. <code>"en"</code>, <code>"tr"</code>, <code>"de"</code>).</td>
-      </tr>
-      <tr>
-        <td><code>apiBase</code></td>
-        <td><code>string</code></td>
-        <td><code>"/__copypatch/api/v1"</code></td>
-        <td>Relative or absolute base URL pointing to the CopyPatch API server.</td>
-      </tr>
-      <tr>
-        <td><code>initialSnapshot</code></td>
-        <td><code>Snapshot</code></td>
-        <td><code>undefined</code></td>
-        <td>Pre-fetched server snapshot for SSR/Next.js pre-rendering.</td>
-      </tr>
+      <tr><td><code>CopyPatchProvider</code></td><td>Sets the locale, published snapshot, and editor runtime.</td></tr>
+      <tr><td><code>EditableText</code></td><td>Makes a text node editable while preserving fallback content for visitors.</td></tr>
+      <tr><td><code>useCopyPatch</code></td><td>Reads editable copy for attributes and other non-node text.</td></tr>
+      <tr><td><code>useEditableText</code></td><td>Builds a custom editable integration.</td></tr>
     </tbody>
   </table>
 
-  <h2>2. Using &lt;EditableText&gt;</h2>
-  <p>
-    Use <code>&lt;EditableText&gt;</code> anywhere you want text to be editable. In normal visitor mode, it renders a standard React child with zero runtime overhead. In edit mode, it enables native <code>contenteditable="plaintext-only"</code> with complete caret preservation.
-  </p>
-
-  <CodeBlock code={editableTextCode} lang="tsx" title="Hero.tsx" />
-
-  <h3>EditableText Props</h3>
-  <table>
-    <thead>
-      <tr>
-        <th>Prop</th>
-        <th>Type</th>
-        <th>Default</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>contentKey</code></td>
-        <td><code>string</code></td>
-        <td><em>Required</em></td>
-        <td>Unique dot-notated string key (e.g. <code>"home.hero.title"</code>).</td>
-      </tr>
-      <tr>
-        <td><code>as</code></td>
-        <td><code>ElementType</code></td>
-        <td><code>"span"</code></td>
-        <td>HTML tag or component to render (e.g. <code>"h1"</code>, <code>"p"</code>, <code>"span"</code>).</td>
-      </tr>
-      <tr>
-        <td><code>allowLineBreaks</code></td>
-        <td><code>boolean</code></td>
-        <td><code>false</code></td>
-        <td>Whether Enter key inserts newline breaks or confirms editing.</td>
-      </tr>
-      <tr>
-        <td><code>children</code></td>
-        <td><code>string</code></td>
-        <td><em>Required</em></td>
-        <td>Default fallback text if no custom patch has been published.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>3. Using the useCopyPatch Hook</h2>
-  <p>
-    For non-text surfaces (such as button attributes, image <code>alt</code> text, or input placeholders), use the <code>useCopyPatch</code> hook:
-  </p>
-
-  <CodeBlock code={hookCode} lang="tsx" title="CustomButton.tsx" />
+  <h2>Edit mode</h2>
+  <p>Authorized users add <code>?copypatch=1</code> to a same-origin page. The provider then lazily loads the editor UI. The host must mount the v2 route before the editor can authenticate or save.</p>
 </DocsLayout>

@@ -14,7 +14,7 @@
     "@astrojs/react": "^4.2.1",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*",
-    "astro": "^5.4.0",
+    "astro": "^6.4.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

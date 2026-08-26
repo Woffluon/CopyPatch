@@ -9,12 +9,12 @@ interface Props {
 const { lang = 'en' } = Astro.props;
 
 const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a iletmeniz yeterlidir
-<CopyPatchProvider locale={currentLocale} apiBase="/__copypatch/api/v1">
+<CopyPatchProvider locale={currentLocale}>
   <EditableText contentKey="pricing.hero.title">
     Büyüyen ekipler için şeffaf fiyatlandırma.
   </EditableText>
 </CopyPatchProvider>` : `// Simply pass your active locale string to CopyPatchProvider
-<CopyPatchProvider locale={currentLocale} apiBase="/__copypatch/api/v1">
+<CopyPatchProvider locale={currentLocale}>
   <EditableText contentKey="pricing.hero.title">
     Transparent pricing for growing teams.
   </EditableText>

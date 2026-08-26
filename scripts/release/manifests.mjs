@@ -7,15 +7,21 @@ export const MANIFEST_PATHS = Object.freeze([
   'package.json',
   'packages/core/package.json',
   'packages/react/package.json',
-  'packages/server/package.json',
+  'packages/backend/package.json',
+  'packages/node/package.json',
   'packages/next/package.json',
+  'packages/storage-sqlite/package.json',
+  'packages/storage-postgres/package.json',
 ]);
 
 export const PUBLISH_PACKAGES = Object.freeze([
   { name: '@copypatch/core', path: 'packages/core' },
   { name: '@copypatch/react', path: 'packages/react' },
-  { name: '@copypatch/server', path: 'packages/server' },
+  { name: '@copypatch/backend', path: 'packages/backend' },
+  { name: '@copypatch/node', path: 'packages/node' },
   { name: '@copypatch/next', path: 'packages/next' },
+  { name: '@copypatch/storage-sqlite', path: 'packages/storage-sqlite' },
+  { name: '@copypatch/storage-postgres', path: 'packages/storage-postgres' },
 ]);
 
 export function parseManifest(content, source) {

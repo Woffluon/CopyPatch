@@ -2,163 +2,34 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const cliCommands = `# Initialize database schema & set editor passphrase
-npx copypatch init --db ./copypatch.sqlite
+const backend = `import { createCopyPatchBackend } from '@copypatch/backend';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-# Start the standalone high-performance server
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://my-website.com" --mode direct
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
 
-# Change passphrase & invalidate all active sessions immediately
-npx copypatch password --db ./copypatch.sqlite
-
-# Apply any pending schema migrations
-npx copypatch migrate --db ./copypatch.sqlite`;
-
-const embeddedServer = `import { createCopyPatchApp } from '@copypatch/server';
-import { serve } from '@hono/node-server';
-
-// Create embedded Hono router with your custom settings
-const app = createCopyPatchApp({
-  dbPath: './copypatch.sqlite',
-  publicOrigins: ['http://localhost:5173', 'https://my-website.com'],
-  sessionSecret: process.env.COPYPATCH_SECRET || 'at-least-32-random-characters-secret',
-  publishingMode: 'direct', // 'direct' or 'draft'
-});
-
-// Run with Node.js native HTTP server
-serve({
-  fetch: app.fetch,
-  port: 4040,
-});
-
-console.log('CopyPatch API listening on http://localhost:4040/__copypatch/api/v1');`;
-
-const sqlitePragmas = `-- CopyPatch Automatic SQLite Pragma Configurations
-PRAGMA journal_mode = WAL;
-PRAGMA synchronous = NORMAL;
-PRAGMA foreign_keys = ON;
-PRAGMA busy_timeout = 5000;
-PRAGMA cache_size = -64000; -- 64MB memory cache`;
-
-const cacheFlow = `Visitor Request -> In-Memory Snapshot Cache (sub-0.2ms) -> JSON Response
-(Zero disk I/O, zero SQLite queries on public visitor reads)`;
+export const copypatch = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});`;
 ---
 
-<DocsLayout
-  title="Server & CLI Reference"
-  description="Complete CLI flags, SQLite database schema, in-memory snapshot cache, and embedded server configuration."
->
-  <h1>Server & CLI Reference</h1>
+<DocsLayout title="Backend and adapters" description="Create an embedded CopyPatch v2 backend and mount it through the host framework adapter.">
+  <h1>Backend and adapters</h1>
+  <p class="lead">The v2 backend is a library instance owned by your application, not an independent CopyPatch server process.</p>
+  <CodeBlock code={backend} lang="ts" title="lib/copypatch.ts" />
 
-  <p class="lead">
-    The <code>@copypatch/server</code> package provides a lightweight, enterprise-grade backend built with Hono, SQLite (via <code>better-sqlite3</code>), and Drizzle ORM. It serves public visitor snapshots in under 0.2ms via an in-memory cache and provides hardened endpoints for authorized editors.
-  </p>
-
-  <h2>CLI Command Suite</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Command</th>
-        <th>Purpose</th>
-        <th>Interactive Options</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>copypatch init</code></td>
-        <td>Initializes SQLite schema, runs migrations, and prompts for admin passphrase.</td>
-        <td>Prompts for passphrase if not supplied via <code>--passphrase</code>.</td>
-      </tr>
-      <tr>
-        <td><code>copypatch serve</code></td>
-        <td>Starts the HTTP API server on the specified port.</td>
-        <td>Listens for visitor requests & authenticated editor mutations.</td>
-      </tr>
-      <tr>
-        <td><code>copypatch password</code></td>
-        <td>Rotates editor passphrase and invalidates all existing sessions.</td>
-        <td>Prompts for new passphrase with minimum length validation.</td>
-      </tr>
-      <tr>
-        <td><code>copypatch migrate</code></td>
-        <td>Applies any pending database schema migrations without downtime.</td>
-        <td>Executes idempotent Drizzle schema migrations.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>CLI Usage Examples</h2>
-  <CodeBlock code={cliCommands} lang="bash" title="Terminal" />
-
-  <h2>CLI Flags Reference</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Flag</th>
-        <th>Description</th>
-        <th>Default</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>--port, -p</code></td>
-        <td>TCP port to bind HTTP server to.</td>
-        <td><code>4040</code></td>
-      </tr>
-      <tr>
-        <td><code>--db, -d</code></td>
-        <td>Path to the SQLite database file on disk.</td>
-        <td><code>"./copypatch.sqlite"</code></td>
-      </tr>
-      <tr>
-        <td><code>--origin, -o</code></td>
-        <td>Comma-separated list of allowed client Origin/Referer URLs.</td>
-        <td><code>"http://localhost:5173"</code></td>
-      </tr>
-      <tr>
-        <td><code>--mode, -m</code></td>
-        <td>Publishing mode: <code>direct</code> (instant live) or <code>draft</code> (staging).</td>
-        <td><code>"direct"</code></td>
-      </tr>
-      <tr>
-        <td><code>--passphrase</code></td>
-        <td>Admin passphrase (for automated scripts / CI).</td>
-        <td><em>Interactive prompt</em></td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>SQLite Database Architecture</h2>
-  <p>
-    CopyPatch automatically initializes SQLite with high-performance concurrency pragmas:
-  </p>
-
-  <CodeBlock code={sqlitePragmas} lang="sql" title="SQLite Pragmas" />
-
-  <h3>Database Tables</h3>
+  <h2>Persistence</h2>
   <ul>
-    <li><strong><code>auth_credentials</code>:</strong> Stores the Argon2id passphrase hash, salt, and timestamp. Exactly 1 row.</li>
-    <li><strong><code>sessions</code>:</strong> Stores 256-bit cryptographically secure session hashes, expiration timestamps, and CSRF secrets.</li>
-    <li><strong><code>locales</code>:</strong> Tracks active locale codes (e.g. <code>"en"</code>, <code>"tr"</code>), published revision numbers, and draft revisions.</li>
-    <li><strong><code>patches</code>:</strong> Holds content strings keyed by <code>(locale, content_key)</code> with published text, draft text, and modification timestamps.</li>
-    <li><strong><code>revisions</code>:</strong> Immutable historical audit log of all changes for rollback capability.</li>
+    <li><code>@copypatch/storage-sqlite</code> uses a local SQLite file and fits a single server or development environment.</li>
+    <li><code>@copypatch/storage-postgres</code> shares state between application instances through PostgreSQL.</li>
   </ul>
 
-  <h2>In-Memory Snapshot Cache Architecture</h2>
-  <p>
-    To ensure zero database overhead for public visitors, CopyPatch maintains an in-memory immutable snapshot map:
-  </p>
+  <h2>Authentication</h2>
+  <p>Pass a <code>passphraseHash</code> for CopyPatch-managed sessions, or pass an <code>authAdapter</code> that returns host principals with <code>editor</code> and <code>publisher</code> roles and verifies each mutation.</p>
 
-  <CodeBlock code={cacheFlow} lang="text" title="Cache Architecture" />
+  <h2>Node adapters</h2>
+  <p><code>@copypatch/node</code> exports native Node, Express, Fastify, and Hono adapters. Each mounts the same backend at <code>/__copypatch/api/v2</code> in the host application.</p>
 
-  <p>
-    When an editor saves or publishes changes, SQLite is updated within a transaction, and the in-memory snapshot cache is atomically swapped.
-  </p>
-
-  <h2>Embedding in Existing Node.js Backends</h2>
-  <p>
-    If you want to run CopyPatch inside an existing Express, Fastify, or Hono service rather than a standalone process, import <code>createCopyPatchApp</code>:
-  </p>
-
-  <CodeBlock code={embeddedServer} lang="typescript" title="server.ts" />
+  <p><code>@copypatch/server</code> is the v1 standalone package. It is deprecated for new integrations, will retire in a later major release, and will not be unpublished.</p>
 </DocsLayout>

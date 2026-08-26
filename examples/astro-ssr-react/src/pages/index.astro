@@ -1,0 +1,13 @@
+---
+import CopyPatchHeading from '../components/CopyPatchHeading';
+import { getCopyPatchBackend } from '../lib/copypatch';
+
+const backend = await getCopyPatchBackend();
+const initialSnapshot = await backend.readPublished('en');
+---
+
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>CopyPatch Astro SSR</title></head>
+  <body><CopyPatchHeading client:load {initialSnapshot} /></body>
+</html>

@@ -1,55 +1,65 @@
-import { ContentSnapshot, API_BASE_PATH } from '@copypatch/core';
+import type { CopyPatchBackend } from '@copypatch/backend';
+import type { ContentSnapshot, CopyPatchHandleContext } from '@copypatch/core';
 
-export interface FetchServerSnapshotOptions {
-  apiBaseUrl?: string;
-  revalidate?: number | false;
+export type CopyPatchRouteHandler = (request: Request) => Promise<Response>;
+
+export interface CopyPatchRouteHandlers {
+  GET: CopyPatchRouteHandler;
+  POST: CopyPatchRouteHandler;
+  PUT: CopyPatchRouteHandler;
+  PATCH: CopyPatchRouteHandler;
+  DELETE: CopyPatchRouteHandler;
+  HEAD: CopyPatchRouteHandler;
+  OPTIONS: CopyPatchRouteHandler;
 }
 
-interface NextFetchRequestInit extends RequestInit {
-  next?: {
-    revalidate?: number | false;
-    tags?: string[];
-  };
+export interface CopyPatchRouteHandlerOptions<THostAuth = unknown> {
+  /** Resolves opaque host state without putting it in HTTP headers. */
+  resolveContext?: (
+    request: Request,
+  ) => CopyPatchHandleContext<THostAuth> | undefined | Promise<CopyPatchHandleContext<THostAuth> | undefined>;
 }
 
 /**
- * Helper for Next.js Server Components / RSC to fetch published snapshot at render time for SSR without hydration mismatch.
+ * Adapts a CopyPatch backend to an App Router catch-all `route.ts` file.
+ * Requests and responses pass through without cloning or serialization.
  */
-export async function fetchServerSnapshot(
+export function createCopyPatchRouteHandlers<THostAuth = unknown>(
+  backend: CopyPatchBackend<THostAuth>,
+  options: CopyPatchRouteHandlerOptions<THostAuth> = {},
+): CopyPatchRouteHandlers {
+  const handle: CopyPatchRouteHandler = async (request) => {
+    const context = options.resolveContext ? await options.resolveContext(request) : undefined;
+    return backend.handle(request, context);
+  };
+
+  return {
+    GET: handle,
+    POST: handle,
+    PUT: handle,
+    PATCH: handle,
+    DELETE: handle,
+    HEAD: handle,
+    OPTIONS: handle,
+  };
+}
+
+export interface ReadPublishedSnapshotOptions {
+  /** Used only when the backend read rejects, so the host can keep rendering safely. */
+  fallback?: ContentSnapshot;
+}
+
+export const EMPTY_CONTENT_SNAPSHOT: ContentSnapshot = { revision: 1, content: {} };
+
+/** Reads published copy in SSR/RSC directly from the colocated backend. */
+export async function readPublishedSnapshot(
+  backend: Pick<CopyPatchBackend, 'readPublished'>,
   locale: string,
-  options: FetchServerSnapshotOptions = {}
+  options: ReadPublishedSnapshotOptions = {},
 ): Promise<ContentSnapshot> {
-  const hasCustomUrl = Boolean(options.apiBaseUrl || process.env.COPYPATCH_API_URL);
-  const apiBaseUrl = options.apiBaseUrl || process.env.COPYPATCH_API_URL || 'http://localhost:4040';
-
-  if (!hasCustomUrl && process.env.NODE_ENV === 'production') {
-    console.warn(
-      '[copypatch/next] Warning: COPYPATCH_API_URL is not defined in production environment. Falling back to http://localhost:4040.'
-    );
-  }
-
-  const url = `${apiBaseUrl}${API_BASE_PATH}/content/${encodeURIComponent(locale)}`;
-
   try {
-    const fetchOptions: NextFetchRequestInit = {
-      headers: {
-        Accept: 'application/json',
-      },
-    };
-
-    if (options.revalidate !== undefined) {
-      fetchOptions.next = { revalidate: options.revalidate };
-    }
-
-    const res = await fetch(url, fetchOptions);
-    if (res.ok) {
-      return await res.json();
-    }
-  } catch (err) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(`[CopyPatch SSR] Failed to fetch server snapshot from ${url}:`, err);
-    }
+    return await backend.readPublished(locale);
+  } catch {
+    return options.fallback ?? EMPTY_CONTENT_SNAPSHOT;
   }
-
-  return { revision: 1, content: {} };
 }

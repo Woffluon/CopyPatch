@@ -2,129 +2,14 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const localeSetup = `import React, { useState } from 'react';
-import { CopyPatchProvider, EditableText } from '@copypatch/react';
-
-export function MultilingualApp() {
-  const [locale, setLocale] = useState<'tr' | 'en' | 'de'>('tr');
-
-  return (
-    <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v1">
-      {/* Dil Degistirme Dugmeleri */}
-      <nav className="flex gap-2 p-4">
-        <button
-          type="button"
-          onClick={() => setLocale('tr')}
-          className={locale === 'tr' ? 'font-bold underline' : ''}
-        >
-          Türkçe
-        </button>
-        <button
-          type="button"
-          onClick={() => setLocale('en')}
-          className={locale === 'en' ? 'font-bold underline' : ''}
-        >
-          English
-        </button>
-        <button
-          type="button"
-          onClick={() => setLocale('de')}
-          className={locale === 'de' ? 'font-bold underline' : ''}
-        >
-          Deutsch
-        </button>
-      </nav>
-
-      {/* Secili dile gore izole edilmis metin alani */}
-      <main className="p-8">
-        <EditableText contentKey="home.welcome.title" as="h1" className="text-3xl font-bold">
-          {locale === 'tr'
-            ? 'Platformumuza hoş geldiniz'
-            : locale === 'en'
-            ? 'Welcome to our platform'
-            : 'Willkommen auf unserer Plattform'}
-        </EditableText>
-      </main>
-    </CopyPatchProvider>
-  );
-}`;
-
-const localeValidation = `// Cekirdek Dil Dogrulama Regex'i (RFC 5646 standardina uygun)
-const LOCALE_REGEX = /^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/i;
-
-// Gecerli Dil Kodu Ornekleri:
-// "tr", "en", "de", "fr-CA", "zh-Hans", "pt-BR", "es-419"`;
+const locale = `<CopyPatchProvider locale="tr">
+  <EditableText contentKey="hero.title" as="h1">Başlık</EditableText>
+</CopyPatchProvider>`;
 ---
 
-<DocsLayout
-  title="Çok Dilli İzolasyon ve i18n"
-  description="CopyPatch'in dil bazlı anlık görüntü izolasyonu, dil değiştirme mekaniği ve RFC 5646 dil kodu doğrulaması."
->
-  <h1>Çok Dilli İzolasyon ve i18n</h1>
-
-  <p class="lead">
-    CopyPatch, içerik anlık görüntülerini ve revizyon sayaçlarını dil tanımlayıcılarına (örneğin <code>tr</code>, <code>en</code>, <code>de</code>, <code>fr-CA</code> veya <code>zh-Hans</code>) göre sıkı şekilde izole ederek yerel çok dilli destek sağlar.
-  </p>
-
-  <h2>Anlık Görüntü İzolasyon Mekanikleri</h2>
-  <ul>
-    <li><strong>Bağımsız Depolama:</strong> Her dil, SQLite içinde kendi yayınlanmış ve taslak anlık görüntü kaydını yönetir.</li>
-    <li><strong>Sıfır Çapraz Etkileşim:</strong> <code>locale="tr"</code> üzerinde yapılan düzenleme ve yayınlama işlemleri sadece Türkçe kayıtları günceller ve Türkçe revizyon numarasını artırır. İngilizce ve Almanca anlık görüntüleri tamamen dokunulmamış kalır.</li>
-    <li><strong>Anında Değişim:</strong> <code>CopyPatchProvider</code> üzerindeki <code>locale</code> özelliği değiştiğinde, sayfa yenilenmesine gerek kalmadan bellek içi önbellek güncellenir ve ilgili dilin verisi anında render edilir.</li>
-  </ul>
-
-  <h2>Dil Kodu Doğrulama Standartları</h2>
-  <p>
-    Veritabanı kirliliğini ve dosya yolu atlama girişimlerini önlemek için tüm dil kodları RFC 5646 standartlarına göre doğrulanır:
-  </p>
-
-  <CodeBlock code={localeValidation} lang="typescript" title="validation.ts" />
-
-  <h2>React Çok Dilli Entegrasyon</h2>
-  <p>
-    Aktif durum veya rota dilinizi <code>CopyPatchProvider</code> bileşenine aktarın:
-  </p>
-
-  <CodeBlock code={localeSetup} lang="tsx" title="MultilingualApp.tsx" />
-
-  <h2>Yönlendirme Mimarisi Önerileri</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Strateji</th>
-        <th>URL Deseni</th>
-        <th>Entegrasyon Tekniği</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Alt Yol (Önerilen)</strong></td>
-        <td><code>/tr/fiyatlandirma</code>, <code>/en/pricing</code></td>
-        <td>Rota parametrelerinden dili alıp <code>CopyPatchProvider</code>'a aktarın.</td>
-      </tr>
-      <tr>
-        <td><strong>Alt Alan Adı</strong></td>
-        <td><code>tr.sitem.com</code>, <code>en.sitem.com</code></td>
-        <td>Next.js ara katmanında (middleware) hostname kontrolü yapın.</td>
-      </tr>
-      <tr>
-        <td><strong>İstemci Durumu</strong></td>
-        <td><code>sitem.com (React State)</code></td>
-        <td>Aktif dili React context veya <code>useState</code> ile yönetin.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>CopyPatch'in Kasıtlı Olarak Yapmadığı Şeyler</h2>
-  <p>
-    Ziyaretçiler için ultra hafif çalışma zamanını (&lt; 1 kB gzip) korumak amacıyla CopyPatch şunları içermez:
-  </p>
-  <ul>
-    <li>Yapay ve bağlamsız sonuçlar üreten otomatik çeviri API'leri.</li>
-    <li>Ağır ICU mesaj çoğullaştırma ayrıştırıcıları.</li>
-    <li>Büyük istemci tarafı sözlük dosyaları.</li>
-  </ul>
-  <p>
-    Bunun yerine ekibinize ve profesyonel insan çevirmenlere doğrudan canlı web sitesi üzerinde temiz, doğal bir metin düzenleme ortamı sunar.
-  </p>
+<DocsLayout title="Çoklu dil" description="Her locale için yayınlanan ve taslak metni bağımsız yönetin.">
+  <h1>Locale izolasyonu</h1>
+  <p class="lead">CopyPatch v2 içerik, taslak ve revision değerlerini locale bazında ayırır.</p>
+  <CodeBlock code={locale} lang="tsx" title="Page.tsx" />
+  <p>Locale değiştiğinde sağlayıcı yeni snapshot'ı same-origin API'den okur. Bir dildeki yayın veya taslak başka dilin metnini değiştirmez.</p>
 </DocsLayout>

@@ -2,99 +2,46 @@
 import DocsLayout from '../../layouts/DocsLayout.astro';
 import CodeBlock from '../../components/ui/CodeBlock.astro';
 
-const pnpmInstall = `# Install client packages for React
-pnpm add @copypatch/react @copypatch/core
+const install = `# React client
+pnpm add @copypatch/core @copypatch/react
 
-# For Next.js App Router (SSR) support:
-pnpm add @copypatch/next
+# Select one server integration and one storage adapter
+pnpm add @copypatch/backend @copypatch/node @copypatch/storage-sqlite
 
-# For standalone server & CLI:
-pnpm add @copypatch/server`;
+# Next.js App Router users also install
+pnpm add @copypatch/next`;
 
-const npmInstall = `# Install client packages with npm
-npm install @copypatch/react @copypatch/core
+const scaffold = `# Generates framework and storage-specific starter files.
+# It never starts a standalone server.
+npx copypatch init --framework next --storage sqlite
 
-# For Next.js App Router:
-npm install @copypatch/next
-
-# For standalone server:
-npm install @copypatch/server`;
-
-const initDb = `# Initialize SQLite database and set administrative passphrase
-npx copypatch init --db ./copypatch.sqlite`;
+# Apply storage migrations in the project environment.
+npx copypatch migrate --storage sqlite`;
 ---
 
-<DocsLayout
-  title="Installation"
-  description="How to install and set up CopyPatch in your React, Vite, or Next.js project."
->
-  <h1>Installation & Setup</h1>
+<DocsLayout title="Installation" description="Install CopyPatch v2 packages and scaffold an embedded, same-origin integration.">
+  <h1>Install CopyPatch v2</h1>
+  <p class="lead">CopyPatch requires Node.js 20 or newer and a server-capable host application.</p>
 
-  <p>
-    CopyPatch consists of lightweight modular packages published under the <code>@copypatch</code> npm namespace.
-  </p>
-
-  <h2>Prerequisites</h2>
-  <ul>
-    <li><strong>Node.js:</strong> <code>&gt;= 20.0.0</code></li>
-    <li><strong>React:</strong> <code>&gt;= 18.0.0</code> or <code>19.x</code></li>
-    <li><strong>Package Manager:</strong> <code>pnpm</code> (recommended), <code>npm</code>, or <code>yarn</code></li>
-  </ul>
-
-  <h2>Package Overview</h2>
+  <h2>Packages</h2>
   <table>
-    <thead>
-      <tr>
-        <th>Package</th>
-        <th>Description</th>
-        <th>Target Environment</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Package</th><th>Use it for</th></tr></thead>
     <tbody>
-      <tr>
-        <td><code>@copypatch/react</code></td>
-        <td>Client provider, <code>EditableText</code>, and hooks</td>
-        <td>React / Vite / Next.js Client</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/core</code></td>
-        <td>Shared types, constants, and validation</td>
-        <td>Universal</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/next</code></td>
-        <td>Next.js App Router RSC snapshot pre-rendering</td>
-        <td>Next.js Server & Client</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/server</code></td>
-        <td>Hono API server, SQLite persistence, and CLI</td>
-        <td>Node.js Server</td>
-      </tr>
+      <tr><td><code>@copypatch/core</code></td><td>Shared types and API constants.</td></tr>
+      <tr><td><code>@copypatch/react</code></td><td>Provider, editable components, and editor client.</td></tr>
+      <tr><td><code>@copypatch/backend</code></td><td>Embedded API runtime and authentication contract.</td></tr>
+      <tr><td><code>@copypatch/storage-sqlite</code></td><td>Single-node or local SQLite persistence.</td></tr>
+      <tr><td><code>@copypatch/storage-postgres</code></td><td>Shared PostgreSQL persistence across instances.</td></tr>
+      <tr><td><code>@copypatch/node</code></td><td>Node, Express, Fastify, Hono adapters and CLI.</td></tr>
+      <tr><td><code>@copypatch/next</code></td><td>Next.js App Router route and server helpers.</td></tr>
     </tbody>
   </table>
 
-  <h2>1. Install Dependencies</h2>
+  <CodeBlock code={install} lang="bash" title="Terminal" />
 
-  <h3>Using pnpm</h3>
-  <CodeBlock code={pnpmInstall} lang="bash" title="Terminal" />
+  <h2>Initialize a project</h2>
+  <p>The CLI creates route and configuration templates for the selected host and storage. Review the generated files before adding secrets or deployment settings.</p>
+  <CodeBlock code={scaffold} lang="bash" title="Terminal" />
 
-  <h3>Using npm</h3>
-  <CodeBlock code={npmInstall} lang="bash" title="Terminal" />
-
-  <h2>2. Initialize SQLite Database</h2>
-  <p>
-    Use the built-in CLI to initialize your single-file SQLite database with automatic migrations and interactive passphrase configuration:
-  </p>
-
-  <CodeBlock code={initDb} lang="bash" title="Terminal" />
-
-  <p>
-    This command will prompt you for an editor passphrase (minimum 12 characters recommended), hash it using <strong>Argon2id</strong>, and create the SQLite database schema in <strong>WAL (Write-Ahead Logging)</strong> mode.
-  </p>
-
-  <h2>Next Step</h2>
-  <p>
-    Continue to the <a href="/docs/react">React & Vite Integration Guide</a> to wire CopyPatch into your user interface.
-  </p>
+  <p>Do not use CopyPatch with a fully static export when editors must save changes. Static output has no route runtime, authentication, or persistence connection.</p>
 </DocsLayout>

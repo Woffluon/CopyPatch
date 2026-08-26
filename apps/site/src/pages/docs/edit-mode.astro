@@ -1,94 +1,26 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
-import CodeBlock from '../../components/ui/CodeBlock.astro';
-
-const keyboardShortcuts = `// Keyboard Navigation & Action Shortcuts in Edit Mode
-Cmd + S / Ctrl + S   -> Save pending edits to server (or Save Draft)
-Escape               -> Deselect active text node / Close modal
-Enter                -> In single-line mode: confirm & blur; in multiline: insert newline
-Tab / Shift + Tab    -> Move caret focus to next / previous editable text node`;
-
-const portalExample = `<!-- Dedicated isolated portal mount -->
-<div id="copypatch-portal-root" aria-live="polite"></div>`;
 ---
 
-<DocsLayout
-  title="Edit Mode & Inline Mechanics"
-  description="How ?copypatch=1 activation works, caret and selection persistence, Argon2id authentication, and floating toolbar controls."
->
-  <h1>Edit Mode & Inline Mechanics</h1>
+<DocsLayout title="Edit mode and authentication" description="Activate the editor through a same-origin v2 backend and choose built-in or host authentication.">
+  <h1>Edit mode and authentication</h1>
+  <p class="lead">Add <code>?copypatch=1</code> to an application page. CopyPatch then loads the editor client and calls the same-origin v2 route.</p>
 
-  <p class="lead">
-    CopyPatch keeps the editor plane completely invisible and decoupled from public visitors until explicitly triggered by an authorized team member.
-  </p>
-
-  <h2>Activating Edit Mode</h2>
-  <ol>
-    <li>Append <code>?copypatch=1</code> to your website URL (e.g. <code>https://my-app.com?copypatch=1</code>).</li>
-    <li><code>CopyPatchProvider</code> detects the query parameter and dynamically lazy-loads the editor bundle (<code>~12 kB gzip</code>). Normal visitors never download this code.</li>
-    <li>If no active session cookie exists, the <strong>Auth Modal</strong> prompts for the administrative passphrase.</li>
-    <li>Upon authentication, the floating <strong>Toolbar</strong> mounts at the bottom of the viewport, and all <code>&lt;EditableText&gt;</code> elements display subtle editing affordances.</li>
-  </ol>
-
-  <h2>Native Caret & Selection Persistence</h2>
-  <p>
-    Unlike naive contenteditable wrappers that cause erratic cursor jumps when React re-renders, CopyPatch uses a custom caret preservation algorithm:
-  </p>
-  <ul>
-    <li>Nodes use native <code>contenteditable="plaintext-only"</code>, ensuring rich HTML formatting is stripped on paste.</li>
-    <li>Edits are stored in an in-memory mutable store without triggering full component tree re-renders during keystrokes.</li>
-    <li>When an element blurs or saves, React synchronizes state cleanly without disturbing text selection or active caret position.</li>
-  </ul>
-
-  <h2>Keyboard Shortcuts</h2>
-  <CodeBlock code={keyboardShortcuts} lang="text" title="Keyboard Shortcuts" />
-
-  <h2>Toolbar Controls Reference</h2>
+  <h2>Authentication choices</h2>
   <table>
-    <thead>
-      <tr>
-        <th>Control</th>
-        <th>Visual Indicator</th>
-        <th>Action</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Strategy</th><th>Use when</th><th>Mutation protection</th></tr></thead>
     <tbody>
-      <tr>
-        <td><strong>Locale Indicator</strong></td>
-        <td><code>EN</code> / <code>TR</code> pill</td>
-        <td>Displays active editing language.</td>
-      </tr>
-      <tr>
-        <td><strong>Status Badge</strong></td>
-        <td>Green / Amber pulse dot</td>
-        <td>Indicates whether changes are live (<code>Ready</code>) or pending (<code>Unsaved</code>).</td>
-      </tr>
-      <tr>
-        <td><strong>Discard</strong></td>
-        <td>Outlined button</td>
-        <td>Reverts all pending inline changes back to the published snapshot.</td>
-      </tr>
-      <tr>
-        <td><strong>Save (⌘S)</strong></td>
-        <td>Primary blue pill</td>
-        <td>Submits patch map to SQLite with optimistic revision verification.</td>
-      </tr>
-      <tr>
-        <td><strong>Exit (✕)</strong></td>
-        <td>Subtle icon button</td>
-        <td>Removes <code>?copypatch=1</code> from URL and enters clean visitor mode.</td>
-      </tr>
+      <tr><td><code>passphraseHash</code></td><td>You want CopyPatch-managed editor access.</td><td>Built-in secure same-site session, CSRF header, rate limit, and role checks.</td></tr>
+      <tr><td><code>authAdapter</code></td><td>Your host already has accounts and access control.</td><td>The adapter verifies the host request and supplies roles for every mutation.</td></tr>
     </tbody>
   </table>
 
-  <h2>DOM Isolation & Portal Architecture</h2>
-  <p>
-    The toolbar and authentication modal render into a dedicated DOM container outside your application markup:
-  </p>
+  <p>Both strategies use <code>editor</code> for draft changes and <code>publisher</code> for publication. They are mutually exclusive backend options.</p>
 
-  <CodeBlock code={portalExample} lang="html" title="HTML" />
-
-  <p>
-    This guarantees that CopyPatch UI components never inherit application CSS resets, global form styles, or z-index layout clipping.
-  </p>
+  <h2>Host-auth adapter responsibilities</h2>
+  <ul>
+    <li>Resolve the authenticated host user into a principal with CopyPatch roles.</li>
+    <li>Verify each mutating request with the host's CSRF or request-integrity mechanism.</li>
+    <li>Pass a trusted client address through context when rate limiting needs it.</li>
+  </ul>
 </DocsLayout>

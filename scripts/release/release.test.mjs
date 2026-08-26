@@ -16,6 +16,7 @@ import {
   updateManifestVersionsAtomically,
 } from './manifests.mjs';
 import { buildPackageTarball, transformWorkspaceDependencies } from './pack-package.mjs';
+import { packAllPackages } from './pack-packages.mjs';
 import { prepareVersion } from './prepare-version.mjs';
 import { classifyRegistryRecords } from './registry-status.mjs';
 import { getNextVersion, getVersionBump, parseVersion } from './versioning.mjs';
@@ -104,6 +105,39 @@ test('Conventional Commit policy maps exact SemVer bumps', () => {
   assert.throws(() => parseVersion('01.0.0'), /Unsupported release version/);
 });
 
+test('v2 release publishes the seven embedded-runtime packages in lockstep', () => {
+  assert.deepEqual(PUBLISH_PACKAGES, [
+    { name: '@copypatch/core', path: 'packages/core' },
+    { name: '@copypatch/react', path: 'packages/react' },
+    { name: '@copypatch/backend', path: 'packages/backend' },
+    { name: '@copypatch/node', path: 'packages/node' },
+    { name: '@copypatch/next', path: 'packages/next' },
+    { name: '@copypatch/storage-sqlite', path: 'packages/storage-sqlite' },
+    { name: '@copypatch/storage-postgres', path: 'packages/storage-postgres' },
+  ]);
+  assert.deepEqual(MANIFEST_PATHS, [
+    'package.json',
+    ...PUBLISH_PACKAGES.map(({ path: packagePath }) => `${packagePath}/package.json`),
+  ]);
+});
+
+test('CI verifies Node 20 and 24 with PostgreSQL, coverage, and browser acceptance', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/ci.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/);
+  assert.match(workflow, /node-version:\s*\[20,\s*24\]/);
+  assert.match(workflow, /services:\s*\r?\n\s+postgres:/);
+  assert.match(workflow, /pnpm test:coverage/);
+  assert.match(workflow, /pnpm test:e2e/);
+});
+
+test('publish gate re-runs PostgreSQL contracts, coverage, and seven-package tarball inspection', async () => {
+  const workflow = await readFile(new URL('../../.github/workflows/publish.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /publish:\s*\r?\n[\s\S]*?services:\s*\r?\n\s+postgres:/);
+  assert.match(workflow, /COPYPATCH_TEST_POSTGRES_URL:/);
+  assert.match(workflow, /pnpm test:coverage/);
+  assert.match(workflow, /pnpm release:pack/);
+});
+
 test('lockstep manifest update is idempotent and rolls back every file on failure', async () => {
   await withTemporaryDirectory(async (repoRoot) => {
     await writeManifestFixture(repoRoot);
@@ -122,6 +156,33 @@ test('lockstep manifest update is idempotent and rolls back every file on failur
       /injected transaction failure/,
     );
     assert.equal(assertManifestConsistency(await readManifestEntries(repoRoot)), '0.1.0');
+  });
+});
+
+test('major release preparation supports the legacy server-to-seven-package topology transition', async () => {
+  await withTemporaryDirectory(async (repoRoot) => {
+    const legacyPaths = [
+      'package.json',
+      'packages/core/package.json',
+      'packages/react/package.json',
+      'packages/server/package.json',
+      'packages/next/package.json',
+    ];
+    for (const relativePath of legacyPaths) {
+      const absolutePath = path.join(repoRoot, relativePath);
+      await mkdir(path.dirname(absolutePath), { recursive: true });
+      const name = relativePath === 'package.json'
+        ? 'fixture-root'
+        : `@copypatch/${relativePath.split('/')[1]}`;
+      await writeFile(absolutePath, `${JSON.stringify({ name, version: '1.0.1', private: relativePath === 'package.json' }, null, 2)}\n`, 'utf8');
+    }
+    runGit(repoRoot, ['init', '--quiet', '--initial-branch=main']);
+    commit(repoRoot, 'chore: legacy release topology');
+
+    await writeManifestFixture(repoRoot, '1.0.1');
+    const prepared = await prepareVersion(repoRoot, 'feat!: replace standalone server with embedded backend');
+    assert.deepEqual(prepared, { changed: true, from: '1.0.1', to: '2.0.0', bump: 'major' });
+    assert.equal(assertManifestConsistency(await readManifestEntries(repoRoot)), '2.0.0');
   });
 });
 
@@ -188,5 +249,27 @@ test('temporary npm tarball contains exact lockstep dependencies, never workspac
       () => transformWorkspaceDependencies({ name: 'bad', dependencies: { x: 'workspace:^' } }, '1.2.3'),
       /Unsupported workspace range/,
     );
+  });
+});
+
+test('seven-package pack inspection rejects unexpected files and returns every public package', async () => {
+  await withTemporaryDirectory(async (repoRoot) => {
+    await writeManifestFixture(repoRoot, '2.0.0');
+    await writeFile(path.join(repoRoot, 'LICENSE'), 'fixture license\n', 'utf8');
+    for (const { path: packagePath } of PUBLISH_PACKAGES) {
+      const manifestPath = path.join(repoRoot, packagePath, 'package.json');
+      const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+      manifest.files = ['dist'];
+      await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+      await mkdir(path.join(repoRoot, packagePath, 'dist'), { recursive: true });
+      await writeFile(path.join(repoRoot, packagePath, 'dist/index.js'), 'export {};\n', 'utf8');
+      await writeFile(path.join(repoRoot, packagePath, 'README.md'), `# ${manifest.name}\n`, 'utf8');
+    }
+    const results = await packAllPackages(repoRoot, path.join(repoRoot, 'packs'));
+    assert.deepEqual(results.map(({ name }) => name), PUBLISH_PACKAGES.map(({ name }) => name));
+    for (const result of results) {
+      assert.equal(result.entries.includes('package/package.json'), true);
+      assert.equal(result.entries.includes('package/dist/index.js'), true);
+    }
   });
 });

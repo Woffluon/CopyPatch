@@ -1,147 +1,20 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
-import CodeBlock from '../../components/ui/CodeBlock.astro';
-
-const cspExample = `Content-Security-Policy: default-src 'self'; script-src 'self'; connect-src 'self' https://your-copypatch-api.com; style-src 'self' 'unsafe-inline'; img-src 'self' data:;`;
 ---
 
-<DocsLayout
-  title="Security Architecture & Threat Model"
-  description="Cryptographic primitives, Argon2id parameters, session security, CSRF protection, and XSS immunity in CopyPatch."
->
-  <h1>Security Architecture & Threat Model</h1>
+<DocsLayout title="Security architecture" description="CopyPatch v2 uses same-origin routing, plain-text content, roles, and storage-safe token handling.">
+  <h1>Security architecture</h1>
+  <p class="lead">CopyPatch v2 has one browser origin: the host application's origin. Its embedded API route rejects unsafe requests whose <code>Origin</code> does not exactly match that host.</p>
 
-  <p class="lead">
-    Security is a primary design pillar of CopyPatch. Unlike traditional CMS platforms that store arbitrary HTML or Markdown, CopyPatch enforces strict architectural boundaries to eliminate Stored XSS, prevent brute-force attacks, and isolate administrative sessions.
-  </p>
-
-  <h2>Core Security Invariants</h2>
-
-  <h3>1. Strict Plain-Text Invariant (Zero XSS)</h3>
-  <p>
-    CopyPatch accepts, validates, and stores <strong>plain strings only</strong>:
-  </p>
+  <h2>Controls</h2>
   <ul>
-    <li>HTML tags (e.g. <code>&lt;script&gt;</code>, <code>&lt;iframe&gt;</code>, <code>&lt;img onerror&gt;</code>) are never executed, parsed, or rendered as active DOM elements.</li>
-    <li>React string interpolation renders values safely via standard text node semantics.</li>
-    <li>Server-side validation normalizes Unicode whitespace and rejects oversized payloads (exceeding 64 KB per key).</li>
-    <li>XSS payloads entered into edit fields are treated as literal inert text strings.</li>
+    <li>Copy is normalized and rendered as plain text.</li>
+    <li>Built-in authentication uses an Argon2id passphrase, secure same-site cookie, CSRF token, and persistent rate limiting.</li>
+    <li>Host-auth adapters authenticate the user and must verify each mutation.</li>
+    <li>Roles distinguish draft editing from publishing.</li>
+    <li>Persistence stores hashes for session, CSRF, and rate-limit identifiers.</li>
+    <li>Expected revisions protect drafts and publication from silent overwrite.</li>
   </ul>
 
-  <h3>2. Argon2id Password Hashing</h3>
-  <p>
-    Editor passphrases are hashed using <strong>Argon2id</strong> (RFC 9106 recommended parameters) with high memory hardness to resist GPU/ASIC cracking:
-  </p>
-  <table>
-    <thead>
-      <tr>
-        <th>Parameter</th>
-        <th>Value</th>
-        <th>Rationale</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Algorithm</strong></td>
-        <td><code>Argon2id</code></td>
-        <td>Hybrid defense against both side-channel and GPU brute-force attacks.</td>
-      </tr>
-      <tr>
-        <td><strong>Memory Cost (m)</strong></td>
-        <td><code>19 MiB (19456 KiB)</code></td>
-        <td>Forces substantial RAM allocation per guess on specialized hardware.</td>
-      </tr>
-      <tr>
-        <td><strong>Time Cost (t)</strong></td>
-        <td><code>2 iterations</code></td>
-        <td>Sufficient compute work without causing perceptible login latency.</td>
-      </tr>
-      <tr>
-        <td><strong>Parallelism (p)</strong></td>
-        <td><code>1 lane</code></td>
-        <td>Deterministic single-threaded execution on standard VPS nodes.</td>
-      </tr>
-      <tr>
-        <td><strong>Salt Length</strong></td>
-        <td><code>256 bits (32 bytes)</code></td>
-        <td>Cryptographically secure random salt generated per hash.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h3>3. Hardened Session Management</h3>
-  <ul>
-    <li><strong>Entropy:</strong> Session tokens are generated using <code>crypto.randomBytes(32)</code> (256 bits of entropy).</li>
-    <li><strong>Database Storage:</strong> Session tokens are hashed with SHA-256 before storage in SQLite. If the database file is compromised, raw session tokens cannot be recovered.</li>
-    <li><strong>Cookie Security:</strong> Transmitted via <code>HttpOnly</code>, <code>SameSite=Strict</code>, and <code>Secure</code> cookies.</li>
-    <li><strong>Host Prefix:</strong> In HTTPS production environments, cookies use the <code>__Host-</code> prefix, preventing subdomain injection and scoping cookies strictly to the exact host.</li>
-    <li><strong>Expiry:</strong> Sessions automatically expire after 7 days of inactivity. Rotating the passphrase with <code>copypatch password</code> immediately invalidates all active sessions.</li>
-  </ul>
-
-  <h3>4. Dual-Token CSRF Protection</h3>
-  <p>
-    All state-mutating requests (<code>POST /session</code>, <code>PUT /patches</code>, <code>POST /publish</code>, <code>POST /draft</code>) require two independent verification factors:
-  </p>
-  <ol>
-    <li>The valid <code>HttpOnly</code> session cookie sent automatically by the browser.</li>
-    <li>A unique CSRF token held in JavaScript memory and passed in the custom <code>x-copypatch-csrf</code> request header.</li>
-  </ol>
-  <p>
-    Because cross-origin scripts cannot read headers or inspect memory across domains, Cross-Site Request Forgery is mathematically eliminated.
-  </p>
-
-  <h3>5. Origin & Referer Validation</h3>
-  <p>
-    The CopyPatch API server validates incoming <code>Origin</code> and <code>Referer</code> headers on every mutating request against the configured <code>--origin</code> allowlist. Requests originating from unexpected hosts are rejected immediately with <code>403 Forbidden (ORIGIN_REJECTED)</code>.
-  </p>
-
-  <h2>Threat Analysis Matrix</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Attack Vector</th>
-        <th>Severity</th>
-        <th>CopyPatch Mitigation</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><strong>Stored XSS</strong></td>
-        <td>Critical</td>
-        <td>Strict plain text invariant; React text node interpolation; 0% <code>dangerouslySetInnerHTML</code>.</td>
-      </tr>
-      <tr>
-        <td><strong>Passphrase Brute-Force</strong></td>
-        <td>High</td>
-        <td>IP rate-limiting on <code>/session</code> + Argon2id memory hardness (19 MiB).</td>
-      </tr>
-      <tr>
-        <td><strong>Cross-Site Request Forgery (CSRF)</strong></td>
-        <td>High</td>
-        <td><code>SameSite=Strict</code> cookies + mandatory <code>x-copypatch-csrf</code> memory header.</td>
-      </tr>
-      <tr>
-        <td><strong>SQL Injection</strong></td>
-        <td>Critical</td>
-        <td>Parameterized queries via Drizzle ORM + strict key/locale regex validation.</td>
-      </tr>
-      <tr>
-        <td><strong>Session Hijacking</strong></td>
-        <td>High</td>
-        <td><code>HttpOnly</code> + <code>Secure</code> + <code>__Host-</code> cookie prefix + SHA-256 hashed DB storage.</td>
-      </tr>
-      <tr>
-        <td><strong>Clickjacking</strong></td>
-        <td>Medium</td>
-        <td>Floating editor UI lives inside the host app; toolbar is framed with explicit z-index isolation.</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>Recommended Content Security Policy (CSP)</h2>
-  <p>
-    To maintain maximum defense-in-depth, configure your production web server to emit the following CSP header:
-  </p>
-
-  <CodeBlock code={cspExample} lang="http" title="HTTP Response Header" />
+  <p>Read the repository <a href="https://github.com/Woffluon/CopyPatch/blob/main/docs/threat-model.md">threat model</a> before choosing a deployment and authentication strategy.</p>
 </DocsLayout>

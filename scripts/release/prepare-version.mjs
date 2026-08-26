@@ -2,7 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readManifestEntries, assertManifestConsistency, updateManifestVersionsAtomically } from './manifests.mjs';
-import { readManifestEntriesAtCommit, resolveCommit } from './git-history.mjs';
+import { assertCommitManifestConsistency, readManifestEntriesAtCommit, resolveCommit } from './git-history.mjs';
 import { getNextVersion, getVersionBump } from './versioning.mjs';
 
 function parseArguments(args) {
@@ -25,7 +25,7 @@ function parseArguments(args) {
 
 export async function prepareVersion(repoRoot, message) {
   resolveCommit(repoRoot, 'HEAD');
-  const headVersion = assertManifestConsistency(readManifestEntriesAtCommit(repoRoot, 'HEAD'));
+  const headVersion = assertCommitManifestConsistency(readManifestEntriesAtCommit(repoRoot, 'HEAD'));
   const workingEntries = await readManifestEntries(repoRoot);
   const workingVersion = assertManifestConsistency(workingEntries);
   const bump = getVersionBump(message);

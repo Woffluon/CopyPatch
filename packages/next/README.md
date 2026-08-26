@@ -1,29 +1,26 @@
 # @copypatch/next
 
-Next.js App Router helpers for CopyPatch. It wraps the React integration for client components and adds a server-side snapshot fetcher so published copy can be rendered during SSR and RSC without hydration drift.
+Next.js App Router helpers for CopyPatch. It wraps the React client integration, adapts a colocated v2 backend to an App Router catch-all route, and reads published snapshots directly during SSR/RSC.
 
 ## Install
 
 ```bash
-pnpm add @copypatch/core @copypatch/react @copypatch/next @copypatch/server
+pnpm add @copypatch/core @copypatch/react @copypatch/backend @copypatch/next
 ```
 
 ## Minimal usage
 
 ```tsx
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { backend } from '@/lib/copypatch-backend';
 
 export default async function Page() {
-  const snapshot = await fetchServerSnapshot('en', {
-    apiBaseUrl: process.env.COPYPATCH_API_URL,
-    revalidate: 60,
-  });
+  const snapshot = await readPublishedSnapshot(backend, 'en');
 
   return (
     <NextCopyPatchProvider
       locale="en"
-      apiBase="/__copypatch/api/v1"
       initialSnapshot={snapshot}
     >
       <EditableText contentKey="home.hero.title" as="h1">
@@ -34,17 +31,42 @@ export default async function Page() {
 }
 ```
 
+Create a catch-all route at `app/%5F%5Fcopypatch/api/v2/[...path]/route.ts`.
+The percent-encoded folder name is required because Next treats underscore-
+prefixed source folders as private while the public URL remains
+`/__copypatch/api/v2`. The
+adapter forwards the original Web `Request` and the backend `Response` without
+rebuilding either one:
+
+```ts
+import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
+import { backend } from '@/lib/copypatch-backend';
+import { resolveCopyPatchContext } from '@/lib/copypatch-auth';
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(backend, {
+    resolveContext: resolveCopyPatchContext,
+  });
+```
+
+`resolveContext(request)` returns `CopyPatchHandleContext` (including an
+optional opaque `hostAuth` value and a trusted `clientAddress` for unsafe
+request rate limits). It is passed directly to the backend and is never
+serialized into request headers. `readPublishedSnapshot` returns the
+backend result directly; supply `{ fallback }` when the host needs a specific
+safe snapshot if the read rejects.
+
 ## Exports
 
 - `@copypatch/next`: `NextCopyPatchProvider`, `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText`, `useCopyPatchStore`
-- `@copypatch/next/server`: `fetchServerSnapshot`
+- `@copypatch/next/server`: `createCopyPatchRouteHandlers`, `readPublishedSnapshot`
 
 ## Requirements
 
 - ESM-only package
 - Node.js `>=20`
 - Peer dependencies: `next`, `react`, and `react-dom`
-- A running `@copypatch/server` instance for content and editor APIs
+- A configured `@copypatch/backend` instance in the Next.js server runtime; no localhost URL or self-fetch is required
 
 ## Links
 

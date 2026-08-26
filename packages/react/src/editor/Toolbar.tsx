@@ -6,6 +6,8 @@ import {
   SaveChangesResponse,
   PublishResponse,
   ApiErrorResponse,
+  PublishRequest,
+  RevisionConflictResponse,
 } from '@copypatch/core';
 
 export interface ToolbarProps {
@@ -72,7 +74,7 @@ export function Toolbar({ store, apiBase, onLogout }: ToolbarProps) {
       );
 
       if (!res.ok) {
-        const err: ApiErrorResponse = await res.json().catch(() => ({}));
+        const err = await readErrorAndRefreshSnapshot(res, store);
         store.setSaving(false, err.error?.message || 'Failed to save changes.');
         return;
       }
@@ -119,24 +121,28 @@ export function Toolbar({ store, apiBase, onLogout }: ToolbarProps) {
             Origin: window.location.origin,
           },
           body: JSON.stringify({
+            expectedPublishedRevision: state.publishedRevision,
             expectedDraftRevision: state.draftRevision,
-          }),
+          } satisfies PublishRequest),
         }
       );
 
       if (!res.ok) {
-        const err: ApiErrorResponse = await res.json().catch(() => ({}));
+        const err = await readErrorAndRefreshSnapshot(res, store);
         store.setSaving(false, err.error?.message || 'Failed to publish drafts.');
         return;
       }
 
       const data: PublishResponse = await res.json();
       const nextPublished = { ...state.published, ...state.drafts };
-      store.setPublishedSnapshot({
-        revision: data.publishedRevision,
-        content: nextPublished,
+      store.setEditorSnapshot({
+        locale: state.locale,
+        publishedRevision: data.publishedRevision,
+        draftRevision: data.draftRevision,
+        publishingMode: state.publishingMode,
+        published: nextPublished,
+        drafts: {},
       });
-      store.clearDrafts();
       store.setSaving(false, null);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Network error publishing drafts.';
@@ -473,4 +479,12 @@ export function Toolbar({ store, apiBase, onLogout }: ToolbarProps) {
       </div>
     </aside>
   );
+}
+
+async function readErrorAndRefreshSnapshot(response: Response, store: CopyPatchStore): Promise<ApiErrorResponse> {
+  const error = await response.json().catch(() => ({})) as ApiErrorResponse & Partial<RevisionConflictResponse>;
+  if (error.error?.code === 'REVISION_CONFLICT' && error.latest) {
+    store.setEditorSnapshot(error.latest);
+  }
+  return error;
 }

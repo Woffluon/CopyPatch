@@ -1,0 +1,30 @@
+{
+  "name": "example-astro-ssr-react",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "start": "node ./dist/server/entry.mjs",
+    "typecheck": "astro check"
+  },
+  "dependencies": {
+    "@astrojs/node": "^10.1.4",
+    "@astrojs/react": "^4.4.2",
+    "@copypatch/backend": "workspace:*",
+    "@copypatch/core": "workspace:*",
+    "@copypatch/react": "workspace:*",
+    "@copypatch/storage-sqlite": "workspace:*",
+    "astro": "^6.4.8",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.8.0"
+  }
+}

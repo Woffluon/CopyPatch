@@ -1,46 +1,41 @@
 # Security Policy
 
-## Supported Versions
+## Supported versions
 
-CopyPatch receives continuous security updates on the active major release branch.
+CopyPatch v2 is the supported release line. The v1 `@copypatch/server` package
+is deprecated for new integrations and remains available while users migrate;
+published versions are not unpublished.
 
-| Version | Supported |
-| :--- | :--- |
-| `0.1.x` | Yes |
-| `< 0.1.0` | No |
+| Version | Support |
+| --- | --- |
+| `2.x` | Current |
+| `1.x` and earlier | Migration-only, no new feature work |
 
----
+## Security model
 
-## Security Architecture & Design Invariants
+CopyPatch v2 mounts in the host application at `/__copypatch/api/v2`. Mutating
+requests require an exact same-origin `Origin` header. CopyPatch does not
+support a separate API origin, CORS configuration, or proxy-based deployment.
 
-CopyPatch is built with a defensive security posture specifically engineered to mitigate web content manipulation vulnerabilities:
+The backend provides two authentication choices:
 
-1. **Strict Plain-Text Invariant**: All incoming content is validated with `normalizeText()`. HTML tags, scripts, and Markdown are rejected or stripped. CopyPatch strictly prevents Stored Cross-Site Scripting (XSS).
-2. **Password Hashing**: Administrative credentials use Argon2id with memory-hard parameters (19 MiB RAM, 2 iterations, 1 parallelism lane).
-3. **Session Hardening**: Sessions use 256-bit entropy cryptographic tokens stored hashed with SHA-256 in SQLite. Cookies use `HttpOnly`, `SameSite=Strict`, and `Secure` attributes, with `__Host-` prefix enforcement in production.
-4. **Dual-Token CSRF**: State-mutating endpoints require both a valid session cookie and a synchronized in-memory `x-copypatch-csrf` header.
-5. **Origin & Referer Isolation**: State-mutating requests strictly enforce `Origin` and `Referer` allowlist matching. Wildcard origins (`*`) are prohibited.
+- Built-in passphrase sessions use Argon2id, secure HttpOnly same-site cookies,
+  short-lived CSRF tokens, and persistent rate-limit state.
+- A host-auth adapter identifies the host application's user and must verify
+  mutations with the host application's CSRF or request-integrity control.
 
----
+All content is normalized as plain text. Storage adapters persist token hashes,
+not raw session or rate-limit identifiers. Role checks separate `editor` and
+`publisher` actions. See [the threat model](docs/threat-model.md) for the
+supported threat boundaries and deployment responsibilities.
 
-## Reporting a Vulnerability
+## Reporting a vulnerability
 
-If you discover a security vulnerability in CopyPatch, please report it responsibly rather than opening a public GitHub issue.
+Please report vulnerabilities privately instead of opening a public issue.
 
-### Reporting Channels
+- Open a draft [GitHub security advisory](https://github.com/woffluon/CopyPatch/security/advisories/new).
+- Contact the maintainer through GitHub if the advisory form is unsuitable.
 
-- **GitHub Security Advisories**: Open a draft security advisory via [GitHub Security Advisories](https://github.com/woffluon/CopyPatch/security/advisories/new).
-- **Maintainer Contact**: Send encrypted details to `security@copypatch.dev` or contact the maintainer directly on GitHub.
-
-### What to Include in Your Report
-
-- Detailed description of the vulnerability and its potential impact.
-- Step-by-step reproduction steps or proof-of-concept (PoC) code.
-- Target component (`@copypatch/core`, `@copypatch/react`, `@copypatch/next`, or `@copypatch/server`).
-- Suggested remediation if known.
-
-### Response Timeline
-
-- **Initial Acknowledgment**: Within 24 hours.
-- **Triage & Reproduction**: Within 48 hours.
-- **Fix & Advisory Release**: Coordinated release with a patch version and public CVE/advisory credit.
+Include the affected package, version, a minimal reproduction, impact, and any
+suggested mitigation. We aim to acknowledge reports within two business days
+and coordinate disclosure after a fix is available.

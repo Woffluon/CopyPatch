@@ -13,7 +13,7 @@ import { CopyPatchProvider, EditableText } from '@copypatch/react';
 
 export function LandingPage() {
   return (
-    <CopyPatchProvider locale="tr" apiBase="/__copypatch/api/v1">
+    <CopyPatchProvider locale="tr">
       <header>
         <EditableText contentKey="nav.brand" as="span">
           Acme Stüdyo
@@ -36,7 +36,7 @@ import { CopyPatchProvider, EditableText } from '@copypatch/react';
 
 export function LandingPage() {
   return (
-    <CopyPatchProvider locale="en" apiBase="/__copypatch/api/v1">
+    <CopyPatchProvider locale="en">
       <header>
         <EditableText contentKey="nav.brand" as="span">
           Acme Studio
@@ -58,19 +58,16 @@ export function LandingPage() {
 
 const nextCode = lang === 'tr' ? `// app/page.tsx (Next.js App Router Sunucu Bileşeni)
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
 
 export default async function Page() {
   const locale = 'tr';
-  // 0ms hidrasyon uyumu için anlık görüntüyü SSR aşamasında çekin
-  const snapshot = await fetchServerSnapshot(locale, {
-    apiBaseUrl: 'http://localhost:4040',
-  });
+  const snapshot = await readPublishedSnapshot(copypatch, locale);
 
   return (
     <NextCopyPatchProvider
       locale={locale}
-      apiBase="/__copypatch/api/v1"
       initialSnapshot={snapshot}
     >
       <EditableText contentKey="hero.title" as="h1">
@@ -80,19 +77,16 @@ export default async function Page() {
   );
 }` : `// app/page.tsx (Next.js App Router Server Component)
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
 
 export default async function Page() {
   const locale = 'en';
-  // Fetch snapshot at build/SSR time for 0ms hydration warning
-  const snapshot = await fetchServerSnapshot(locale, {
-    apiBaseUrl: 'http://localhost:4040',
-  });
+  const snapshot = await readPublishedSnapshot(copypatch, locale);
 
   return (
     <NextCopyPatchProvider
       locale={locale}
-      apiBase="/__copypatch/api/v1"
       initialSnapshot={snapshot}
     >
       <EditableText contentKey="hero.title" as="h1">
@@ -102,15 +96,15 @@ export default async function Page() {
   );
 }`;
 
-const serverCode = lang === 'tr' ? `# 1. SQLite veritabanını başlatın ve yönetici parolasını belirleyin
-npx copypatch init --db ./copypatch.sqlite
+const serverCode = lang === 'tr' ? `# Gömülü yapılandırma ve SQLite rotası oluşturun
+npx copypatch init --framework vite-node --storage sqlite
 
-# 2. Bağımsız sunucuyu ayağa kaldırın
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173` : `# 1. Initialize SQLite database & set administrative passphrase
-npx copypatch init --db ./copypatch.sqlite
+# Parola özetini üretin ve COPYPATCH_PASSPHRASE_HASH olarak saklayın
+printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin` : `# Generate embedded configuration and a SQLite route
+npx copypatch init --framework vite-node --storage sqlite
 
-# 2. Start standalone server
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin http://localhost:5173`;
+# Generate a passphrase hash and store it as COPYPATCH_PASSPHRASE_HASH
+printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
 ---
 
 <section class="integration-section">

@@ -628,7 +628,7 @@ function App() {
   const [locale, setLocale] = useState<'en' | 'tr'>('en');
 
   return (
-    <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v1">
+    <CopyPatchProvider locale={locale} apiBase="/__copypatch/api/v2">
       <AppContent locale={locale} setLocale={setLocale} />
     </CopyPatchProvider>
   );

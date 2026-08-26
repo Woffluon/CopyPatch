@@ -1,0 +1,58 @@
+{
+  "name": "@copypatch/storage-postgres",
+  "version": "2.0.0",
+  "description": "PostgreSQL persistence adapter for CopyPatch",
+  "license": "MIT",
+  "type": "module",
+  "homepage": "https://copypatch.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/storage-postgres"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "postgresql",
+    "persistence",
+    "content-editing"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@copypatch/core": "workspace:*",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.5",
+    "typescript": "^5.8.0",
+    "vitest": "^3.2.7"
+  }
+}

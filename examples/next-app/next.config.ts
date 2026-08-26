@@ -1,14 +1,16 @@
 import type { NextConfig } from 'next';
 
+// CopyPatch is mounted by app/__copypatch/api/v2/[...path]/route.ts. There is
+// deliberately no cross-origin rewrite: mutations are same-origin only.
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/__copypatch/api/:path*',
-        destination: 'http://localhost:4040/__copypatch/api/:path*',
-      },
-    ];
-  },
+  // Native SQLite/Argon2 dependencies stay in the Node server bundle.
+  serverExternalPackages: [
+    '@copypatch/backend',
+    '@copypatch/storage-sqlite',
+    '@node-rs/argon2',
+    '@node-rs/argon2-win32-x64-msvc',
+    'better-sqlite3',
+  ],
 };
 
 export default nextConfig;

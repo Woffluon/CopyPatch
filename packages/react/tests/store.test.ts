@@ -83,4 +83,13 @@ describe('React CopyPatchStore', () => {
     store.setUnsavedEdit('hero.title', 'Original Title');
     expect(Object.keys(store.getState().unsaved).length).toBe(0);
   });
+
+  it('clears the focused key when changing locale so edits cannot remain attached to another locale', () => {
+    const store = new CopyPatchStore('en');
+    store.setActiveEditingKey('hero.title');
+
+    store.setLocale('tr');
+
+    expect(store.getState().activeEditingKey).toBeNull();
+  });
 });

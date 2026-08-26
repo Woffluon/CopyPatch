@@ -5,7 +5,7 @@ React bindings for CopyPatch. This package gives you the provider, inline editab
 ## Install
 
 ```bash
-pnpm add @copypatch/core @copypatch/react @copypatch/server
+pnpm add @copypatch/core @copypatch/react
 ```
 
 ## Minimal usage
@@ -20,7 +20,7 @@ function HeroButton() {
 
 export function App() {
   return (
-    <CopyPatchProvider locale="en" apiBase="/__copypatch/api/v1">
+    <CopyPatchProvider locale="en">
       <EditableText contentKey="home.hero.title" as="h1">
         Let clients edit the copy, not the website.
       </EditableText>
@@ -40,7 +40,8 @@ export function App() {
 - ESM-only package
 - Node.js `>=20`
 - Peer dependencies: `react` and `react-dom`
-- A running `@copypatch/server` instance for loading and saving content
+- A server-capable host that mounts `@copypatch/backend` at the same-origin
+  `/__copypatch/api/v2` path. The provider uses that path by default.
 
 ## Links
 

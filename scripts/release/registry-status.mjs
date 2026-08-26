@@ -46,10 +46,11 @@ export async function getRegistryStatus(repoRoot, fetchImplementation = fetch) {
 }
 
 function summaryFor(status) {
+  const packageCount = PUBLISH_PACKAGES.length;
   if (status.state === 'bootstrap') {
     return [
       '### npm bootstrap required',
-      `All four packages are absent from npm. Automated publish for v${status.version} is a no-op: first publication must be performed manually, then npm trusted publishing can be configured for this workflow. No account credential was requested.`,
+      `All ${packageCount} packages are absent from npm. Automated publish for v${status.version} is a no-op: first publication must be performed manually, then npm trusted publishing can be configured for this workflow. No account credential was requested.`,
     ].join('\n');
   }
   if (status.state === 'partial-bootstrap') {
@@ -57,7 +58,7 @@ function summaryFor(status) {
     return `### npm bootstrap incomplete\nPackages absent from npm: ${missing}. No automated publish attempted.`;
   }
   if (status.state === 'complete') {
-    return `### npm registry state\nAll four packages already contain ${status.version}; publish job will skip exact versions.`;
+    return `### npm registry state\nAll ${packageCount} packages already contain ${status.version}; publish job will skip exact versions.`;
   }
   const missingVersions = status.records.filter((record) => !record.versionExists).map((record) => record.name).join(', ');
   return `### npm registry state\nVersion ${status.version} still needs publication for: ${missingVersions}.`;

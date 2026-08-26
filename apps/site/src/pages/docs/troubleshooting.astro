@@ -1,144 +1,19 @@
 ---
 import DocsLayout from '../../layouts/DocsLayout.astro';
-import CodeBlock from '../../components/ui/CodeBlock.astro';
-
-const originFixCode = `# Pass multiple comma-separated origins if running frontend & backend on different ports
-npx copypatch serve --port 4040 --db ./copypatch.sqlite --origin "http://localhost:5173,https://my-website.com"`;
-
-const passwordResetCode = `# Invalidate all active sessions and prompt for new passphrase
-npx copypatch password --db ./copypatch.sqlite`;
-
-const viteProxyCode = `// vite.config.ts
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 5173,
-    proxy: {
-      '/__copypatch/api/v1': {
-        target: 'http://localhost:4040',
-        changeOrigin: true,
-      },
-    },
-  },
-});`;
-
-const nextHydrationFixCode = `// app/page.tsx (Server Component)
-import { NextCopyPatchProvider } from '@copypatch/next';
-import { fetchServerSnapshot } from '@copypatch/next/server';
-
-export default async function Page() {
-  const snapshot = await fetchServerSnapshot('en');
-  return (
-    <NextCopyPatchProvider locale="en" initialSnapshot={snapshot}>
-      {/* Page Content */}
-    </NextCopyPatchProvider>
-  );
-}`;
-
-const filePermissionsCode = `chmod 755 /data
-chmod 644 /data/copypatch.sqlite*`;
 ---
 
-<DocsLayout
-  title="Troubleshooting & Diagnostics"
-  description="Diagnostic guide and solutions for common CopyPatch issues, CORS errors, CSRF failures, and SSR hydration mismatches."
->
-  <h1>Troubleshooting & Diagnostics</h1>
-
-  <p class="lead">
-    This guide lists common errors, diagnostic checklists, and resolution steps for both development and production environments.
-  </p>
-
-  <h2>Diagnostic Matrix</h2>
+<DocsLayout title="Troubleshooting" description="Diagnose CopyPatch v2 embedded-route, storage, authentication, and conflict issues.">
+  <h1>Troubleshooting</h1>
   <table>
-    <thead>
-      <tr>
-        <th>Error Code / Symptom</th>
-        <th>Root Cause</th>
-        <th>Resolution</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Symptom</th><th>Check</th></tr></thead>
     <tbody>
-      <tr>
-        <td><code>ORIGIN_REJECTED (403)</code></td>
-        <td>Client Origin header does not match configured <code>--origin</code> allowlist.</td>
-        <td>Add the client URL to the server CLI <code>--origin</code> argument.</td>
-      </tr>
-      <tr>
-        <td><code>CSRF_FAILED (403)</code></td>
-        <td>Missing or mismatched <code>x-copypatch-csrf</code> request header.</td>
-        <td>Ensure edit session is active and cookies are not blocked by browser extensions.</td>
-      </tr>
-      <tr>
-        <td><code>REVISION_CONFLICT (409)</code></td>
-        <td>Another user published or saved draft changes concurrently.</td>
-        <td>Refresh snapshot to view latest changes before reapplying local edits.</td>
-      </tr>
-      <tr>
-        <td><code>SQLITE_BUSY (500)</code></td>
-        <td>Database file locked or filesystem lacks directory write permissions.</td>
-        <td>Ensure database is in WAL mode and parent directory has read-write permissions.</td>
-      </tr>
-      <tr>
-        <td><strong>Edit toolbar missing</strong></td>
-        <td><code>?copypatch=1</code> missing from URL or provider not mounted.</td>
-        <td>Confirm <code>CopyPatchProvider</code> wraps the active component tree.</td>
-      </tr>
-      <tr>
-        <td><strong>Next.js Hydration Warning</strong></td>
-        <td>Server rendered fallback text but client fetched different copy.</td>
-        <td>Use <code>fetchServerSnapshot()</code> in Server Component before rendering.</td>
-      </tr>
+      <tr><td>Editor never opens</td><td>Confirm <code>CopyPatchProvider</code> wraps the page and the URL includes <code>?copypatch=1</code>.</td></tr>
+      <tr><td>Route returns 404</td><td>Mount the host route at <code>/__copypatch/api/v2</code>; do not use the v1 path.</td></tr>
+      <tr><td><code>ORIGIN_REJECTED</code></td><td>Call the embedded route from the host's exact origin. Remove separate-server, proxy, and CORS settings.</td></tr>
+      <tr><td><code>CSRF_FAILED</code></td><td>For built-in auth, start a fresh same-origin session. For host auth, check the adapter's mutation verification.</td></tr>
+      <tr><td><code>REVISION_CONFLICT</code></td><td>Refresh the editor snapshot and reapply the intended changes.</td></tr>
+      <tr><td>Storage errors</td><td>Run migrations, verify SQLite file and directory access, or verify the PostgreSQL connection and schema permissions.</td></tr>
+      <tr><td>Static deployment</td><td>Use a server-capable host. Static-only output cannot provide editing, storage, or authentication.</td></tr>
     </tbody>
   </table>
-
-  <h2>1. Edit Mode (?copypatch=1) Does Not Activate</h2>
-  <p><strong>Symptoms:</strong> Navigating to <code>?copypatch=1</code> shows the standard visitor website without the floating toolbar or passphrase prompt.</p>
-  <p><strong>Diagnostic Checklist:</strong></p>
-  <ul>
-    <li>Verify that your root layout or view component is wrapped with <code>&lt;CopyPatchProvider&gt;</code>.</li>
-    <li>Ensure the search parameter is exact (case-sensitive): <code>?copypatch=1</code>.</li>
-    <li>Check your browser developer console for any script errors or bundle loading failures.</li>
-    <li>If using React 19 / Vite, verify that dynamic <code>import()</code> is allowed by your Content Security Policy (CSP).</li>
-  </ul>
-
-  <h2>2. CORS or Origin Rejection (403 ORIGIN_REJECTED)</h2>
-  <p><strong>Symptoms:</strong> Saving copy changes fails with <code>403 Forbidden: ORIGIN_REJECTED</code>.</p>
-  <p><strong>Cause:</strong> CopyPatch enforces strict origin checks to prevent unauthorized cross-site mutations.</p>
-  <p><strong>Fix:</strong> Specify all allowed client URLs to the server CLI:</p>
-
-  <CodeBlock code={originFixCode} lang="bash" title="Terminal" />
-
-  <p>
-    Alternatively, proxy API requests through your Vite dev server to keep frontend and API on the same origin:
-  </p>
-
-  <CodeBlock code={viteProxyCode} lang="ts" title="vite.config.ts" />
-
-  <h2>3. Passphrase Lost or Session Invalidation</h2>
-  <p><strong>Symptoms:</strong> You forgot the configured passphrase or need to revoke all currently active editor sessions immediately.</p>
-  <p><strong>Fix:</strong> Run the interactive password command against your database:</p>
-
-  <CodeBlock code={passwordResetCode} lang="bash" title="Terminal" />
-
-  <p>
-    This atomically updates the Argon2id hash in <code>auth_credentials</code> and wipes all active rows in the <code>sessions</code> table, instantly logging out all browser sessions.
-  </p>
-
-  <h2>4. Next.js SSR Hydration Mismatch</h2>
-  <p><strong>Symptoms:</strong> Browser console logs <code>Warning: Text content did not match. Server: "..." Client: "..."</code>.</p>
-  <p><strong>Cause:</strong> The Server Component rendered with hardcoded React fallback copy, but the client hydrated with published copy from CopyPatch storage.</p>
-  <p><strong>Fix:</strong> Fetch the snapshot on the server during SSR and pass it via <code>initialSnapshot</code>:</p>
-
-  <CodeBlock code={nextHydrationFixCode} lang="tsx" title="app/page.tsx" />
-
-  <h2>5. SQLite File Permissions & WAL Mode</h2>
-  <p><strong>Symptoms:</strong> Backend logs <code>SQLITE_CANTOPEN</code> or <code>SQLITE_READONLY</code>.</p>
-  <p><strong>Cause:</strong> SQLite needs write permissions to both the database file itself and the parent directory to create <code>copypatch.sqlite-wal</code> and <code>copypatch.sqlite-shm</code> files.</p>
-  <p><strong>Fix:</strong> Grant read-write permissions to the executing user or Docker container:</p>
-
-  <CodeBlock code={filePermissionsCode} lang="bash" title="Terminal" />
 </DocsLayout>

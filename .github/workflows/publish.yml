@@ -120,6 +120,22 @@ jobs:
     permissions:
       contents: read
       id-token: write
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: copypatch
+          POSTGRES_PASSWORD: copypatch
+          POSTGRES_DB: copypatch_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U copypatch -d copypatch_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      COPYPATCH_TEST_POSTGRES_URL: postgresql://copypatch:copypatch@127.0.0.1:5432/copypatch_test
     steps:
       - name: Checkout release commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -153,8 +169,16 @@ jobs:
       - name: Run unit and release tests
         run: pnpm test
 
+      - name: Enforce coverage threshold
+        run: pnpm test:coverage
+
       - name: Measure bundle sizes
         run: node scripts/measure-bundle.mjs
+
+      - name: Inspect all package tarballs
+        env:
+          PACK_DIR: ${{ runner.temp }}/copypatch-verify-packs
+        run: pnpm release:pack -- --out "$PACK_DIR"
 
       - name: Pack and publish missing exact versions
         env:

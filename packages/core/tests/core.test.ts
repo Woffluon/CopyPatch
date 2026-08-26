@@ -1,7 +1,27 @@
 import { describe, it, expect } from 'vitest';
-import { isValidContentKey, isValidLocale, normalizeText } from '../src/index.js';
+import {
+  API_BASE_PATH,
+  isValidContentKey,
+  isValidLocale,
+  normalizeText,
+  RevisionConflictError,
+  type CopyPatchAuthAdapter,
+  type CopyPatchPersistence,
+} from '../src/index.js';
+
+const persistenceContract = (persistence: CopyPatchPersistence): CopyPatchPersistence => persistence;
+const authContract = (adapter: CopyPatchAuthAdapter): CopyPatchAuthAdapter => adapter;
 
 describe('Core Validation & Formatting', () => {
+  it('exposes the v2 API base path', () => {
+    expect(API_BASE_PATH).toBe('/__copypatch/api/v2');
+  });
+
+  it('exports storage-independent async backend contracts', () => {
+    expect(typeof persistenceContract).toBe('function');
+    expect(typeof authContract).toBe('function');
+    expect(new RevisionConflictError('conflict').code).toBe('REVISION_CONFLICT');
+  });
   it('validates content keys correctly', () => {
     expect(isValidContentKey('home.hero.title')).toBe(true);
     expect(isValidContentKey('features.card_1:subtitle')).toBe(true);
@@ -11,6 +31,8 @@ describe('Core Validation & Formatting', () => {
     expect(isValidContentKey('   ')).toBe(false);
     expect(isValidContentKey('home/hero/title')).toBe(false); // No slashes/traversal
     expect(isValidContentKey('../secret')).toBe(false);
+    expect(isValidContentKey('__proto__')).toBe(false);
+    expect(isValidContentKey('constructor')).toBe(false);
     expect(isValidContentKey('SELECT * FROM users')).toBe(false);
     expect(isValidContentKey('a'.repeat(161))).toBe(false);
   });

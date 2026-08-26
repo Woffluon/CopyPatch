@@ -1,8 +1,12 @@
 import { spawnSync } from 'node:child_process';
-import { MANIFEST_PATHS, assertManifestConsistency, parseManifest } from './manifests.mjs';
+import { MANIFEST_PATHS, parseManifest } from './manifests.mjs';
 import { getNextVersion, getVersionBump } from './versioning.mjs';
 
 export const VERSION_CONTRACT_PATH = 'scripts/release/versioning.mjs';
+const HISTORICAL_MANIFEST_PATHS = Object.freeze([...new Set([
+  ...MANIFEST_PATHS,
+  'packages/server/package.json',
+])]);
 
 export function runGit(repoRoot, args, options = {}) {
   const result = spawnSync('git', ['-C', repoRoot, ...args], {
@@ -38,10 +42,21 @@ export function fileExistsAtCommit(repoRoot, commit, relativePath) {
 }
 
 export function readManifestEntriesAtCommit(repoRoot, commit) {
-  return MANIFEST_PATHS.map((relativePath) => {
+  return HISTORICAL_MANIFEST_PATHS.filter((relativePath) => fileExistsAtCommit(repoRoot, commit, relativePath)).map((relativePath) => {
     const content = showFileAtCommit(repoRoot, commit, relativePath);
     return { path: relativePath, content, manifest: parseManifest(content, `${commit}:${relativePath}`) };
   });
+}
+
+export function assertCommitManifestConsistency(entries) {
+  const root = entries.find((entry) => entry.path === 'package.json');
+  if (!root) throw new Error('Root package.json is missing from historical manifest set.');
+  const version = root.manifest.version;
+  const mismatches = entries.filter((entry) => entry.manifest.version !== version);
+  if (mismatches.length > 0) {
+    throw new Error(`Historical manifest versions must equal root ${version}: ${mismatches.map((entry) => `${entry.path}=${entry.manifest.version}`).join(', ')}`);
+  }
+  return version;
 }
 
 export function getValidatedVersionHistory(repoRoot, target = 'HEAD') {
@@ -58,8 +73,8 @@ export function getValidatedVersionHistory(repoRoot, target = 'HEAD') {
   for (let index = contractIndex; index < commits.length; index += 1) {
     const commit = commits[index];
     const parent = commits[index - 1];
-    const currentVersion = assertManifestConsistency(readManifestEntriesAtCommit(repoRoot, commit));
-    const parentVersion = assertManifestConsistency(readManifestEntriesAtCommit(repoRoot, parent));
+    const currentVersion = assertCommitManifestConsistency(readManifestEntriesAtCommit(repoRoot, commit));
+    const parentVersion = assertCommitManifestConsistency(readManifestEntriesAtCommit(repoRoot, parent));
     const message = runGit(repoRoot, ['show', '-s', '--format=%B', commit]).stdout.replace(/\r?\n$/, '');
     const bump = getVersionBump(message);
     const expectedVersion = getNextVersion(parentVersion, bump);

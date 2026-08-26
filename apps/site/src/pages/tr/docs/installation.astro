@@ -2,77 +2,29 @@
 import DocsLayout from '../../../layouts/DocsLayout.astro';
 import CodeBlock from '../../../components/ui/CodeBlock.astro';
 
-const pnpmInstall = `# React için istemci paketlerini yükleyin:
-pnpm add @copypatch/react @copypatch/core
+const install = `# React istemcisi
+pnpm add @copypatch/core @copypatch/react
 
-# Next.js App Router (SSR) desteği için:
-pnpm add @copypatch/next
+# Bir backend, bir depolama adaptörü ve gerekiyorsa host adaptörünü seçin
+pnpm add @copypatch/backend @copypatch/storage-sqlite @copypatch/node
 
-# Bağımsız sunucu ve CLI için:
-pnpm add @copypatch/server`;
+# Next.js App Router için
+pnpm add @copypatch/next`;
 
-const initDb = `# SQLite veritabanını başlatın ve yönetici parolasını belirleyin:
-npx copypatch init --db ./copypatch.sqlite`;
+const scaffold = `# Projenin içinde same-origin route ve yapılandırma oluşturur.
+# Bağımsız CopyPatch sunucusu başlatmaz.
+npx copypatch init --framework next --storage sqlite
+npx copypatch migrate --storage sqlite`;
 ---
 
-<DocsLayout
-  title="Kurulum & Başlangıç"
-  description="React, Vite veya Next.js projelerinde CopyPatch paketlerinin kurulumu ve ilk yapılandırma."
->
-  <h1>Kurulum & Başlangıç</h1>
-
-  <p class="lead">
-    CopyPatch, <code>@copypatch</code> npm isim alanı altında yayınlanan modüler ve hafif paketlerden oluşur.
-  </p>
-
-  <h2>Gereksinimler</h2>
-  <ul>
-    <li><strong>Node.js:</strong> <code>&gt;= 20.0.0</code></li>
-    <li><strong>React:</strong> <code>&gt;= 18.0.0</code> veya <code>19.x</code></li>
-    <li><strong>Paket Yöneticisi:</strong> <code>pnpm</code> (önerilen), <code>npm</code> veya <code>yarn</code></li>
-  </ul>
-
-  <h2>Paket Genel Bakışı</h2>
-  <table>
-    <thead>
-      <tr>
-        <th>Paket</th>
-        <th>Açıklama</th>
-        <th>Hedef Ortam</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><code>@copypatch/react</code></td>
-        <td>İstemci sağlayıcısı, <code>EditableText</code> ve hook'lar</td>
-        <td>React / Vite / Next.js İstemcisi</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/core</code></td>
-        <td>Ortak tipler, sabitler ve doğrulama kuralları</td>
-        <td>Evrensel</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/next</code></td>
-        <td>Next.js App Router RSC sunucu tarafı ön oluşturma</td>
-        <td>Next.js Sunucu & İstemci</td>
-      </tr>
-      <tr>
-        <td><code>@copypatch/server</code></td>
-        <td>Hono API sunucusu, SQLite kalıcılığı ve CLI</td>
-        <td>Node.js Sunucusu</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <h2>1. Bağımlılıkları Yükleyin</h2>
-  <CodeBlock code={pnpmInstall} lang="bash" title="Terminal" />
-
-  <h2>2. SQLite Veritabanını Başlatın</h2>
-  <CodeBlock code={initDb} lang="bash" title="Terminal" />
-
-  <h2>Sonraki Adım</h2>
-  <p>
-    Kullanıcı arayüzünüzü bağlamak için <a href="/tr/docs/react">React & Vite Entegrasyonu</a> sayfasına geçebilirsiniz.
-  </p>
+<DocsLayout title="Kurulum" description="CopyPatch v2 paketlerini sunucu çalıştırabilen bir host uygulamasına ekleyin.">
+  <h1>CopyPatch v2 kurulumu</h1>
+  <p class="lead">CopyPatch, ikinci bir servis veya port değil, mevcut uygulamanızın içinde çalışan bir kütüphanedir.</p>
+  <h2>Paketler</h2>
+  <p><code>@copypatch/core</code> sözleşmeleri, <code>@copypatch/react</code> istemciyi, <code>@copypatch/backend</code> HTTP davranışını, <code>@copypatch/storage-sqlite</code> veya <code>@copypatch/storage-postgres</code> kalıcılığı sağlar. <code>@copypatch/node</code> Node, Express, Fastify, Hono adaptörlerini ve CLI'ı içerir.</p>
+  <CodeBlock code={install} lang="bash" title="Terminal" />
+  <h2>Başlangıç dosyaları</h2>
+  <p>CLI seçtiğiniz framework ve depolama için dosya üretir. Mevcut dosyaların üzerine yazmaz ve <code>serve</code> komutu sunmaz.</p>
+  <CodeBlock code={scaffold} lang="bash" title="Terminal" />
+  <p>Tam statik çıktı düzenleme, kimlik doğrulama veya kalıcılık sağlayamaz. Editör için sunucu çalıştırabilen bir deployment gerekir.</p>
 </DocsLayout>
