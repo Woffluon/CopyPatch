@@ -90,5 +90,6 @@ analizler
 temp/
 
 # Astro runtime cache; generated from the active local configuration.
+examples\astro-ssr-react\.astro
 apps/site/.astro/data-store.json
 tmp/
