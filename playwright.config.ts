@@ -7,9 +7,12 @@ const e2eRuntimeDirectory = join(tmpdir(), 'copypatch-playwright-v2');
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 45_000,
+  expect: {
+    timeout: 15_000,
+  },
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   workers: 1,
   reporter: [
     ['list'],
