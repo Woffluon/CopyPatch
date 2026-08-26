@@ -97,33 +97,7 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
           <span class="github-text">GitHub</span>
         </a>
 
-        <!-- Theme Toggle -->
-        <button
-          type="button"
-          id="theme-toggle"
-          class="theme-toggle"
-          aria-label="Toggle light/dark theme"
-          title="Toggle theme"
-        >
-          <!-- Sun (shown in dark mode) -->
-          <svg class="icon-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="5"/>
-            <line x1="12" y1="1" x2="12" y2="3"/>
-            <line x1="12" y1="21" x2="12" y2="23"/>
-            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-            <line x1="1" y1="12" x2="3" y2="12"/>
-            <line x1="21" y1="12" x2="23" y2="12"/>
-            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-          </svg>
-          <!-- Moon (shown in light mode) -->
-          <svg class="icon-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-          </svg>
-        </button>
-
-        <a href={docsHref} class="btn btn-primary get-started-btn">
+        <a href={docsHref} class="btn btn-pill-white get-started-btn">
           <span>{currentLang === 'tr' ? 'Başlayın' : 'Get Started'}</span>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M5 12h14M12 5l7 7-7 7" />
@@ -230,22 +204,6 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
       }
     });
   }
-
-  // Theme toggle
-  const themeToggle = document.getElementById('theme-toggle');
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      const html = document.documentElement;
-      const current = html.getAttribute('data-theme');
-      const next = current === 'dark' ? 'light' : 'dark';
-      html.setAttribute('data-theme', next);
-      localStorage.setItem('cp-theme', next);
-      const metaColor = document.getElementById('meta-theme-color');
-      if (metaColor) {
-        metaColor.setAttribute('content', next === 'dark' ? '#2b2b2b' : '#e4e2dd');
-      }
-    });
-  }
 </script>
 
 <style>
@@ -278,54 +236,51 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
     display: flex;
     align-items: center;
     gap: 0.625rem;
-    font-weight: 700;
-    font-size: 1.125rem;
-    letter-spacing: -0.02em;
-    color: var(--cp-text);
+    font-weight: 510;
+    font-size: 1rem;
+    letter-spacing: -0.011em;
+    color: #ffffff;
     text-decoration: none;
   }
 
   .brand-logo {
-    width: 30px;
-    height: 30px;
+    width: 24px;
+    height: 24px;
     border-radius: var(--cp-radius-sm);
     object-fit: contain;
     display: block;
   }
 
-  /* Show the right logo per theme */
-  :root:not([data-theme="dark"]) .brand-logo-dark { display: none; }
-  [data-theme="dark"] .brand-logo-light { display: none; }
-
   .brand-text {
-    color: var(--cp-text);
+    color: #ffffff;
+    font-weight: 510;
   }
 
   /* Desktop Nav */
   .desktop-nav {
     display: flex;
     align-items: center;
-    gap: 1.75rem;
+    gap: 1.5rem;
   }
 
   .nav-link {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--cp-text-muted);
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--color-mist);
     transition: color var(--cp-transition-fast);
     text-decoration: none;
   }
 
   .nav-link:hover,
   .nav-link.active {
-    color: var(--cp-text);
+    color: #ffffff;
   }
 
   /* Actions */
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 0.875rem;
+    gap: 0.75rem;
   }
 
   /* Language Switcher */
@@ -388,32 +343,6 @@ const docsHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
     color: var(--cp-text);
     background-color: var(--cp-surface-elevated);
   }
-
-  /* Theme Toggle */
-  .theme-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    min-height: 44px;
-    border-radius: var(--cp-radius-md);
-    background: transparent;
-    border: 1px solid var(--cp-border);
-    color: var(--cp-text-muted);
-    cursor: pointer;
-    transition: color var(--cp-transition-fast), background-color var(--cp-transition-fast), border-color var(--cp-transition-fast);
-  }
-
-  .theme-toggle:hover {
-    color: var(--cp-text);
-    background-color: var(--cp-surface-elevated);
-  }
-
-  /* Show moon in light mode, sun in dark mode */
-  :root:not([data-theme="dark"]) .icon-sun { display: none; }
-  [data-theme="dark"] .icon-moon { display: none; }
 
   /* Get Started Button */
   .get-started-btn {

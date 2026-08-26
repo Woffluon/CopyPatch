@@ -10,21 +10,29 @@ const { lang = 'en' } = Astro.props;
 
 <section id="security" class="security-section">
   <div class="container">
-    <div class="section-header">
-      <h2>{lang === 'tr' ? 'Kendi sunucunuz. Kendi veritabanınız. Tam kontrol.' : 'Your server. Your database. Complete control.'}</h2>
+    <div class="section-header fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'GÜVENLİK' : 'SECURITY'}</div>
+      <h2>{lang === 'tr' ? 'Tavizsiz Kendi Sunucunuzda Güvenlik' : 'Zero-compromise self-hosted security'}</h2>
       <p class="section-subhead">
         {
           lang === 'tr'
-            ? 'CopyPatch harici sunuculara hiçbir veri göndermez. Katı kurumsal güvenlik ilkeleriyle tamamen kendi altyapınızda çalışır.'
+            ? 'CopyPatch dış sunuculara sıfır veri gönderir. Kendi altyapınızda, katı kurumsal güvenlik değişmezleriyle çalışır.'
             : 'CopyPatch sends zero data to external servers. It runs in your own infrastructure with strict enterprise security invariants.'
         }
       </p>
     </div>
 
-    <div class="security-grid">
-      <!-- Feature 1: Plain Text Invariant -->
+    <div class="security-grid stagger-children">
+      <!-- Invariant 1: Plain Text Invariant -->
       <div class="security-card">
-        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 01' : 'INVARIANT 01'}</div>
+        <div class="card-top-row">
+          <div class="sec-badge">INVARIANT 01</div>
+          <div class="sec-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+        </div>
         <h3 class="sec-title">{lang === 'tr' ? 'Kesin Düz Metin Değişmezi' : 'Strict Plain-Text Invariant'}</h3>
         <p class="sec-desc">
           {
@@ -34,13 +42,22 @@ const { lang = 'en' } = Astro.props;
           }
         </p>
         <div class="code-snippet-pill">
+          <span class="code-dot"></span>
           <code>assert(typeof text === 'string')</code>
         </div>
       </div>
 
-      <!-- Feature 2: Argon2id Authentication -->
+      <!-- Invariant 2: Argon2id Authentication -->
       <div class="security-card">
-        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 02' : 'INVARIANT 02'}</div>
+        <div class="card-top-row">
+          <div class="sec-badge">INVARIANT 02</div>
+          <div class="sec-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+        </div>
         <h3 class="sec-title">{lang === 'tr' ? 'Argon2id Parola Özetleme' : 'Argon2id Passphrase Hashing'}</h3>
         <p class="sec-desc">
           {
@@ -50,13 +67,22 @@ const { lang = 'en' } = Astro.props;
           }
         </p>
         <div class="code-snippet-pill">
-          <code>argon2.hash(passphrase, type: argon2id)</code>
+          <span class="code-dot"></span>
+          <code>{"argon2.hash(pwd, { type: argon2id, m: 19456 })"}</code>
         </div>
       </div>
 
-      <!-- Feature 3: HttpOnly & SameSite=Strict Sessions -->
+      <!-- Invariant 3: HttpOnly & SameSite=Strict Sessions -->
       <div class="security-card">
-        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 03' : 'INVARIANT 03'}</div>
+        <div class="card-top-row">
+          <div class="sec-badge">INVARIANT 03</div>
+          <div class="sec-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 8v4l3 3"/>
+            </svg>
+          </div>
+        </div>
         <h3 class="sec-title">{lang === 'tr' ? '256-Bit Kriptografik Oturumlar' : '256-Bit Cryptographic Sessions'}</h3>
         <p class="sec-desc">
           {
@@ -72,13 +98,21 @@ const { lang = 'en' } = Astro.props;
           }
         </p>
         <div class="code-snippet-pill">
-          <code>Set-Cookie: __Host-cp_session; HttpOnly</code>
+          <span class="code-dot"></span>
+          <code>Set-Cookie: __Host-cp_session; HttpOnly; SameSite=Strict</code>
         </div>
       </div>
 
-      <!-- Feature 4: CSRF & Origin Validation -->
+      <!-- Invariant 4: CSRF & Origin Validation -->
       <div class="security-card">
-        <div class="sec-badge">{lang === 'tr' ? 'DEĞİŞMEZ 04' : 'INVARIANT 04'}</div>
+        <div class="card-top-row">
+          <div class="sec-badge">INVARIANT 04</div>
+          <div class="sec-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          </div>
+        </div>
         <h3 class="sec-title">{lang === 'tr' ? 'Çift Belirteçli CSRF ve Origin Koruması' : 'Dual-Token CSRF & Origin Guard'}</h3>
         <p class="sec-desc">
           {
@@ -94,6 +128,7 @@ const { lang = 'en' } = Astro.props;
           }
         </p>
         <div class="code-snippet-pill">
+          <span class="code-dot"></span>
           <code>headers['x-copypatch-csrf'] === session.csrf</code>
         </div>
       </div>
@@ -103,9 +138,9 @@ const { lang = 'en' } = Astro.props;
 
 <style>
   .security-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
+    border-top: 1px solid var(--color-graphite);
   }
 
   .section-header {
@@ -114,65 +149,129 @@ const { lang = 'en' } = Astro.props;
     margin: 0 auto var(--cp-space-12);
   }
 
-  .section-header h2 {
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
     margin-bottom: 0.75rem;
   }
 
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
+  }
+
   .section-subhead {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   .security-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: var(--cp-space-6);
-    max-width: 1000px;
+    max-width: 1040px;
     margin: 0 auto;
   }
 
   .security-card {
-    background-color: var(--cp-bg);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
     padding: var(--cp-space-6);
     display: flex;
     flex-direction: column;
+    box-shadow: var(--cp-shadow-sm);
+    transition: all var(--cp-transition-fast);
+  }
+
+  .security-card:hover {
+    border-color: var(--color-smoke);
+    background-color: var(--color-obsidian);
+  }
+
+  .card-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
   }
 
   .sec-badge {
     font-family: var(--cp-font-mono);
     font-size: 0.6875rem;
-    font-weight: 700;
-    color: var(--cp-text-dim);
-    margin-bottom: 0.75rem;
-    letter-spacing: 0.05em;
+    font-weight: 510;
+    color: var(--color-mist);
+    letter-spacing: -0.013em;
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    padding: 2px 8px;
+    border-radius: var(--radius-badges);
+  }
+
+  .sec-icon {
+    width: 28px;
+    height: 28px;
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-badges);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-mist);
   }
 
   .sec-title {
-    font-size: 1.125rem;
-    color: var(--cp-text);
+    font-size: 1rem;
+    font-weight: 510;
+    color: #ffffff;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.011em;
   }
 
   .sec-desc {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--cp-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-fog);
+    font-weight: 400;
     margin-bottom: 1.25rem;
     flex: 1;
   }
 
   .code-snippet-pill {
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border-subtle);
+    background-color: var(--color-void);
+    border: 1px solid var(--color-graphite);
     padding: 0.5rem 0.75rem;
-    border-radius: var(--cp-radius-sm);
+    border-radius: var(--radius-inputs);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .code-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: var(--color-acid-lime);
+    box-shadow: 0 0 4px rgba(228, 242, 34, 0.4);
+    flex-shrink: 0;
   }
 
   .code-snippet-pill code {
+    font-family: var(--cp-font-mono);
     font-size: 0.75rem;
-    color: var(--cp-text-muted);
+    color: var(--color-mist);
+    white-space: nowrap;
   }
 
   @media (max-width: 768px) {

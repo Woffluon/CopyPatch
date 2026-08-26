@@ -43,17 +43,17 @@ const structuredData = {
 ---
 
 <!doctype html>
-<html lang={lang} data-theme="light">
+<html lang={lang} data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
 
-    <!-- Google Fonts: League Spartan -->
+    <!-- Google Fonts: Inter Variable & JetBrains Mono for Linear Style Reference -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=League+Spartan:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
     <!-- Primary Meta Tags -->
     <title>{fullTitle}</title>
@@ -75,24 +75,19 @@ const structuredData = {
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={new URL(ogImage, Astro.url)} />
 
-    <!-- Theme Color (dynamic via JS) -->
-    <meta name="theme-color" id="meta-theme-color" content="#e4e2dd" />
+    <!-- Theme Color -->
+    <meta name="theme-color" id="meta-theme-color" content="#08090a" />
 
     <!-- Structured Data -->
     <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
 
-    <!-- FOUC Prevention & Theme Init (inline, runs synchronously before paint) -->
+    <!-- FOUC Prevention & Theme Init -->
     <script is:inline>
       (function () {
-        var stored = null;
-        try {
-          stored = localStorage.getItem('cp-theme');
-        } catch (e) {}
-        var theme = stored === 'dark' ? 'dark' : 'light';
-        document.documentElement.setAttribute('data-theme', theme);
+        document.documentElement.setAttribute('data-theme', 'dark');
         var metaColor = document.getElementById('meta-theme-color');
         if (metaColor) {
-          metaColor.setAttribute('content', theme === 'dark' ? '#2b2b2b' : '#e4e2dd');
+          metaColor.setAttribute('content', '#08090a');
         }
       })();
     </script>

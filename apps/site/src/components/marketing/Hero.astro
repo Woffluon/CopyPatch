@@ -1,5 +1,6 @@
 ---
 import { SITE_CONFIG, type Locale } from '../../config/site';
+import InteractiveDemo from '../demo/InteractiveDemo';
 
 interface Props {
   lang?: Locale;
@@ -11,8 +12,8 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
 
 <section class="hero-section">
   <div class="container hero-container">
-    <!-- Hero Text Stack -->
-    <div class="hero-content">
+    <!-- Left Column: Value Prop & Actions -->
+    <div class="hero-content fade-in">
       <h1 class="hero-headline">
         {
           lang === 'tr' ? (
@@ -23,7 +24,7 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
           ) : (
             <>
               Let clients edit the copy.<br />
-              <span class="headline-highlight">Not the website.</span>
+              <span class="headline-highlight">Not the website or code.</span>
             </>
           )
         }
@@ -33,7 +34,7 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
         {
           lang === 'tr'
             ? 'React projelerinizde onaylanan metinleri işaretleyin. Müşterileriniz doğrudan canlı sayfaya tıklasın, yazsın, kaydetsin; kod ve tasarımınız bozulmasın.'
-            : 'Mark approved text in React. Clients click directly on the live page, type, save, and leave your codebase and layout completely untouched.'
+            : 'Mark approved copy in React. Clients click directly on the live page, type, and save without touching your codebase or layout.'
         }
       </p>
 
@@ -73,7 +74,7 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
         </div>
       </div>
 
-      <!-- Micro Trust / Performance Facts -->
+      <!-- Micro Trust / Performance Facts Grid -->
       <div class="hero-specs">
         <div class="spec-item">
           <span class="spec-value">&lt; 1 kB</span>
@@ -87,13 +88,20 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
         <div class="spec-divider"></div>
         <div class="spec-item">
           <span class="spec-value">Argon2id</span>
-          <span class="spec-label">{lang === 'tr' ? 'Kurumsal güvenlik' : 'Enterprise security'}</span>
+          <span class="spec-label">{lang === 'tr' ? 'Kurumsal güvenlik' : 'Enterprise auth'}</span>
         </div>
         <div class="spec-divider"></div>
         <div class="spec-item">
           <span class="spec-value">{lang === 'tr' ? '%100 Düz Metin' : '100% Plain Text'}</span>
           <span class="spec-label">{lang === 'tr' ? 'Sıfır XSS riski' : 'Zero XSS surface'}</span>
         </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Live Preview -->
+    <div class="hero-visual fade-in">
+      <div class="hero-demo-card">
+        <InteractiveDemo client:load defaultLocale={lang} siteLang={lang} compact={true} />
       </div>
     </div>
   </div>
@@ -127,96 +135,108 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
 
 <style>
   .hero-section {
-    padding-top: var(--cp-space-20);
-    padding-bottom: var(--cp-space-20);
+    padding-top: var(--cp-space-16);
+    padding-bottom: var(--cp-space-16);
     background-color: var(--cp-bg);
     border-bottom: 1px solid var(--cp-border-subtle);
   }
 
   .hero-container {
-    display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: var(--cp-space-12);
     align-items: center;
-    text-align: center;
   }
 
   .hero-content {
-    max-width: 820px;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .hero-headline {
     margin-bottom: 1.25rem;
-    line-height: 1.1;
+    line-height: 1.05;
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    color: #ffffff;
   }
 
   .headline-highlight {
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
   }
 
   .hero-subtext {
-    font-size: clamp(1.0625rem, 2vw, 1.25rem);
-    color: var(--cp-text-muted);
-    line-height: 1.6;
-    max-width: 680px;
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
+    max-width: 540px;
     margin-bottom: 2rem;
   }
 
   .hero-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
+    width: 100%;
   }
 
   .install-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border);
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
     padding: 0.5rem 0.875rem;
-    border-radius: var(--cp-radius-md);
+    border-radius: var(--radius-inputs);
     font-family: var(--cp-font-mono);
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
+    box-shadow: var(--cp-shadow-sm);
+    transition: border-color var(--cp-transition-fast);
+  }
+
+  .install-pill:hover {
+    border-color: var(--color-smoke);
   }
 
   .install-prompt {
-    color: var(--cp-text-dim);
+    color: var(--color-ash);
     user-select: none;
   }
 
   .install-cmd {
-    color: var(--cp-text);
+    color: var(--color-mist);
+    font-weight: 400;
   }
 
   .install-copy-btn {
     background: transparent;
     border: none;
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
     cursor: pointer;
     display: flex;
     align-items: center;
     padding: 2px 4px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: color var(--cp-transition-fast);
   }
 
   .install-copy-btn:hover {
-    color: var(--cp-text);
+    color: #ffffff;
   }
 
   .install-copy-btn.copied {
-    color: var(--cp-text);
+    color: var(--color-acid-lime);
   }
 
   .copied-indicator {
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 510;
   }
 
   .cta-buttons {
@@ -226,40 +246,67 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
   }
 
   .hero-specs {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
     padding-top: 1.5rem;
-    border-top: 1px solid var(--cp-border-subtle);
+    border-top: 1px solid var(--color-graphite);
     width: 100%;
-    max-width: 720px;
-    flex-wrap: wrap;
   }
 
   .spec-item {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 0.15rem;
+    gap: 0.2rem;
   }
 
   .spec-value {
     font-family: var(--cp-font-mono);
-    font-size: 0.9375rem;
-    font-weight: 600;
-    color: var(--cp-text);
+    font-size: 0.875rem;
+    font-weight: 510;
+    color: #ffffff;
+    letter-spacing: -0.013em;
   }
 
   .spec-label {
     font-size: 0.75rem;
-    color: var(--cp-text-dim);
+    color: var(--color-ash);
+    line-height: 1.3;
   }
 
   .spec-divider {
-    width: 1px;
-    height: 24px;
-    background-color: var(--cp-border);
+    display: none;
+  }
+
+  .hero-visual {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .hero-demo-card {
+    width: 100%;
+    border-radius: var(--radius-cards);
+    transition: transform var(--cp-transition-spring);
+  }
+
+  @media (max-width: 1024px) {
+    .hero-container {
+      grid-template-columns: 1fr;
+      gap: var(--cp-space-10);
+    }
+    .hero-content {
+      align-items: center;
+      text-align: center;
+    }
+    .hero-actions {
+      justify-content: center;
+    }
+    .hero-specs {
+      justify-content: center;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+      max-width: 500px;
+    }
   }
 
   @media (max-width: 640px) {
@@ -277,12 +324,6 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
     }
     .cta-buttons .btn {
       width: 100%;
-    }
-    .spec-divider {
-      display: none;
-    }
-    .hero-specs {
-      gap: 1rem 1.5rem;
     }
   }
 </style>

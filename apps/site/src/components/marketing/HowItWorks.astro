@@ -17,8 +17,9 @@ const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1"
 
 <section id="how-it-works" class="how-section">
   <div class="container">
-    <div class="section-header">
-      <h2>{lang === 'tr' ? '3 Basit Adımda Sayfa İçi Düzenleme' : 'Inline editing in three simple steps'}</h2>
+    <div class="section-header fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'İŞ AKIŞI' : 'WORKFLOW'}</div>
+      <h2>{lang === 'tr' ? '3 Adımda Sayfa İçi Düzenleme' : 'Inline editing in three simple steps'}</h2>
       <p class="section-subhead">
         {
           lang === 'tr'
@@ -28,95 +29,168 @@ const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1"
       </p>
     </div>
 
-    <div class="steps-grid">
-      <!-- Step 1 -->
-      <div class="step-card">
-        <div class="step-badge">01</div>
-        <h3 class="step-title">{lang === 'tr' ? 'Geliştirici onaylanan metinleri işaretler' : 'Developer marks editable text'}</h3>
-        <p class="step-desc">
-          {
-            lang === 'tr' ? (
-              <>
-                React bileşeninizde onaylanan metni <code>&lt;EditableText&gt;</code> ile sarmalayın. Düzen, stil ve DOM hiyerarşisi üzerindeki %100 kontrolünüzü koruyun.
-              </>
-            ) : (
-              <>
-                Wrap approved copy in your React component with <code>&lt;EditableText&gt;</code>. You retain 100% control over layout, styling, and DOM hierarchy.
-              </>
-            )
-          }
-        </p>
-        <div class="step-visual">
-          <CodeBlock code={step1Code} lang="tsx" title="App.tsx" />
-        </div>
+    <!-- Interactive Step Container -->
+    <div class="how-interactive-layout">
+      <!-- Step Selectors (Tabs) -->
+      <div class="step-nav stagger-children" role="tablist" aria-label={lang === 'tr' ? 'Nasıl Çalışır Adımları' : 'How it works steps'}>
+        <button
+          type="button"
+          class="step-item active"
+          data-step="1"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-step-1"
+          id="tab-step-1"
+        >
+          <div class="step-num">01</div>
+          <div class="step-meta">
+            <h3 class="step-title">{lang === 'tr' ? 'Geliştirici metni işaretler' : 'Developer marks copy'}</h3>
+            <p class="step-summary">
+              {
+                lang === 'tr'
+                  ? 'React bileşeninizi <EditableText> ile sarmalayın. DOM ve stil kontrolünüzü %100 koruyun.'
+                  : 'Wrap approved copy in <EditableText>. You retain 100% control over DOM and styling.'
+              }
+            </p>
+          </div>
+          <div class="step-progress-bar"></div>
+        </button>
+
+        <button
+          type="button"
+          class="step-item"
+          data-step="2"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-step-2"
+          id="tab-step-2"
+        >
+          <div class="step-num">02</div>
+          <div class="step-meta">
+            <h3 class="step-title">{lang === 'tr' ? 'Müşteri canlı sayfada yazar' : 'Client edits on live page'}</h3>
+            <p class="step-summary">
+              {
+                lang === 'tr'
+                  ? '?copypatch=1 ile açın, metne tıklayın ve doğal imleç kararlılığıyla doğrudan sayfada düzenleyin.'
+                  : 'Open ?copypatch=1, click, and edit copy directly on the page with zero cursor jumping.'
+              }
+            </p>
+          </div>
+          <div class="step-progress-bar"></div>
+        </button>
+
+        <button
+          type="button"
+          class="step-item"
+          data-step="3"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-step-3"
+          id="tab-step-3"
+        >
+          <div class="step-num">03</div>
+          <div class="step-meta">
+            <h3 class="step-title">{lang === 'tr' ? 'Canlıya anında aktarın' : 'Publish with instant snapshot'}</h3>
+            <p class="step-summary">
+              {
+                lang === 'tr'
+                  ? 'Onaylayın ve tek tıkla yayınlayın. SQLite WAL anında ETag önbelleğini yeniler; ziyaretçiler anında yeni metni görür.'
+                  : 'Approve and publish. SQLite WAL invalidates the cache; visitors immediately see fresh copy in < 1ms.'
+              }
+            </p>
+          </div>
+          <div class="step-progress-bar"></div>
+        </button>
       </div>
 
-      <!-- Step 2 -->
-      <div class="step-card">
-        <div class="step-badge">02</div>
-        <h3 class="step-title">{lang === 'tr' ? 'Müşteri doğrudan sayfa üzerinde düzenler' : 'Client edits directly on the page'}</h3>
-        <p class="step-desc">
-          {
-            lang === 'tr' ? (
-              <>
-                Müşteri siteyi düzenleme modunda (<code>?copypatch=1</code>) açar, doğrudan metne tıklar ve yerel tarayıcı imleç desteğiyle doğal biçimde yazar.
-              </>
-            ) : (
-              <>
-                The client visits the website in edit mode (<code>?copypatch=1</code>), clicks directly into the text, and types naturally with native browser selection and caret support.
-              </>
-            )
-          }
-        </p>
-        <div class="step-visual step-visual-interactive">
-          <div class="mini-browser-mockup">
-            <div class="mini-header">
-              <span class="mini-dot"></span>
-              <span class="mini-url">https://site.com?copypatch=1</span>
-            </div>
-            <div class="mini-content">
-              <span class="mini-label">{lang === 'tr' ? 'SAYFA İÇİ DÜZENLEME:' : 'EDITING INLINE:'}</span>
-              <div class="mini-editable-box">
-                <span class="mini-text">{lang === 'tr' ? 'İnsanların gerçekten ' : 'Build something people '}</span>
-                <span class="mini-caret">|</span>
+      <!-- Right Column: Step Visual Display Panel -->
+      <div class="step-display fade-in">
+        <!-- Panel 1 -->
+        <div class="step-panel active" id="panel-step-1" role="tabpanel" aria-labelledby="tab-step-1">
+          <div class="panel-header">
+            <span class="panel-tag">src/App.tsx</span>
+            <span class="panel-status">{lang === 'tr' ? 'Geliştirici Deneyimi' : 'Developer Experience'}</span>
+          </div>
+          <div class="panel-body">
+            <CodeBlock code={step1Code} lang="tsx" title="App.tsx" />
+          </div>
+        </div>
+
+        <!-- Panel 2 -->
+        <div class="step-panel" id="panel-step-2" role="tabpanel" aria-labelledby="tab-step-2" style="display: none;">
+          <div class="panel-header">
+            <span class="panel-tag">https://client-site.com?copypatch=1</span>
+            <span class="panel-status">{lang === 'tr' ? 'Müşteri Canlı Düzenleme' : 'Client Inline Editor'}</span>
+          </div>
+          <div class="panel-body">
+            <div class="mini-browser-card">
+              <div class="browser-status-bar">
+                <span class="status-dot"></span>
+                <span class="status-text">{lang === 'tr' ? 'DÜZENLEME MODU AKTİF' : 'EDIT MODE ACTIVE'}</span>
+              </div>
+              <div class="editable-preview-box">
+                <span class="preview-key">contentKey="hero.title"</span>
+                <div class="preview-text-line">
+                  <span>{lang === 'tr' ? 'Onaylanan metinleri anında ' : 'Turn approved copy into '}</span>
+                  <span class="caret-blink">|</span>
+                </div>
+              </div>
+              <div class="simulated-toolbar">
+                <span class="sim-brand">CopyPatch</span>
+                <span class="sim-pill">1 unsaved edit</span>
+                <span class="sim-btn">Save ⌘S</span>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Step 3 -->
-      <div class="step-card">
-        <div class="step-badge">03</div>
-        <h3 class="step-title">{lang === 'tr' ? 'Kaydet & anında kalıcılık' : 'Save & instant persistence'}</h3>
-        <p class="step-desc">
-          {
-            lang === 'tr' ? (
-              <>
-                Müşteri Kaydet'e tıklar. Kendi sunucunuzdaki SQLite sunucusu anlık görüntü önbelleğini atomik olarak günceller. Ziyaretçiler güncel metni sıfır veritabanı maliyetiyle alır.
-              </>
-            ) : (
-              <>
-                Client hits Save. The self-hosted SQLite server updates the snapshot cache atomically. Next visitor request receives updated copy with zero database overhead.
-              </>
-            )
-          }
-        </p>
-        <div class="step-visual step-visual-publish">
-          <div class="pipeline-mockup">
-            <div class="pipe-node">
-              <span class="pipe-title">{lang === 'tr' ? 'Müşteri Kaydı' : 'Client Save'}</span>
-              <span class="pipe-sub">PUT /changes</span>
-            </div>
-            <div class="pipe-arrow">→</div>
-            <div class="pipe-node active">
-              <span class="pipe-title">SQLite DB</span>
-              <span class="pipe-sub">{lang === 'tr' ? 'Atomik Önbellek' : 'Atomic Cache'}</span>
-            </div>
-            <div class="pipe-arrow">→</div>
-            <div class="pipe-node">
-              <span class="pipe-title">{lang === 'tr' ? 'Ziyaretçiler' : 'Visitors'}</span>
-              <span class="pipe-sub">{lang === 'tr' ? '< 1 ms Anlık Görüntü' : '< 1 ms Snapshot'}</span>
+        <!-- Panel 3 -->
+        <div class="step-panel" id="panel-step-3" role="tabpanel" aria-labelledby="tab-step-3" style="display: none;">
+          <div class="panel-header">
+            <span class="panel-tag">{lang === 'tr' ? 'Atomik Dağıtım Hattı' : 'Atomic Delivery Pipeline'}</span>
+            <span class="panel-status">SQLite WAL &lt; 1 ms</span>
+          </div>
+          <div class="panel-body">
+            <div class="pipeline-card">
+              <div class="pipe-track">
+                <div class="pipe-node-box">
+                  <span class="node-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9"></path>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                    </svg>
+                  </span>
+                  <span class="node-label">{lang === 'tr' ? 'Müşteri Kaydı' : 'Client Save'}</span>
+                  <span class="node-sub">PUT /changes</span>
+                </div>
+                <div class="pipe-flow-arrow">→</div>
+                <div class="pipe-node-box active">
+                  <span class="node-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <ellipse cx="12" cy="5" rx="9" ry="3"></ellipse>
+                      <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"></path>
+                      <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"></path>
+                    </svg>
+                  </span>
+                  <span class="node-label">SQLite WAL</span>
+                  <span class="node-sub">{lang === 'tr' ? 'Atomik Önbellek' : 'Atomic Cache'}</span>
+                </div>
+                <div class="pipe-flow-arrow">→</div>
+                <div class="pipe-node-box">
+                  <span class="node-icon">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="2" y1="12" x2="22" y2="12"></line>
+                      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                    </svg>
+                  </span>
+                  <span class="node-label">{lang === 'tr' ? 'Ziyaretçiler' : 'Public Visitors'}</span>
+                  <span class="node-sub">&lt; 1 ms ETag</span>
+                </div>
+              </div>
+              <div class="pipe-meta-box">
+                <code>{lang === 'tr' ? 'Önbellek Yenilendi: snapshot.revision = 42' : 'Cache Rebuilt: snapshot.revision = 42'}</code>
+              </div>
             </div>
           </div>
         </div>
@@ -125,11 +199,49 @@ const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1"
   </div>
 </section>
 
+<script>
+  const stepItems = Array.from(document.querySelectorAll('.step-item')) as HTMLButtonElement[];
+  const panels = document.querySelectorAll('.step-panel');
+
+  function setStep(index: number) {
+    stepItems.forEach((item, i) => {
+      const isActive = i === index;
+      item.classList.toggle('active', isActive);
+      item.setAttribute('aria-selected', String(isActive));
+    });
+
+    panels.forEach((panel, i) => {
+      if (i === index) {
+        (panel as HTMLElement).style.display = 'block';
+      } else {
+        (panel as HTMLElement).style.display = 'none';
+      }
+    });
+  }
+
+  stepItems.forEach((btn, index) => {
+    btn.addEventListener('click', () => setStep(index));
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const next = (index + 1) % stepItems.length;
+        stepItems[next]?.focus();
+        setStep(next);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        const prev = (index - 1 + stepItems.length) % stepItems.length;
+        stepItems[prev]?.focus();
+        setStep(prev);
+      }
+    });
+  });
+</script>
+
 <style>
   .how-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
+    border-top: 1px solid var(--color-graphite);
   }
 
   .section-header {
@@ -138,123 +250,229 @@ const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1"
     margin: 0 auto var(--cp-space-12);
   }
 
-  .section-header h2 {
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
     margin-bottom: 0.75rem;
   }
 
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
+  }
+
   .section-subhead {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
-  .steps-grid {
+  .how-interactive-layout {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 1fr 1.25fr;
     gap: var(--cp-space-6);
+    max-width: 1040px;
+    margin: 0 auto;
+    align-items: stretch;
   }
 
-  .step-card {
-    background-color: var(--cp-bg);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
-    padding: var(--cp-space-6);
+  .step-nav {
     display: flex;
     flex-direction: column;
+    gap: 0.5rem;
   }
 
-  .step-badge {
+  .step-item {
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
+    padding: 1.125rem 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    text-align: left;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--cp-transition-fast);
+    font-family: inherit;
+  }
+
+  .step-item:hover {
+    border-color: var(--color-smoke);
+    background-color: var(--color-obsidian);
+  }
+
+  .step-item.active {
+    border-color: var(--color-acid-lime);
+    background-color: var(--color-obsidian);
+    box-shadow: var(--cp-shadow-sm);
+  }
+
+  .step-num {
     font-family: var(--cp-font-mono);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    color: var(--cp-text);
-    background-color: var(--cp-surface-elevated);
-    border: 1px solid var(--cp-border);
-    width: 32px;
-    height: 32px;
-    border-radius: var(--cp-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 510;
+    color: var(--color-mist);
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-badges);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 1rem;
+    flex-shrink: 0;
+  }
+
+  .step-item.active .step-num {
+    background-color: var(--color-acid-lime);
+    color: var(--color-void);
+    border-color: var(--color-acid-lime);
+  }
+
+  .step-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
   }
 
   .step-title {
-    font-size: 1.1875rem;
-    margin-bottom: 0.5rem;
-    color: var(--cp-text);
+    font-size: 0.9375rem;
+    font-weight: 510;
+    color: #ffffff;
+    letter-spacing: -0.011em;
   }
 
-  .step-desc {
-    font-size: 0.875rem;
-    line-height: 1.6;
-    color: var(--cp-text-muted);
-    margin-bottom: 1.25rem;
+  .step-summary {
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--color-fog);
+    font-weight: 400;
   }
 
-  .step-visual {
-    margin-top: auto;
+  .step-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background-color: var(--color-acid-lime);
+    transition: width 200ms ease;
   }
 
-  .step-visual-interactive,
-  .step-visual-publish {
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border-subtle);
-    border-radius: var(--cp-radius-md);
-    padding: 1rem;
-    min-height: 140px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .mini-browser-mockup {
+  .step-item.active .step-progress-bar {
     width: 100%;
   }
 
-  .mini-header {
+  .step-display {
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
+    padding: var(--cp-space-6);
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--cp-shadow-md);
+  }
+
+  .step-panel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .panel-header {
     display: flex;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 10px;
-    padding-bottom: 6px;
+    justify-content: space-between;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1rem;
     border-bottom: 1px solid var(--cp-border-subtle);
   }
 
-  .mini-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background-color: var(--cp-text-dim);
+  .panel-tag {
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--cp-text);
   }
 
-  .mini-url {
+  .panel-status {
+    font-size: 0.6875rem;
+    font-family: var(--cp-font-mono);
+    color: var(--cp-text-dim);
+    text-transform: uppercase;
+  }
+
+  .panel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .mini-browser-card {
+    background-color: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: var(--cp-radius-md);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .browser-status-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-family: var(--cp-font-mono);
     font-size: 0.6875rem;
     color: var(--cp-text-dim);
   }
 
-  .mini-label {
-    font-size: 0.6875rem;
-    font-family: var(--cp-font-mono);
-    color: var(--cp-text-muted);
-    display: block;
-    margin-bottom: 4px;
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: var(--cp-accent);
   }
 
-  .mini-editable-box {
+  .editable-preview-box {
     border: 1px dashed var(--cp-border-hover);
-    padding: 6px 10px;
-    border-radius: 4px;
     background-color: var(--cp-accent-subtle);
-    font-size: 0.875rem;
+    padding: 1rem;
+    border-radius: var(--cp-radius-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .preview-key {
+    font-family: var(--cp-font-mono);
+    font-size: 0.6875rem;
+    color: var(--cp-text-dim);
+  }
+
+  .preview-text-line {
+    font-size: 1.125rem;
+    font-weight: 700;
     color: var(--cp-text);
     display: flex;
     align-items: center;
   }
 
-  .mini-caret {
+  .caret-blink {
+    font-weight: 700;
     color: var(--cp-text);
-    font-weight: bold;
     animation: blink 1s step-end infinite;
   }
 
@@ -262,51 +480,109 @@ const step1Code = lang === 'tr' ? `<EditableText contentKey="hero.title" as="h1"
     50% { opacity: 0; }
   }
 
-  .pipeline-mockup {
+  .simulated-toolbar {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 100%;
-    gap: 4px;
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-pills);
+    padding: 4px 12px;
+    font-size: 0.75rem;
   }
 
-  .pipe-node {
+  .sim-brand {
+    font-weight: 510;
+    color: #ffffff;
+  }
+
+  .sim-pill {
+    font-family: var(--cp-font-mono);
+    color: var(--color-ash);
+    font-size: 0.6875rem;
+  }
+
+  .sim-btn {
+    background-color: var(--color-acid-lime);
+    color: var(--color-void);
+    padding: 3px 10px;
+    border-radius: var(--radius-inputs);
+    font-weight: 510;
+    font-size: 0.6875rem;
+    letter-spacing: -0.011em;
+  }
+
+  .pipeline-card {
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .pipe-track {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .pipe-node-box {
+    flex: 1;
+    background-color: var(--color-void);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-inputs);
+    padding: 0.75rem 0.5rem;
+    text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    background-color: var(--cp-surface-elevated);
-    border: 1px solid var(--cp-border-subtle);
-    padding: 6px 8px;
-    border-radius: var(--cp-radius-sm);
-    text-align: center;
-    flex: 1;
+    gap: 0.2rem;
   }
 
-  .pipe-node.active {
-    border-color: var(--cp-accent);
-    background-color: var(--cp-accent-subtle);
+  .pipe-node-box.active {
+    border-color: var(--color-acid-lime);
+    background-color: rgba(228, 242, 34, 0.05);
   }
 
-  .pipe-title {
+  .node-icon {
+    font-size: 1.125rem;
+    margin-bottom: 2px;
+  }
+
+  .node-label {
     font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--cp-text);
+    font-weight: 510;
+    color: #ffffff;
   }
 
-  .pipe-sub {
-    font-size: 0.625rem;
+  .node-sub {
     font-family: var(--cp-font-mono);
-    color: var(--cp-text-dim);
+    font-size: 0.625rem;
+    color: var(--color-ash);
   }
 
-  .pipe-arrow {
-    color: var(--cp-border-hover);
-    font-weight: bold;
-    font-size: 0.875rem;
+  .pipe-flow-arrow {
+    font-weight: 510;
+    color: var(--color-smoke);
+    font-size: 1rem;
   }
 
-  @media (max-width: 960px) {
-    .steps-grid {
+  .pipe-meta-box {
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-badges);
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    color: var(--color-mist);
+    text-align: center;
+  }
+
+  @media (max-width: 880px) {
+    .how-interactive-layout {
       grid-template-columns: 1fr;
     }
   }

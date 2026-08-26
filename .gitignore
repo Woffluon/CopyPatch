@@ -89,7 +89,8 @@ desktop.ini
 analizler
 temp/
 
-# Astro runtime cache; generated from the active local configuration.
-examples\astro-ssr-react\.astro
-apps/site/.astro/data-store.json
+# Astro runtime cache & generated types
+.astro/
+apps/site/.astro/
+examples/astro-ssr-react/.astro/
 tmp/

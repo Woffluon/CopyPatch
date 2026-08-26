@@ -10,7 +10,8 @@ const { lang = 'en' } = Astro.props;
 
 <section class="comparison-section">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'KARŞILAŞTIRMA' : 'COMPARISON'}</div>
       <h2>{lang === 'tr' ? 'Neden geleneksel bir CMS yerine CopyPatch?' : 'Why not just use a traditional CMS?'}</h2>
       <p class="section-subhead">
         {
@@ -21,7 +22,7 @@ const { lang = 'en' } = Astro.props;
       </p>
     </div>
 
-    <div class="comparison-table-wrapper" tabindex="0" role="region" aria-label={lang === 'tr' ? 'CMS Karşılaştırma Tablosu' : 'CMS Comparison Table'}>
+    <div class="comparison-table-wrapper fade-in" tabindex="0" role="region" aria-label={lang === 'tr' ? 'CMS Karşılaştırma Tablosu' : 'CMS Comparison Table'}>
       <table class="comparison-table">
         <thead>
           <tr>
@@ -88,9 +89,9 @@ const { lang = 'en' } = Astro.props;
 
 <style>
   .comparison-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
+    border-top: 1px solid var(--color-graphite);
   }
 
   .section-header {
@@ -99,67 +100,101 @@ const { lang = 'en' } = Astro.props;
     margin: 0 auto var(--cp-space-12);
   }
 
-  .section-header h2 {
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
     margin-bottom: 0.75rem;
   }
 
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
+  }
+
   .section-subhead {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   .comparison-table-wrapper {
-    max-width: 1000px;
+    max-width: 1040px;
     margin: 0 auto;
     overflow-x: auto;
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
-    background-color: var(--cp-bg);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
+    background-color: var(--color-carbon);
+    box-shadow: var(--cp-shadow-md);
   }
 
   .comparison-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     text-align: left;
   }
 
   .comparison-table th,
   .comparison-table td {
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--cp-border-subtle);
+    border-bottom: 1px solid var(--color-graphite);
   }
 
   .comparison-table th {
-    background-color: var(--cp-surface-elevated);
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: var(--cp-text-muted);
+    background-color: var(--color-obsidian);
+    font-size: 0.75rem;
+    font-family: var(--cp-font-mono);
+    font-weight: 510;
+    color: var(--color-fog);
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
   .comparison-table th.col-copypatch {
-    color: var(--cp-text);
-    background-color: var(--cp-surface-elevated);
-    border-left: 1px solid var(--cp-border);
-    border-right: 1px solid var(--cp-border);
-    font-weight: 700;
+    color: #ffffff;
+    background-color: var(--color-obsidian);
+    border-left: 1px solid var(--color-graphite);
+    border-right: 1px solid var(--color-graphite);
   }
 
-  .comparison-table td.copypatch-val {
-    background-color: var(--cp-surface);
-    border-left: 1px solid var(--cp-border);
-    border-right: 1px solid var(--cp-border);
-    color: var(--cp-text);
+  .comparison-table td.col-copypatch {
+    font-weight: 510;
+    color: #ffffff;
+    background-color: rgba(228, 242, 34, 0.02);
+    border-left: 1px solid var(--color-graphite);
+    border-right: 1px solid var(--color-graphite);
   }
 
-  .feature-title {
-    font-weight: 600;
-    color: var(--cp-text);
+  .pill-highlight {
+    display: inline-block;
+    background-color: rgba(39, 166, 68, 0.15);
+    color: var(--color-pulse-green);
+    border: 1px solid rgba(39, 166, 68, 0.3);
+    padding: 2px 8px;
+    border-radius: var(--radius-pills);
+    font-size: 0.6875rem;
+    font-family: var(--cp-font-mono);
+    font-weight: 510;
   }
 
-  .comparison-table tbody tr:last-child td {
+  .comparison-table tr:last-child td {
     border-bottom: none;
+  }
+
+  @media (max-width: 768px) {
+    .comparison-table th,
+    .comparison-table td {
+      padding: 0.75rem 0.875rem;
+      font-size: 0.75rem;
+    }
   }
 </style>

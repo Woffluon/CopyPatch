@@ -13,14 +13,13 @@ html {
   font-family: var(--cp-font-sans);
   background-color: var(--cp-bg);
   color: var(--cp-text);
-  line-height: 1.6;
+  line-height: 1.5;
+  font-feature-settings: "cv01" on, "ss03" on, "zero" on;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   scroll-behavior: smooth;
   overflow-x: hidden;
-  /* Theme transition: only triggered after first render */
-  transition: background-color var(--cp-transition-theme), color var(--cp-transition-theme);
 }
 
 body {
@@ -28,6 +27,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: var(--cp-bg);
+  color: var(--cp-text);
   overflow-x: hidden;
   width: 100%;
 }
@@ -35,15 +35,17 @@ body {
 /* ─── Font Application ─── */
 h1, h2, h3, h4, h5, h6, p, span, a, button, input, label, select, textarea {
   font-family: var(--cp-font-sans);
+  font-feature-settings: "cv01" on, "ss03" on, "zero" on;
 }
 
 code, pre, kbd, samp, .font-mono {
   font-family: var(--cp-font-mono);
+  font-feature-settings: "cv01" on, "ss03" on;
 }
 
 /* ─── Focus States ─── */
 :focus-visible {
-  outline: 2px solid var(--cp-accent);
+  outline: 1px solid var(--cp-accent);
   outline-offset: 2px;
 }
 
@@ -53,13 +55,13 @@ code, pre, kbd, samp, .font-mono {
   top: -100px;
   left: 1rem;
   background: var(--cp-accent);
-  color: var(--cp-bg);
+  color: var(--color-void);
   padding: 0.5rem 1rem;
-  border-radius: var(--cp-radius-sm);
+  border-radius: var(--cp-radius-md);
   z-index: 100000;
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.875rem;
+  font-weight: 510;
+  font-size: 0.8125rem;
   transition: top var(--cp-transition-fast);
 }
 
@@ -69,57 +71,62 @@ code, pre, kbd, samp, .font-mono {
 
 /* ─── Selection ─── */
 ::selection {
-  background-color: rgba(43, 43, 43, 0.18);
-  color: var(--cp-text);
+  background-color: rgba(228, 242, 34, 0.2);
+  color: #ffffff;
 }
 
-[data-theme="dark"] ::selection {
-  background-color: rgba(228, 226, 221, 0.2);
-  color: var(--cp-text);
-}
-
-/* ─── Typography Hierarchy ─── */
+/* ─── Typography Hierarchy (Linear Style Reference) ─── */
 h1, h2, h3, h4, h5, h6 {
   color: var(--cp-text);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -0.025em;
+  font-weight: 510;
+  line-height: 1.0;
   overflow-wrap: break-word;
   word-break: break-word;
 }
 
 h1 {
-  font-size: clamp(1.75rem, 5vw, 3rem);
-  letter-spacing: -0.035em;
-  font-weight: 800;
+  font-size: clamp(2rem, 5vw, 4rem);
+  letter-spacing: -0.022em;
+  font-weight: 510;
+  line-height: 1.05;
 }
 
 h2 {
-  font-size: clamp(1.35rem, 3.5vw, 2.25rem);
-  letter-spacing: -0.03em;
-  font-weight: 700;
+  font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+  letter-spacing: -0.022em;
+  font-weight: 510;
+  line-height: 1.1;
 }
 
 h3 {
-  font-size: clamp(1.125rem, 2.5vw, 1.5rem);
-  letter-spacing: -0.02em;
+  font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+  letter-spacing: -0.012em;
+  font-weight: 510;
+  line-height: 1.25;
+}
+
+h4 {
+  font-size: 1.125rem;
+  letter-spacing: -0.011em;
+  font-weight: 510;
 }
 
 p {
   color: var(--cp-text-muted);
   font-size: 1rem;
-  line-height: 1.65;
+  font-weight: 400;
+  line-height: 1.5;
   overflow-wrap: break-word;
 }
 
 a {
-  color: var(--cp-text);
+  color: var(--color-mist);
   text-decoration: none;
   transition: color var(--cp-transition-fast);
 }
 
 a:hover {
-  color: var(--cp-accent-hover);
+  color: #ffffff;
 }
 
 /* ─── Layout Container ─── */
@@ -137,11 +144,11 @@ a:hover {
 pre {
   background-color: var(--cp-surface) !important;
   border: 1px solid var(--cp-border);
-  border-radius: var(--cp-radius-md);
+  border-radius: var(--cp-radius-lg);
   padding: 0.875rem 1.125rem;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.6;
   max-width: 100%;
   width: 100%;
@@ -156,10 +163,10 @@ code {
 :not(pre) > code {
   background-color: var(--cp-surface-elevated);
   border: 1px solid var(--cp-border-subtle);
-  color: var(--cp-text);
+  color: var(--color-mist);
   padding: 0.15rem 0.4rem;
   border-radius: var(--cp-radius-sm);
-  font-size: 0.85em;
+  font-size: 0.8125rem;
   word-break: break-word;
   overflow-wrap: anywhere;
 }
@@ -190,74 +197,89 @@ th, td {
 th {
   background-color: var(--cp-surface-elevated);
   color: var(--cp-text);
-  font-weight: 600;
+  font-weight: 510;
 }
 
-/* ─── Buttons: Outlined (per design spec) ─── */
+/* ─── Buttons: Linear Precision Specification ─── */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.625rem 1.25rem;
-  font-size: 0.9375rem;
-  font-weight: 600;
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  font-weight: 510;
   font-family: var(--cp-font-sans);
   border-radius: var(--cp-radius-md);
-  border: 1px solid var(--cp-accent);
-  background-color: transparent;
-  color: var(--cp-accent);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color var(--cp-transition-fast),
-              border-color var(--cp-transition-fast),
-              color var(--cp-transition-fast),
-              transform var(--cp-transition-fast);
+  transition: all var(--cp-transition-fast);
   white-space: nowrap;
   user-select: none;
   text-decoration: none;
-  letter-spacing: 0.01em;
+  letter-spacing: -0.011em;
 }
 
 .btn:active {
   transform: scale(0.98);
 }
 
-/* Primary: filled on hover */
+/* Primary Action Button: Acid Lime (#e4f222) */
 .btn-primary {
-  background-color: var(--cp-accent);
-  color: var(--cp-bg);
-  border-color: var(--cp-accent);
+  background-color: var(--color-acid-lime);
+  color: var(--color-void);
+  border-color: var(--color-acid-lime);
+  font-weight: 510;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .btn-primary:hover {
-  background-color: var(--cp-accent-hover);
-  border-color: var(--cp-accent-hover);
-  color: var(--cp-bg);
+  background-color: #d2e01b;
+  border-color: #d2e01b;
+  color: var(--color-void);
 }
 
-/* Secondary: outlined */
+/* Secondary Action Button: Ghost Outline (#23252a) */
 .btn-secondary {
   background-color: transparent;
-  border-color: var(--cp-border-hover);
-  color: var(--cp-text-muted);
+  border-color: var(--color-graphite);
+  color: var(--color-mist);
 }
 
 .btn-secondary:hover {
-  background-color: var(--cp-surface-elevated);
-  border-color: var(--cp-accent);
-  color: var(--cp-text);
+  background-color: var(--color-obsidian);
+  border-color: var(--color-smoke);
+  color: #ffffff;
+}
+
+/* White Pill Button (Nav Sign-up / Secondary Emphasis) */
+.btn-pill-white {
+  background-color: #ffffff;
+  color: var(--color-void);
+  border-radius: var(--radius-pills);
+  padding: 8px 16px;
+  font-size: 0.8125rem;
+  font-weight: 510;
+  border: 1px solid #ffffff;
+}
+
+.btn-pill-white:hover {
+  background-color: var(--color-bone);
+  border-color: var(--color-bone);
+  color: var(--color-void);
 }
 
 /* Ghost: no border */
 .btn-ghost {
   background-color: transparent;
   border-color: transparent;
-  color: var(--cp-text-muted);
+  color: var(--color-mist);
+  padding: 8px 12px;
+  font-size: 0.8125rem;
 }
 
 .btn-ghost:hover {
-  background-color: var(--cp-surface-elevated);
-  color: var(--cp-text);
+  color: #ffffff;
 }
 
 /* ─── Prose (Docs) ─── */
@@ -361,8 +383,8 @@ th {
 .fade-in {
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
-              transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .fade-in.visible {
@@ -374,20 +396,48 @@ th {
 .stagger-children > * {
   opacity: 0;
   transform: translateY(12px);
-  transition: opacity 600ms cubic-bezier(0.16, 1, 0.3, 1),
-              transform 600ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 500ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 500ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stagger-children.visible > *:nth-child(1) { transition-delay: 0ms; }
-.stagger-children.visible > *:nth-child(2) { transition-delay: 80ms; }
-.stagger-children.visible > *:nth-child(3) { transition-delay: 160ms; }
-.stagger-children.visible > *:nth-child(4) { transition-delay: 240ms; }
-.stagger-children.visible > *:nth-child(5) { transition-delay: 320ms; }
-.stagger-children.visible > *:nth-child(6) { transition-delay: 400ms; }
+.stagger-children.visible > *:nth-child(2) { transition-delay: 60ms; }
+.stagger-children.visible > *:nth-child(3) { transition-delay: 120ms; }
+.stagger-children.visible > *:nth-child(4) { transition-delay: 180ms; }
+.stagger-children.visible > *:nth-child(5) { transition-delay: 240ms; }
+.stagger-children.visible > *:nth-child(6) { transition-delay: 300ms; }
 
 .stagger-children.visible > * {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* ─── Tactile Micro-Interactions ─── */
+.security-card,
+.oss-feature,
+.flow-step,
+.arch-diagram-card,
+.code-showcase-card,
+.comparison-table-wrapper {
+  transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 200ms ease,
+              background-color 200ms ease,
+              box-shadow 200ms ease;
+}
+
+.security-card:hover,
+.oss-feature:hover {
+  transform: translateY(-2px);
+  border-color: var(--color-smoke);
+}
+
+.install-pill {
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.install-pill:hover {
+  border-color: var(--color-smoke);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.04);
 }
 
 /* ─── Reduced Motion ─── */
@@ -402,7 +452,9 @@ th {
   }
 
   .fade-in,
-  .stagger-children > * {
+  .stagger-children > *,
+  .security-card,
+  .oss-feature {
     opacity: 1 !important;
     transform: none !important;
   }

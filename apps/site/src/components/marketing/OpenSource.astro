@@ -10,8 +10,9 @@ const { lang = 'en' } = Astro.props;
 
 <section class="oss-section">
   <div class="container">
-    <div class="oss-card">
+    <div class="oss-card fade-in">
       <div class="oss-header">
+        <div class="section-tag">{lang === 'tr' ? 'AÇIK KAYNAK' : 'OPEN SOURCE'}</div>
         <h2>{lang === 'tr' ? '%100 Ücretsiz. MIT Lisanslı. Sıfır Telemetri.' : '100% Free. MIT Licensed. Zero Telemetry.'}</h2>
         <p class="oss-desc">
           {
@@ -22,7 +23,7 @@ const { lang = 'en' } = Astro.props;
         </p>
       </div>
 
-      <div class="oss-grid">
+      <div class="oss-grid stagger-children">
         <div class="oss-feature">
           <div class="oss-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -89,19 +90,20 @@ const { lang = 'en' } = Astro.props;
 
 <style>
   .oss-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
+    border-top: 1px solid var(--color-graphite);
   }
 
   .oss-card {
-    max-width: 1000px;
+    max-width: 1040px;
     margin: 0 auto;
-    background-color: var(--cp-bg);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
     padding: var(--cp-space-12) var(--cp-space-8);
     text-align: center;
+    box-shadow: var(--cp-shadow-md);
   }
 
   .oss-header {
@@ -109,14 +111,30 @@ const { lang = 'en' } = Astro.props;
     margin: 0 auto var(--cp-space-10);
   }
 
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
+    margin-bottom: 0.75rem;
+  }
+
   .oss-header h2 {
     margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
   }
 
   .oss-desc {
     font-size: 1rem;
-    color: var(--cp-text-muted);
-    line-height: 1.6;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   .oss-grid {
@@ -128,36 +146,43 @@ const { lang = 'en' } = Astro.props;
   }
 
   .oss-feature {
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border-subtle);
-    border-radius: var(--cp-radius-md);
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
     padding: var(--cp-space-6);
+    transition: all var(--cp-transition-fast);
+  }
+
+  .oss-feature:hover {
+    border-color: var(--color-smoke);
   }
 
   .oss-icon {
     width: 36px;
     height: 36px;
-    background-color: var(--cp-surface-elevated);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-md);
+    background-color: var(--color-void);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-inputs);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--cp-text-muted);
+    color: var(--color-mist);
     margin-bottom: 1rem;
   }
 
   .oss-feature-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--cp-text);
+    font-size: 0.9375rem;
+    font-weight: 510;
+    color: #ffffff;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.011em;
   }
 
   .oss-feature-desc {
     font-size: 0.8125rem;
     line-height: 1.55;
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
+    font-weight: 400;
   }
 
   .oss-cta-wrap {

@@ -6,6 +6,17 @@ export default defineConfig({
   site: 'https://copypatch.vercel.app',
   output: 'static',
   integrations: [react()],
+  vite: {
+    optimizeDeps: {
+      include: [
+        'react',
+        'react-dom',
+        'react-dom/client',
+        'react/jsx-runtime',
+        'react/jsx-dev-runtime',
+      ],
+    },
+  },
   markdown: {
     shikiConfig: {
       themes: {

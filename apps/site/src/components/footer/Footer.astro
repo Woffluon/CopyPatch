@@ -17,8 +17,7 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
     <div class="footer-top">
       <div class="footer-brand">
         <a href={homeHref} class="brand" aria-label="CopyPatch">
-          <img src="/logo-white.png" alt="CopyPatch Logo" class="brand-logo brand-logo-light" width="28" height="28" />
-          <img src="/logo-dark.png" alt="CopyPatch Logo" class="brand-logo brand-logo-dark" width="28" height="28" />
+          <img src="/favicon.svg" alt="CopyPatch Logo" class="brand-logo" width="24" height="24" />
           <span class="brand-text">CopyPatch</span>
         </a>
         <p class="brand-desc">
@@ -79,12 +78,11 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
 
 <style>
   .site-footer {
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    background-color: var(--color-carbon);
+    border-top: 1px solid var(--color-graphite);
     padding-top: var(--cp-space-16);
     padding-bottom: var(--cp-space-8);
     margin-top: auto;
-    transition: background-color var(--cp-transition-theme), border-color var(--cp-transition-theme);
   }
 
   .footer-top {
@@ -104,32 +102,32 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
     display: inline-flex;
     align-items: center;
     gap: 0.625rem;
-    font-weight: 700;
-    font-size: 1.125rem;
-    color: var(--cp-text);
+    font-weight: 510;
+    font-size: 1rem;
+    letter-spacing: -0.011em;
+    color: #ffffff;
     text-decoration: none;
   }
 
   .brand-logo {
-    width: 28px;
-    height: 28px;
-    border-radius: var(--cp-radius-sm);
+    width: 24px;
+    height: 24px;
+    border-radius: var(--radius-sm);
     object-fit: contain;
     display: block;
   }
 
-  :root:not([data-theme="dark"]) .brand-logo-dark { display: none; }
-  [data-theme="dark"] .brand-logo-light { display: none; }
-
   .brand-text {
-    color: var(--cp-text);
+    color: #ffffff;
+    font-weight: 510;
   }
 
   .brand-desc {
-    font-size: 0.875rem;
-    color: var(--cp-text-muted);
-    line-height: 1.6;
+    font-size: 0.8125rem;
+    color: var(--color-fog);
+    line-height: 1.5;
     max-width: 320px;
+    font-weight: 400;
   }
 
   .footer-links-grid {
@@ -139,11 +137,11 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
   }
 
   .col-title {
-    font-size: 0.8125rem;
-    font-weight: 600;
+    font-size: 0.75rem;
+    font-weight: 510;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--cp-text);
+    color: #ffffff;
     margin-bottom: 0.875rem;
   }
 
@@ -155,18 +153,19 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
   }
 
   .col-links a {
-    font-size: 0.875rem;
-    color: var(--cp-text-muted);
+    font-size: 0.8125rem;
+    color: var(--color-fog);
     transition: color var(--cp-transition-fast);
     text-decoration: none;
+    font-weight: 400;
   }
 
   .col-links a:hover {
-    color: var(--cp-text);
+    color: #ffffff;
   }
 
   .footer-bottom {
-    border-top: 1px solid var(--cp-border-subtle);
+    border-top: 1px solid var(--color-graphite);
     padding-top: var(--cp-space-6);
     display: flex;
     align-items: center;
@@ -176,8 +175,9 @@ const homeHref = currentLang === 'tr' ? '/tr' : '/';
   }
 
   .copyright {
-    font-size: 0.8125rem;
-    color: var(--cp-text-dim);
+    font-size: 0.75rem;
+    color: var(--color-ash);
+    font-weight: 400;
   }
 
   @media (max-width: 768px) {

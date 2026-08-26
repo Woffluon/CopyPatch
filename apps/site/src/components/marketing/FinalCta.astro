@@ -11,7 +11,8 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
 
 <section class="final-cta-section">
   <div class="container">
-    <div class="final-cta-card">
+    <div class="final-cta-card fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'HEMEN BAŞLAYIN' : 'GET STARTED'}</div>
       <h2 class="final-headline">
         {
           lang === 'tr' ? (
@@ -53,13 +54,13 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
 
 <style>
   .final-cta-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-surface);
-    border-top: 1px solid var(--cp-border);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
+    border-top: 1px solid var(--color-graphite);
   }
 
   .final-cta-card {
-    max-width: 820px;
+    max-width: 860px;
     margin: 0 auto;
     text-align: center;
     display: flex;
@@ -67,21 +68,36 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
     align-items: center;
   }
 
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
+    margin-bottom: 0.75rem;
+  }
+
   .final-headline {
-    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
-    line-height: 1.15;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.05;
     margin-bottom: 1rem;
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    color: #ffffff;
   }
 
   .final-highlight {
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
   }
 
   .final-subtext {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
     max-width: 600px;
-    margin-bottom: 2rem;
+    margin-bottom: 2.25rem;
+    line-height: 1.5;
   }
 
   .final-actions {
@@ -90,11 +106,6 @@ const docsHref = lang === 'tr' ? '/tr/docs' : '/docs';
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: center;
-  }
-
-  .btn-lg {
-    padding: 0.75rem 1.75rem;
-    font-size: 1rem;
   }
 
   @media (max-width: 640px) {

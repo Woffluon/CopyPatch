@@ -25,8 +25,7 @@ const { code, lang = 'typescript', title } = Astro.props;
     <Code
       code={code.trim()}
       lang={lang}
-      themes={{ light: 'one-light', dark: 'one-dark-pro' }}
-      defaultColor={false}
+      theme="one-dark-pro"
     />
   </div>
 </div>
@@ -61,14 +60,15 @@ const { code, lang = 'typescript', title } = Astro.props;
   .code-block-container {
     position: relative;
     margin: 1.25rem 0;
-    border-radius: var(--cp-radius-md);
-    border: 1px solid var(--cp-border);
-    background-color: var(--cp-surface);
+    border-radius: var(--radius-cards);
+    border: 1px solid var(--color-graphite);
+    background-color: var(--color-carbon);
     overflow: hidden;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
   }
 
   .code-header {
@@ -76,17 +76,16 @@ const { code, lang = 'typescript', title } = Astro.props;
     align-items: center;
     justify-content: space-between;
     padding: 0.5rem 1rem;
-    background-color: var(--cp-surface-elevated);
-    border-bottom: 1px solid var(--cp-border-subtle);
+    background-color: var(--color-obsidian);
+    border-bottom: 1px solid var(--color-graphite);
   }
 
   .code-lang {
     font-family: var(--cp-font-mono);
     font-size: 0.75rem;
-    font-weight: 500;
-    color: var(--cp-text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    font-weight: 510;
+    color: var(--color-fog);
+    letter-spacing: -0.011em;
   }
 
   .copy-btn {
@@ -95,27 +94,27 @@ const { code, lang = 'typescript', title } = Astro.props;
     justify-content: center;
     gap: 0.35rem;
     background: transparent;
-    border: 1px solid var(--cp-border-subtle);
-    border-radius: var(--cp-radius-sm);
-    color: var(--cp-text-muted);
-    padding: 0.35rem 0.65rem;
-    min-height: 44px;
-    min-width: 44px;
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-badges);
+    color: var(--color-mist);
+    padding: 0.25rem 0.6rem;
+    min-height: 28px;
     font-size: 0.75rem;
-    font-family: var(--cp-font-sans);
+    font-family: var(--cp-font-mono);
     cursor: pointer;
     transition: all var(--cp-transition-fast);
   }
 
   .copy-btn:hover {
-    color: var(--cp-text);
-    border-color: var(--cp-border-hover);
-    background-color: var(--cp-surface);
+    color: #ffffff;
+    border-color: var(--color-smoke);
+    background-color: var(--color-carbon);
   }
 
   .copy-btn.copied {
-    color: var(--cp-success);
-    border-color: var(--cp-success);
+    color: var(--color-pulse-green);
+    border-color: var(--color-pulse-green);
+    background-color: rgba(39, 166, 68, 0.15);
   }
 
   .code-body {
@@ -123,6 +122,7 @@ const { code, lang = 'typescript', title } = Astro.props;
     max-width: 100%;
     min-width: 0;
     overflow-x: auto;
+    background-color: var(--color-carbon);
     -webkit-overflow-scrolling: touch;
   }
 
@@ -130,36 +130,23 @@ const { code, lang = 'typescript', title } = Astro.props;
     margin: 0 !important;
     border: none !important;
     border-radius: 0 !important;
-    padding: 0.875rem 1rem !important;
-    background-color: var(--cp-surface) !important;
+    padding: 1rem 1.25rem !important;
+    background-color: transparent !important;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
     overflow-x: auto;
+    font-family: var(--cp-font-mono) !important;
+    line-height: 1.6 !important;
     -webkit-overflow-scrolling: touch;
   }
 
   .code-body :global(code) {
-    font-size: 0.875rem !important;
+    font-size: 0.8125rem !important;
+    font-family: var(--cp-font-mono) !important;
     white-space: pre;
     word-break: normal;
     overflow-wrap: normal;
-  }
-
-  /* Shiki dual-theme: show correct theme based on data-theme attribute */
-  /* Light theme visible by default */
-  .code-body :global(.shiki.shiki-themes) {
-    background-color: transparent !important;
-  }
-
-  /* Light mode: show light theme colors */
-  :root:not([data-theme="dark"]) .code-body :global(.shiki span) {
-    color: var(--shiki-light, inherit) !important;
-  }
-
-  /* Dark mode: show dark theme colors */
-  [data-theme="dark"] .code-body :global(.shiki span) {
-    color: var(--shiki-dark, inherit) !important;
   }
 </style>

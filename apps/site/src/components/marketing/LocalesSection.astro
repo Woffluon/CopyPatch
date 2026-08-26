@@ -23,7 +23,8 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
 
 <section class="locales-section">
   <div class="container">
-    <div class="section-header">
+    <div class="section-header fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'ÇOKLU DİL' : 'LOCALIZATION'}</div>
       <h2>{lang === 'tr' ? 'Her dil için bağımsız metin anlık görüntüleri' : 'Independent copy snapshots per locale'}</h2>
       <p class="section-subhead">
         {
@@ -35,7 +36,7 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
     </div>
 
     <div class="locales-grid">
-      <div class="locales-text">
+      <div class="locales-text fade-in">
         <h3 class="locales-title">{lang === 'tr' ? 'Dil İzolasyonu Nasıl Çalışır?' : 'How Locale Scoping Works'}</h3>
         <p class="locales-desc">
           {
@@ -79,7 +80,7 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
         </ul>
       </div>
 
-      <div class="locales-code-card">
+      <div class="locales-code-card fade-in">
         <CodeBlock code={localeCode} lang="tsx" title={lang === 'tr' ? 'Dil Entegrasyonu' : 'Locale Integration'} />
         
         <div class="locale-pills-demo">
@@ -103,8 +104,8 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
 
 <style>
   .locales-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-bg);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
   }
 
   .section-header {
@@ -113,35 +114,55 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
     margin: 0 auto var(--cp-space-12);
   }
 
-  .section-header h2 {
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
     margin-bottom: 0.75rem;
   }
 
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
+  }
+
   .section-subhead {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   .locales-grid {
     display: grid;
     grid-template-columns: 1fr 1.2fr;
-    gap: var(--cp-space-10);
-    max-width: 1000px;
+    gap: var(--cp-space-8);
+    max-width: 1040px;
     margin: 0 auto;
     align-items: center;
   }
 
   .locales-title {
-    font-size: 1.25rem;
-    color: var(--cp-text);
+    font-size: 1.125rem;
+    font-weight: 510;
+    color: #ffffff;
     margin-bottom: 0.75rem;
+    letter-spacing: -0.011em;
   }
 
   .locales-desc {
-    font-size: 0.9375rem;
+    font-size: 0.875rem;
     line-height: 1.6;
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
     margin-bottom: 1.5rem;
+    font-weight: 400;
   }
 
   .locales-points {
@@ -149,23 +170,27 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
     display: flex;
     flex-direction: column;
     gap: 1rem;
+    padding: 0;
   }
 
   .locales-points li {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     line-height: 1.55;
-    color: var(--cp-text-muted);
+    color: var(--color-fog);
+    font-weight: 400;
   }
 
   .locales-points strong {
-    color: var(--cp-text);
+    color: #ffffff;
+    font-weight: 510;
   }
 
   .locales-code-card {
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
     padding: var(--cp-space-6);
+    box-shadow: var(--cp-shadow-md);
   }
 
   .locale-pills-demo {
@@ -173,32 +198,32 @@ const localeCode = lang === 'tr' ? `// Aktif dil etiketini CopyPatchProvider'a i
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
-    background-color: var(--cp-surface-elevated);
-    border: 1px solid var(--cp-border-subtle);
+    background-color: var(--color-obsidian);
+    border: 1px solid var(--color-graphite);
     padding: 0.75rem 1rem;
-    border-radius: var(--cp-radius-md);
+    border-radius: var(--radius-inputs);
   }
 
   .pill-row {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
   }
 
   .pill-tag {
     font-family: var(--cp-font-mono);
-    font-weight: 700;
+    font-weight: 510;
     font-size: 0.6875rem;
-    background-color: var(--cp-surface);
-    color: var(--cp-text);
-    border: 1px solid var(--cp-border);
+    background-color: var(--color-void);
+    color: var(--color-mist);
+    border: 1px solid var(--color-graphite);
     padding: 0.15rem 0.4rem;
-    border-radius: 4px;
+    border-radius: var(--radius-badges);
   }
 
   .pill-val {
-    color: var(--cp-text);
+    color: var(--color-fog);
     font-family: var(--cp-font-mono);
     font-size: 0.75rem;
   }

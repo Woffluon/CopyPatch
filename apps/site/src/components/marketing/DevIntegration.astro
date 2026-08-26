@@ -109,8 +109,9 @@ printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
 
 <section class="integration-section">
   <div class="container">
-    <div class="section-header">
-      <h2>{lang === 'tr' ? 'Temiz koda değer veren geliştiriciler için tasarlandı' : 'Designed for developers who value clean code'}</h2>
+    <div class="section-header fade-in">
+      <div class="section-tag">{lang === 'tr' ? 'ENTEGRASYON' : 'INTEGRATION'}</div>
+      <h2>{lang === 'tr' ? 'Temiz koda değer veren geliştiriciler için' : 'Designed for developers who value clean code'}</h2>
       <p class="section-subhead">
         {
           lang === 'tr'
@@ -120,7 +121,7 @@ printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
       </p>
     </div>
 
-    <div class="code-showcase-card">
+    <div class="code-showcase-card fade-in">
       <div class="tab-header" role="tablist" aria-label={lang === 'tr' ? 'Entegrasyon Kodu Sekmeleri' : 'Integration Code Tabs'}>
         <button
           type="button"
@@ -228,8 +229,8 @@ printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
 
 <style>
   .integration-section {
-    padding: var(--cp-space-20) 0;
-    background-color: var(--cp-bg);
+    padding: var(--cp-section-gap) 0;
+    background-color: var(--color-void);
   }
 
   .section-header {
@@ -238,28 +239,46 @@ printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
     margin: 0 auto var(--cp-space-12);
   }
 
-  .section-header h2 {
+  .section-tag {
+    display: inline-block;
+    font-family: var(--cp-font-mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: -0.013em;
+    color: var(--color-fog);
     margin-bottom: 0.75rem;
   }
 
+  .section-header h2 {
+    margin-bottom: 0.75rem;
+    font-size: clamp(1.75rem, 3.5vw, 2.5rem);
+    letter-spacing: -0.022em;
+    font-weight: 510;
+    line-height: 1.1;
+    color: #ffffff;
+  }
+
   .section-subhead {
-    font-size: 1.0625rem;
-    color: var(--cp-text-muted);
+    font-size: 1rem;
+    color: var(--color-fog);
+    font-weight: 400;
+    line-height: 1.5;
   }
 
   .code-showcase-card {
-    max-width: 860px;
+    max-width: 900px;
     margin: 0 auto;
-    background-color: var(--cp-surface);
-    border: 1px solid var(--cp-border);
-    border-radius: var(--cp-radius-lg);
+    background-color: var(--color-carbon);
+    border: 1px solid var(--color-graphite);
+    border-radius: var(--radius-cards);
     padding: var(--cp-space-6);
+    box-shadow: var(--cp-shadow-md);
   }
 
   .tab-header {
     display: flex;
     gap: 0.5rem;
-    border-bottom: 1px solid var(--cp-border-subtle);
+    border-bottom: 1px solid var(--color-graphite);
     padding-bottom: 0.75rem;
     margin-bottom: 1rem;
     overflow-x: auto;
@@ -268,24 +287,25 @@ printf '%s' "$COPYPATCH_PASSPHRASE" | npx copypatch hash --stdin`;
   .tab-btn {
     background: transparent;
     border: 1px solid transparent;
-    color: var(--cp-text-muted);
+    color: var(--color-mist);
     padding: 0.4rem 0.875rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    border-radius: var(--cp-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 400;
+    border-radius: var(--radius-badges);
     cursor: pointer;
     transition: all var(--cp-transition-fast);
     white-space: nowrap;
+    font-family: var(--cp-font-mono);
   }
 
   .tab-btn:hover {
-    color: var(--cp-text);
+    color: #ffffff;
   }
 
   .tab-btn.active {
-    background-color: var(--cp-surface-elevated);
-    border-color: var(--cp-border);
-    color: var(--cp-accent-hover);
-    font-weight: 600;
+    background-color: var(--color-obsidian);
+    border-color: var(--color-graphite);
+    color: #ffffff;
+    box-shadow: var(--cp-shadow-sm);
   }
 </style>
