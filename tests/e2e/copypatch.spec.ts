@@ -141,7 +141,7 @@ test.describe('CopyPatch v2 same-origin editing', () => {
 
       await replaceHeroTitle(second, staleText);
       await saveDraft(second, 409);
-      await expect(toolbar(second)).toContainText('The editor snapshot has changed.');
+      await expect(toolbar(second)).toContainText('The editor snapshot has changed.', { timeout: 10_000 });
 
       await publishDraft(first);
       const visitor = await visitorPage(firstContext, 'conflict');

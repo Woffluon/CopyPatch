@@ -22,6 +22,7 @@
     "test:e2e": "playwright test",
     "lint": "pnpm run typecheck",
     "typecheck": "pnpm --filter \"./packages/*\" --filter \"./examples/*\" --filter \"./apps/*\" run typecheck",
+    "typecheck:packages": "pnpm --filter \"./packages/*\" --filter \"example-next-app\" --filter \"example-react-router-framework\" --filter \"example-vite-node\" --filter \"example-vite-react\" run typecheck",
     "clean": "pnpm -r --parallel exec rm -rf dist .turbo node_modules",
     "release:prepare": "node scripts/release/prepare-version.mjs",
     "release:verify": "node scripts/release/check-version.mjs",

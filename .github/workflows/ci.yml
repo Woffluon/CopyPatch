@@ -67,7 +67,12 @@ jobs:
         run: pnpm build
 
       - name: Typecheck
-        run: pnpm typecheck
+        run: |
+          if [ "${{ matrix.node-version }}" = "24" ]; then
+            pnpm typecheck
+          else
+            pnpm run typecheck:packages
+          fi
 
       - name: Build documentation & demo site
         if: matrix.node-version == 24
