@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { assertManifestConsistency } from './manifests.mjs';
 import {
+  assertCommitManifestConsistency,
   getValidatedVersionHistory,
   listFirstParentCommits,
   readManifestEntriesAtCommit,
@@ -26,7 +26,7 @@ function semanticTags(repoRoot, targetSha, firstParentCommits) {
     if (!commitIndexes.has(sha)) {
       throw new Error(`Release tag ${tag} must point into first-parent history.`);
     }
-    const manifestVersion = assertManifestConsistency(readManifestEntriesAtCommit(repoRoot, sha));
+    const manifestVersion = assertCommitManifestConsistency(readManifestEntriesAtCommit(repoRoot, sha));
     if (manifestVersion !== version) {
       throw new Error(`Release tag ${tag} points to manifest version ${manifestVersion}.`);
     }
@@ -39,7 +39,7 @@ export function discoverRelease(repoRoot, target = 'HEAD') {
   const targetSha = resolveCommit(repoRoot, target);
   const firstParentCommits = listFirstParentCommits(repoRoot, targetSha);
   const targetIndex = firstParentCommits.length - 1;
-  const targetVersion = assertManifestConsistency(readManifestEntriesAtCommit(repoRoot, targetSha));
+  const targetVersion = assertCommitManifestConsistency(readManifestEntriesAtCommit(repoRoot, targetSha));
   const history = getValidatedVersionHistory(repoRoot, targetSha);
   if (history.length === 0) return null;
 
