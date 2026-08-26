@@ -37,7 +37,7 @@ export default defineConfig({
   webServer: {
     command: 'node tests/e2e/next-host.mjs',
     url: 'http://127.0.0.1:4173',
-    reuseExistingServer: false,
+    reuseExistingServer: true,
     timeout: 120_000,
     env: {
       COPYPATCH_E2E_RUNTIME_DIR: e2eRuntimeDirectory,
