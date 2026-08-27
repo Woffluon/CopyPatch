@@ -91,18 +91,6 @@ jobs:
         if: matrix.node-version == 24
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Start E2E server
-        if: matrix.node-version == 24
-        run: node tests/e2e/next-host.mjs &
-        env:
-          COPYPATCH_E2E_RUNTIME_DIR: /tmp/copypatch-playwright-v2
-
-      - name: Wait for E2E server
-        if: matrix.node-version == 24
-        run: npx --yes wait-on http://127.0.0.1:4173 --timeout 60000
-
       - name: Run Playwright E2E browser tests
         if: matrix.node-version == 24
         run: pnpm test:e2e
-        env:
-          COPYPATCH_E2E_RUNTIME_DIR: /tmp/copypatch-playwright-v2

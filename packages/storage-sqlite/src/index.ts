@@ -55,6 +55,7 @@ interface RateLimitRow {
 
 export class SQLitePersistence implements CopyPatchPersistence {
   private readonly sqlite: Database.Database;
+  private readonly statementCache = new Map<string, Database.Statement>();
   private closed = false;
 
   constructor(filenameOrOptions: string | SQLitePersistenceOptions) {
@@ -86,7 +87,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
     }
     if (current === SCHEMA_VERSION) return;
 
-    const managedTables = this.sqlite.prepare(`
+    const managedTables = this.prepare(`
       SELECT name FROM sqlite_master
       WHERE type = 'table' AND name IN ('content_state', 'content_entries', 'sessions', 'rate_limits')
     `).pluck().all() as string[];
@@ -139,7 +140,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
       if (version !== SCHEMA_VERSION) {
         return { ok: false, message: `SQLite schema version is ${version}; expected ${SCHEMA_VERSION}.` };
       }
-      this.sqlite.prepare('SELECT 1 FROM content_state LIMIT 1').get();
+      this.prepare('SELECT 1 FROM content_state LIMIT 1').get();
       return { ok: true };
     } catch (error) {
       return { ok: false, message: error instanceof Error ? error.message : 'SQLite health check failed.' };
@@ -150,7 +151,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
     this.assertOpen();
     return this.sqlite.transaction((value: string) => {
       const state = this.readState(value);
-      const rows = this.sqlite.prepare(`
+      const rows = this.prepare(`
         SELECT content_key, published_text, draft_text
         FROM content_entries
         WHERE locale = ? AND published_text IS NOT NULL
@@ -177,7 +178,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
         return { status: 'conflict', latest: current };
       }
 
-      const write = this.sqlite.prepare(`
+      const write = this.prepare(`
         INSERT INTO content_entries (locale, content_key, published_text, draft_text)
         VALUES (?, ?, NULL, ?)
         ON CONFLICT (locale, content_key) DO UPDATE SET draft_text = excluded.draft_text
@@ -201,10 +202,10 @@ export class SQLitePersistence implements CopyPatchPersistence {
         return { status: 'conflict', latest: current };
       }
 
-      const promotedCount = (this.sqlite.prepare(`
+      const promotedCount = (this.prepare(`
         SELECT count(*) FROM content_entries WHERE locale = ? AND draft_text IS NOT NULL
       `).pluck().get(input.locale) as number);
-      this.sqlite.prepare(`
+      this.prepare(`
         UPDATE content_entries
         SET published_text = draft_text, draft_text = NULL
         WHERE locale = ? AND draft_text IS NOT NULL
@@ -228,10 +229,10 @@ export class SQLitePersistence implements CopyPatchPersistence {
         return { status: 'conflict', latest: current };
       }
 
-      const discardedCount = (this.sqlite.prepare(`
+      const discardedCount = (this.prepare(`
         SELECT count(*) FROM content_entries WHERE locale = ? AND draft_text IS NOT NULL
       `).pluck().get(input.locale) as number);
-      this.sqlite.prepare(`
+      this.prepare(`
         UPDATE content_entries SET draft_text = NULL
         WHERE locale = ? AND draft_text IS NOT NULL
       `).run(input.locale);
@@ -249,7 +250,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
     this.assertOpen();
     assertHash('tokenHash', session.tokenHash);
     assertHash('csrfTokenHash', session.csrfTokenHash);
-    this.sqlite.prepare(`
+    this.prepare(`
       INSERT INTO sessions (
         token_hash, csrf_token_hash, subject, roles_json, created_at,
         last_seen_at, idle_expires_at, absolute_expires_at
@@ -269,7 +270,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
   async readSession(tokenHash: string): Promise<StoredSession | null> {
     this.assertOpen();
     assertHash('tokenHash', tokenHash);
-    const row = this.sqlite.prepare(`
+    const row = this.prepare(`
       SELECT token_hash, csrf_token_hash, subject, roles_json, created_at,
              last_seen_at, idle_expires_at, absolute_expires_at
       FROM sessions WHERE token_hash = ?
@@ -282,10 +283,10 @@ export class SQLitePersistence implements CopyPatchPersistence {
     assertHash('tokenHash', tokenHash);
     if (update.csrfTokenHash !== undefined) assertHash('csrfTokenHash', update.csrfTokenHash);
     const result = update.csrfTokenHash === undefined
-      ? this.sqlite.prepare(`
+      ? this.prepare(`
           UPDATE sessions SET last_seen_at = ?, idle_expires_at = ? WHERE token_hash = ?
         `).run(update.lastSeenAt, update.idleExpiresAt, tokenHash)
-      : this.sqlite.prepare(`
+      : this.prepare(`
           UPDATE sessions
           SET last_seen_at = ?, idle_expires_at = ?, csrf_token_hash = ?
           WHERE token_hash = ?
@@ -297,7 +298,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
   async deleteSession(tokenHash: string): Promise<void> {
     this.assertOpen();
     assertHash('tokenHash', tokenHash);
-    this.sqlite.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
+    this.prepare('DELETE FROM sessions WHERE token_hash = ?').run(tokenHash);
   }
 
   async consumeRateLimit(input: RateLimitInput): Promise<RateLimitDecision> {
@@ -308,13 +309,13 @@ export class SQLitePersistence implements CopyPatchPersistence {
     if (!Number.isSafeInteger(input.now)) throw new TypeError('now must be a safe integer.');
 
     return this.sqlite.transaction((value: RateLimitInput): RateLimitDecision => {
-      const current = this.sqlite.prepare(`
+      const current = this.prepare(`
         SELECT count, reset_at FROM rate_limits WHERE key_hash = ?
       `).get(value.keyHash) as RateLimitRow | undefined;
       const reset = current === undefined || current.reset_at <= value.now;
       const count = reset ? 1 : current.count + 1;
       const resetAt = reset ? value.now + value.windowMs : current.reset_at;
-      this.sqlite.prepare(`
+      this.prepare(`
         INSERT INTO rate_limits (key_hash, count, reset_at) VALUES (?, ?, ?)
         ON CONFLICT (key_hash) DO UPDATE SET count = excluded.count, reset_at = excluded.reset_at
       `).run(value.keyHash, count, resetAt);
@@ -328,13 +329,23 @@ export class SQLitePersistence implements CopyPatchPersistence {
 
   close(): void {
     if (this.closed) return;
+    this.statementCache.clear();
     this.sqlite.close();
     this.closed = true;
   }
 
+  private prepare(sql: string): Database.Statement {
+    let statement = this.statementCache.get(sql);
+    if (!statement) {
+      statement = this.sqlite.prepare(sql);
+      this.statementCache.set(sql, statement);
+    }
+    return statement;
+  }
+
   private editorSnapshot(locale: string): EditorSnapshot {
     const state = this.readState(locale);
-    const rows = this.sqlite.prepare(`
+    const rows = this.prepare(`
       SELECT content_key, published_text, draft_text
       FROM content_entries
       WHERE locale = ?
@@ -357,7 +368,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
   }
 
   private readState(locale: string): { publishedRevision: number; draftRevision: number } {
-    const row = this.sqlite.prepare(`
+    const row = this.prepare(`
       SELECT published_revision, draft_revision FROM content_state WHERE locale = ?
     `).get(locale) as ContentStateRow | undefined;
     return row
@@ -366,7 +377,7 @@ export class SQLitePersistence implements CopyPatchPersistence {
   }
 
   private writeState(locale: string, publishedRevision: number, draftRevision: number): void {
-    this.sqlite.prepare(`
+    this.prepare(`
       INSERT INTO content_state (locale, published_revision, draft_revision)
       VALUES (?, ?, ?)
       ON CONFLICT (locale) DO UPDATE SET

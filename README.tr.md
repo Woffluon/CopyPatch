@@ -1,355 +1,175 @@
-# CopyPatch
+# 📝 CopyPatch
 
-[English](README.md) | [Türkçe](README.tr.md)
+> React uygulamaları için modern ve aynı köken (same-origin) satır içi metin düzenleyici.
 
-CopyPatch, var olan web uygulamanıza güvenli ve satır içi (inline) metin düzenleme yeteneği kazandırır. Düzenlenebilir metinleri React bileşenleriyle işaretleyin, CopyPatch backend modülünü ana uygulamanızın içine bağlayın ve yetkili editörlerin `?copypatch=1` parametresiyle doğrudan canlı sayfada metinleri güncellemesini sağlayın.
+[![CI Durumu](https://img.shields.io/github/actions/workflow/status/Woffluon/CopyPatch/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Woffluon/CopyPatch/actions/workflows/ci.yml)
+[![Sürüm](https://img.shields.io/badge/version-2.0.0-blue.svg?style=flat-square)](packages)
+[![Lisans](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
+[![Dökümantasyon](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
 
-CopyPatch uygulamanızın kendi çalışma zamanı içinde gömülü çalışır. Bağımsız bir API sunucusu, harici açık portlar, reverse proxy veya harici CORS yapılandırması gerektirmez.
+[English](README.md) • [Türkçe](README.tr.md)
+
+---
+
+CopyPatch, ekiplere ve müşterilere harici bir CMS arayüzüne veya kod düzenlemesine ihtiyaç duymadan, doğrudan canlı web sayfası üzerinde metinleri düzenleme imkanı sağlar.
+
+Düzenlenebilir alanları React bileşenleriyle işaretleyin, gömülü backend modülünü uygulamanıza bağlayın ve yetkili editörlerin `?copypatch=1` parametresiyle metinleri canlıda güncellemesini sağlayın.
+
+---
+
+## 🧭 Navigasyon Portalı
+
+| Kategori | Bağlantı | Açıklama |
+| :--- | :--- | :--- |
+| 📦 **Core ve React** | [`@copypatch/core`](packages/core)<br>[`@copypatch/react`](packages/react) | Ortak tipler, şemalar, `<EditableText>`, `<CopyPatchProvider>` ve düzenleyici katmanı. |
+| ⚙️ **Backend ve Node** | [`@copypatch/backend`](packages/backend)<br>[`@copypatch/node`](packages/node) | Depolamadan bağımsız HTTP denetleyicisi, Express/Fastify/Hono adaptörleri ve proje CLI aracı. |
+| 🗄️ **Kalıcılık (Depolama)** | [`@copypatch/storage-sqlite`](packages/storage-sqlite)<br>[`@copypatch/storage-postgres`](packages/storage-postgres) | SQLite (tek sunucu/yerel) ve PostgreSQL (yatayda ölçeklenen kümeler) depolama adaptörleri. |
+| ⚡ **Next.js** | [`@copypatch/next`](packages/next) | Next.js App Router rota işleyicileri, sunucuda snapshot okuma yardımcıları ve sağlayıcı. |
+| 🏛️ **Mimari** | [`docs/architecture.tr.md`](docs/architecture.tr.md) | Çalışma zamanı yapısı, paket sınırları, veri akışı ve dökümantasyon kuralları. |
+| 🛡️ **Güvenlik** | [`docs/threat-model.tr.md`](docs/threat-model.tr.md)<br>[`SECURITY.tr.md`](SECURITY.tr.md) | Güvenlik modeli, Argon2id şifreleme, CSRF başlıkları ve güvenlik açığı bildirim politikası. |
+| 🚀 **Örnekler** | [`examples/`](examples) | Next.js, Astro, React Router ve Vite için çalıştırılabilir referans projeler. |
+| 🌐 **Canlı Demo ve Site** | [`apps/site`](apps/site) | Resmi Astro dökümantasyon ve etkileşimli canlı gösterim sitesi. |
+
+---
+
+## 🏗️ Genel Mimari
+
+CopyPatch uygulamanızın kendi çalışma ortamında gömülü çalışır. Harici bir API sunucusu, açık portlar veya CORS yapılandırması gerektirmez:
 
 ```mermaid
 flowchart LR
-  Browser[Tarayıcı: ?copypatch=1] --> Host[Ana Uygulama]
-  Host --> ReactView[React: CopyPatchProvider & EditableText]
-  Host --> ApiRoute[/__copypatch/api/v2/*]
-  ApiRoute --> Backend[@copypatch/backend]
-  Backend --> Storage[(SQLite / PostgreSQL)]
+  Browser["🌐 Tarayıcı (?copypatch=1)"] --> Host["🖥️ Ana Uygulama"]
+  Host --> ReactView["⚛️ React Bileşenleri (<EditableText>)"]
+  Host --> ApiRoute["🔌 API Rotası (/__copypatch/api/v2/*)"]
+  ApiRoute --> Backend["⚙️ @copypatch/backend"]
+  Backend --> Storage["💾 SQLite / PostgreSQL"]
 ```
 
----
+### Temel Mimari Prensipler
 
-## Temel Yetenekler
-
-- **Aynı köken (Same-origin) mimarisi:** API rotası doğrudan `/__copypatch/api/v2` altında sunulur. Tüm istekler sayfanın kendi kökeninde kaldığı için CORS karmaşıklığı ve harici port açma riski oluşmaz.
-- **Ziyaretçiler için sıfır ek paket yükü:** Normal ziyaretçilere yalnızca hafif React bileşenleri gönderilir. Görsel düzenleyici arayüzü, diff inceleme araçları ve kimlik doğrulama ekranları yalnızca `?copypatch=1` parametresi mevcut olduğunda dinamik olarak yüklenir.
-- **Sunucu anlık görüntüsü (Snapshot) ile render:** Sunucu bileşenleri (RSC) ve SSR rotaları yayınlanmış metinleri doğrudan veritabanından okur; böylece istemcide layout kayması (CLS) veya veri bekleme şelaleleri yaşanmaz.
-- **Esnek depolama katmanı:** Tek sunuculu veya yerel ortamlar için SQLite (`@copypatch/storage-sqlite`), yatayda ölçeklenen çoklu sunucu kümeleri için PostgreSQL (`@copypatch/storage-postgres`) kullanılır.
-- **Rol tabanlı güvenlik:** Dahili Argon2id oturumları veya ana uygulamaya ait özel kimlik doğrulama adaptörleri ile `editor` (taslak kaydetme) ve `publisher` (canlıya yayınlama) yetkileri katı CSRF doğrulamasıyla denetlenir.
+- **Aynı köken (Same-origin) mimarisi:** API rotası doğrudan `/__copypatch/api/v2` altında çalışır. Tüm istekler sayfanın kendi kökeninde kalır, CORS risklerini ortadan kaldırır.
+- **Ziyaretçiler için sıfır paket yükü:** Normal ziyaretçiler yalnızca hafif metin etiketleri alır. Düzenleyici paneli ve kimlik doğrulama modülleri sadece `?copypatch=1` çağrıldığında dinamik yüklenir.
+- **Sunucu anlık görüntüsü (Snapshot) ile render:** Sunucu bileşenleri (RSC) ve SSR rotaları yayınlanmış metinleri doğrudan okur, layout kayması ve istemci şelalelerini engeller.
+- **Revizyon koordinasyonu:** Dahili atomik karşılaştır-ve-değiştir (compare-and-swap) mekanizması eşzamanlı düzenlemelerde çakışmaları önler.
 
 ---
 
-## Paket Ekosistemi
+## ⚡ 3 Adımda Hızlı Başlangıç
 
-CopyPatch, `@copypatch` kapsamında eşzamanlı sürümlenen yedi genel paket sunar:
-
-| Paket | Görev |
-| --- | --- |
-| [`@copypatch/core`](packages/core) | Paylaşılan TypeScript sözleşmeleri, doğrulama şemaları ve API sabitleri. |
-| [`@copypatch/react`](packages/react) | `<CopyPatchProvider>`, `<EditableText>`, headless hook'lar ve dinamik düzenleyici arayüzü. |
-| [`@copypatch/backend`](packages/backend) | Depolamadan bağımsız HTTP denetleyicisi, oturum yönetimi, CSRF kontrolü ve yetkilendirme. |
-| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `better-sqlite3` tabanlı SQLite kalıcılık adaptörü. |
-| [`@copypatch/storage-postgres`](packages/storage-postgres) | Transaction ve bağlantı havuzu destekli PostgreSQL kalıcılık adaptörü. |
-| [`@copypatch/node`](packages/node) | Express, Fastify, Hono, yerel Node HTTP adaptörleri ve `copypatch` CLI aracı. |
-| [`@copypatch/next`](packages/next) | Next.js App Router rota işleyicileri, sunucu snapshot okuma yardımcıları ve sağlayıcı sarmalayıcıları. |
-
-> [!NOTE]
-> `@copypatch/server` paketi v1 sürümündeki bağımsız sunucuyu temsil eder. Kullanımdan kaldırılmıştır ve yalnızca geriye dönük uyumluluk için korunmaktadır. Tüm v2 entegrasyonları gömülü backend örneklerini kullanır.
-
----
-
-## Hızlı Başlangıç: Next.js App Router ve SQLite
-
-### 1. Bağımlılıkları yükleyin
+### 1. Paketleri yükleyin
 
 ```bash
-pnpm add @copypatch/core @copypatch/react @copypatch/backend \
-  @copypatch/storage-sqlite @copypatch/next
+pnpm add @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/next
 ```
 
-### 2. Paylaşılan backend örneğini oluşturun
-
-Kalıcılık motorunu ve backend denetleyicisini sunucu tarafında tek bir yardımcı modülde başlatın:
-
-```ts
-// lib/copypatch.ts
-import { createCopyPatchBackend } from '@copypatch/backend';
-import { createSQLitePersistence } from '@copypatch/storage-sqlite';
-
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
-await persistence.migrate();
-
-export const copypatch = createCopyPatchBackend({
-  persistence,
-  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
-});
-```
-
-### 3. Aynı köken API rotasını ekleyin
-
-`/__copypatch/api/v2/*` yolunu karşılayan catch-all rota işleyicisini tanımlayın:
-
-```ts
-// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
-import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
-import { copypatch } from '@/lib/copypatch';
-
-export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
-  createCopyPatchRouteHandlers(copypatch);
-```
-
-### 4. Argon2id parola özetini üretin
-
-Özeti bir kez üretin ve ortam değişkeninize (`COPYPATCH_PASSPHRASE_HASH`) kaydedin:
-
-```bash
-printf '%s' "guclu-editor-parolaniz" | pnpm exec copypatch hash --stdin
-```
-
-### 5. Sunucu bileşenlerini snapshot ile render edin
-
-Sunucuda yayınlanmış anlık görüntüyü okuyun ve arayüzü sağlayıcı ile sarmalayın:
+### 2. Layout bileşeninizi sarmalayın ve metinleri etiketleyin
 
 ```tsx
-// app/page.tsx
 import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
 import { readPublishedSnapshot } from '@copypatch/next/server';
-import { copypatch } from '@/lib/copypatch';
+import { backend } from '@/lib/copypatch';
 
-export default async function Page() {
-  const snapshot = await readPublishedSnapshot(copypatch, 'tr');
+export default async function Layout({ children }: { children: React.ReactNode }) {
+  const snapshot = await readPublishedSnapshot(backend, 'tr');
 
   return (
     <NextCopyPatchProvider locale="tr" initialSnapshot={snapshot}>
-      <main className="container">
-        <EditableText contentKey="home.hero.title" as="h1">
-          Platformumuza Hoş Geldiniz
+      <header>
+        <EditableText contentKey="header.title" as="h1">
+          Ürünümüze Hoş Geldiniz
         </EditableText>
-        <EditableText contentKey="home.hero.body" as="p" allowLineBreaks>
-          Bu sayfayı ?copypatch=1 parametresiyle açarak metinleri doğrudan düzenleyebilirsiniz.
-        </EditableText>
-      </main>
+      </header>
+      <main>{children}</main>
     </NextCopyPatchProvider>
   );
 }
 ```
+### 3. Satır içi düzenleyiciyi açın
+
+Herhangi bir sayfayı `?copypatch=1` parametresiyle ziyaret edin (örneğin `http://localhost:3000/?copypatch=1`). Belirlediğiniz parola ile giriş yapın, metinleri doğrudan sayfa üzerinde düzenleyin ve anında kaydedin veya yayınlayın.
 
 ---
 
-## Depolama Adaptörleri
+## 📦 Monorepo Paketleri
 
-### SQLite (`@copypatch/storage-sqlite`)
+Tüm genel paketler kilit adımlı (lockstep) sürümleme (`2.0.0`) ile yayınlanır:
 
-Yerel geliştirme, masaüstü uygulamaları veya tek container dağıtımları için idealdir:
-
-```ts
-import { createSQLitePersistence } from '@copypatch/storage-sqlite';
-
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
-await persistence.migrate();
-```
-
-### PostgreSQL (`@copypatch/storage-postgres`)
-
-Çoklu sunucusuz (serverless) örnek veya yatayda ölçeklenen sunucular için tasarlanmıştır:
-
-```ts
-import { createPostgresPersistence } from '@copypatch/storage-postgres';
-
-const persistence = createPostgresPersistence(process.env.DATABASE_URL!);
-await persistence.migrate();
-```
+| Paket | Sürüm | Açıklama | Rehber |
+| :--- | :--- | :--- | :--- |
+| [`@copypatch/core`](packages/core) | `2.0.0` | Ortak sözleşmeler, sabitler, şemalar ve kalıcılık arayüzleri. | [README](packages/core/README.md) |
+| [`@copypatch/react`](packages/react) | `2.0.0` | Sağlayıcı, hook'lar, `<EditableText>` ve düzenleyici çalışma zamanı. | [README](packages/react/README.md) |
+| [`@copypatch/backend`](packages/backend) | `2.0.0` | Depolamadan bağımsız HTTP denetleyicisi ve yetkilendirme motoru. | [README](packages/backend/README.md) |
+| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `2.0.0` | Tek sunuculu ve yerel ortamlar için SQLite adaptörü. | [README](packages/storage-sqlite/README.md) |
+| [`@copypatch/storage-postgres`](packages/storage-postgres) | `2.0.0` | Yatayda ölçeklenen çoklu sunucular için PostgreSQL adaptörü. | [README](packages/storage-postgres/README.md) |
+| [`@copypatch/node`](packages/node) | `2.0.0` | Express, Fastify, Hono, Node HTTP adaptörleri ve `copypatch` CLI aracı. | [README](packages/node/README.md) |
+| [`@copypatch/next`](packages/next) | `2.0.0` | Next.js App Router rota işleyicileri ve RSC snapshot okuyucuları. | [README](packages/next/README.md) |
 
 ---
 
-## Çoklu Çerçeve Sunucu Adaptörleri
+## 🚀 Çerçeve (Framework) Entegrasyon Rehberleri
 
-`@copypatch/node` paketi popüler Node.js çatıları için yerel ara yazılımlar sunar:
+CopyPatch, popüler modern web çatıları için test edilmiş referans uygulamalar sunar:
 
-### Express
+- [**Next.js App Router Rehberi**](examples/next-app/README.md): App Router catch-all rotası, sunucu bileşenleri ve SQLite yapılandırması.
+- [**Astro SSR + React Rehberi**](examples/astro-ssr-react/README.md): Astro SSR uç noktaları ve ada (island) hidrasyonu entegrasyonu.
+- [**React Router / Remix Rehberi**](examples/react-router/README.md): Sunucu yükleyici (loader) snapshot çözümü ve eylem yönetimi.
+- [**Vite + Express / Node Rehberi**](examples/vite-node/README.md): Express veya yerel Node.js sunucusu ile gömülü backend.
+- [**Vite Single-Page App Rehberi**](examples/vite-react/README.md): İstemci taraflı SPA entegrasyonu.
 
-```ts
-import express from 'express';
-import { expressMiddleware } from '@copypatch/node';
-import { copypatch } from './copypatch.js';
+---
 
-const app = express();
+## 🛠️ CLI Hızlı Başvuru
 
-// Body parser'lardan önce CopyPatch middleware'ini bağlayın
-app.use(expressMiddleware(copypatch));
-```
+`@copypatch/node` paketi `copypatch` komut satırı aracını içerir:
 
-### Fastify
+```bash
+# İlk yapılandırmayı ve rota dosyalarını oluşturun
+pnpm exec copypatch init --framework next --storage sqlite
 
-```ts
-import Fastify from 'fastify';
-import { fastifyPlugin } from '@copypatch/node';
-import { copypatch } from './copypatch.js';
+# Parola için güvenli Argon2id özeti üretin
+printf 'guclu-parolaniz' | pnpm exec copypatch hash --stdin
 
-const fastify = Fastify();
-await fastify.register(fastifyPlugin, { backend: copypatch });
-```
-
-### Hono (Node.js çalışma zamanı)
-
-```ts
-import { Hono } from 'hono';
-import { honoMiddleware } from '@copypatch/node';
-import { copypatch } from './copypatch.js';
-
-const app = new Hono();
-app.use('*', honoMiddleware(copypatch));
-```
-
-### Astro SSR ve React Router
-
-Astro SSR veya React Router sunucu girişlerinde doğrudan `handleNodeRequest` fonksiyonunu kullanın:
-
-```ts
-import { handleNodeRequest } from '@copypatch/node';
-import { copypatch } from './copypatch.js';
-
-export async function handleRequest(req, res) {
-  const handled = await handleNodeRequest(copypatch, req, res);
-  if (handled) return;
-  // Ana uygulamanın render işlemine devam edin
-}
+# Ortam, veritabanı bağlantısı ve ayarları doğrulayın
+pnpm exec copypatch doctor
 ```
 
 ---
 
-## React Bileşen ve Hook Referansı
+## 🛡️ Güvenlik ve Yetkilendirme
 
-### `<EditableText>`
+- **Parola Doğrulama:** Güvenli parametrelerle yapılandırılmış yerleşik Argon2id özet doğrulaması.
+- **İmzalı Oturum Çerezleri:** HTTP-only, SameSite ve şifrelenmiş oturum çerezleri.
+- **CSRF Koruması:** Değişiklik isteklerinde oturumla eşleşen `x-copypatch-csrf` başlığı zorunludur.
+- **Rol Hiyerarşisi:** `editor` (taslak kaydetme/silme) ve `publisher` (canlıya alma) yetki ayrımı.
+- **Özel Kimlik Doğrulama Adaptörleri:** Mevcut oturum sistemleriyle (NextAuth, Clerk, Lucia, Supabase) kolay entegrasyon.
 
-Ziyaretçi modunda düz metin; editör modunda kontrolsüz `contentEditable` yüzeyi render eder:
+Ayrıntılar için [Tehdit Modeli](docs/threat-model.tr.md) ve [Güvenlik Politikası](SECURITY.tr.md) belgelerini inceleyin.
 
-```tsx
-import { EditableText } from '@copypatch/react';
+---
 
-<EditableText
-  contentKey="pricing.plan.pro.description"
-  as="p"
-  allowLineBreaks={false}
-  className="text-muted"
->
-  Tüm temel özellikleri içeren standart ekip paketi.
-</EditableText>
+## 🤝 Katkıda Bulunma ve Sürüm Süreci
+
+Katkılarınızı memnuniyetle karşılıyoruz! Geliştirme adımları için [CONTRIBUTING.tr.md](CONTRIBUTING.tr.md) belgesine göz atabilirsiniz.
+
+```bash
+pnpm install --frozen-lockfile   # Bağımlılıkları yükleyin
+pnpm build                      # Tüm paketleri derleyin
+pnpm typecheck                  # TypeScript denetimlerini çalıştırın
+pnpm test                       # Vitest ve sürüm sözleşmesi testlerini çalıştırın
+pnpm test:e2e                   # Playwright E2E tarayıcı testlerini çalıştırın
 ```
 
-- `contentKey` (zorunlu): Metin kaydı için benzersiz kimlik dizesi.
-- `as` (isteğe bağlı): HTML eleman tipi (örneğin `'span'`, `'h1'`, `'p'`). Varsayılan: `'span'`.
-- `allowLineBreaks` (isteğe bağlı): Shift+Enter ile çok satırlı düzenlemeye izin vermek için `true` yapın.
-- `children` (zorunlu): Veritabanında kayıtlı metin bulunmadığında render edilecek yedek içerik.
+### Conventional Commits ve Sürüm Hazırlığı
 
-### `useCopyPatch`
+Tüm sürümlü değişiklikler kilit adımlı sürüm politikasına tabidir. Commit mesajlarınızı şu komutla hazırlayın:
 
-Aktif düzenleyici durumu, yetkilendirme bilgisi ve geçerli dil koduna erişir:
-
-```tsx
-import { useCopyPatch } from '@copypatch/react';
-
-function StatusIndicator() {
-  const { isEditorActive, isAuthorized, role, locale } = useCopyPatch();
-
-  if (!isEditorActive) return null;
-
-  return (
-    <aside className="editor-status">
-      Dil: {locale} | Rol: {role ?? 'Misafir'}
-    </aside>
-  );
-}
-```
-
-### `useEditableText` (Headless Hook)
-
-`<EditableText>` kullanmadan özel düzenleme bileşenleri veya entegrasyonlar geliştirmek için:
-
-```tsx
-import { useEditableText } from '@copypatch/react';
-
-function CustomField({ contentKey, defaultValue }: { contentKey: string; defaultValue: string }) {
-  const { text, isEditing, elementRef, onFocus, onBlur, onInput } =
-    useEditableText(contentKey, defaultValue);
-
-  return (
-    <div
-      ref={elementRef}
-      contentEditable={isEditing}
-      onFocus={onFocus}
-      onBlur={onBlur}
-      onInput={onInput}
-    >
-      {text}
-    </div>
-  );
-}
+```bash
+pnpm release:prepare -- "feat: ozelliginizi tanimlayin"
 ```
 
 ---
 
-## Kimlik Doğrulama ve Güvenlik
+## 📄 Lisans
 
-CopyPatch iki kimlik doğrulama yöntemini destekler:
-
-### 1. Dahili Argon2id Parola Doğrulaması
-
-Backend oluşturulurken `passphraseHash` parametresi tanımlanır. Başarılı giriş sonrasında HTTP-only ve imzalı bir oturum çerezi (`copypatch_session`) oluşturulur.
-
-Veri değiştiren tüm isteklerde (taslak kaydı, yayınlama, geri alma) CSRF saldırılarına karşı `x-copypatch-csrf` başlığı doğrulanır.
-
-### 2. Ana Uygulama Kimlik Doğrulama Adaptörü
-
-CopyPatch'i uygulamanızın mevcut kullanıcı sistemine (NextAuth, Clerk, Auth0, Supabase vb.) bağlayın:
-
-```ts
-import { createCopyPatchBackend, type AuthAdapter } from '@copypatch/backend';
-
-const authAdapter: AuthAdapter = {
-  async resolveUser(request) {
-    const session = await getHostSession(request);
-    if (!session?.user) return null;
-
-    return {
-      id: session.user.id,
-      name: session.user.name,
-      role: session.user.isAdmin ? 'publisher' : 'editor',
-    };
-  },
-  async verifyMutation(request, user) {
-    // Ana uygulamanın CSRF token veya istek bütünlüğünü doğrulayın
-    return isValidHostCsrf(request);
-  },
-};
-
-export const copypatch = createCopyPatchBackend({
-  persistence,
-  authAdapter,
-});
-```
-
-### Rol Hiyerarşisi
-
-- `guest`: Yalnızca yayınlanmış metinleri okuyabilir.
-- `editor`: Yayınlanmış metinleri okuyabilir, taslakları önizleyebilir ve taslak revizyonu kaydedebilir.
-- `publisher`: Editör yetkilerine ek olarak taslak revizyonlarını canlıya yayınlayabilir.
-
----
-
-## CLI Referansı
-
-`@copypatch/node` paketi `copypatch` CLI aracını içerir:
-
-| Komut | Kullanım | Açıklama |
-| --- | --- | --- |
-| `init` | `copypatch init --framework <framework> --storage <storage>` | Başlangıç yapılandırma ve rota dosyalarını üretir. |
-| `hash` | `printf '%s' "$SECRET" \| copypatch hash --stdin` | Kriptografik Argon2id parola özeti oluşturur. |
-| `migrate` | `copypatch migrate --storage <sqlite\|postgres>` | Seçilen depolama motoru için şema geçişlerini çalıştırır. |
-| `doctor` | `copypatch doctor` | Mevcut dizini, yapılandırma dosyalarını ve ortam değişkenlerini denetler. |
-
-`init` komutu için desteklenen çatı seçenekleri: `next`, `astro`, `react-router`, `vite-node`.
-
----
-
-## Dökümantasyon ve Mimari
-
-- [Mimari Haritası (Architecture Map)](docs/architecture.tr.md): Çalışma zamanı akışı ve paket bağımlılık kuralları.
-- [Tehdit Modeli ve Güvenlik Durumu](docs/threat-model.tr.md): Güvenlik analizi, oturum politikaları ve önlemler.
-- [Güvenlik Politikası](SECURITY.tr.md): Güvenlik açığı bildirim ve koordinasyon yönergeleri.
-- [Katkı Rehberi](CONTRIBUTING.tr.md): Monorepo kurulumu, lockstep sürümleme ve test talimatları.
-- [Canlı Dökümantasyon Sitesi](https://copypatch.vercel.app/tr/docs): API rehberleri, canlı bileşen alanı ve öğreticiler.
-
----
-
-## Lisans
-
-MIT. Telif Hakkı 2026 Efe Arabacı.
+MIT Lisansı. Detaylar için [LICENSE](LICENSE) dosyasına bakın.
