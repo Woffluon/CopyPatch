@@ -1,5 +1,7 @@
 # Next.js App Router fixture
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 This fixture embeds `@copypatch/backend` in the same Next Node deployment. The
 catch-all route owns `/__copypatch/api/v2/*`; no proxy or external CopyPatch
 server is required.

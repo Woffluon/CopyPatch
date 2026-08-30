@@ -1,0 +1,105 @@
+---
+title: "Sorun Giderme ve Sıkça Sorulan Sorular"
+description: "CopyPatch v2 entegrasyonlarındaki hata kodları, ara yazılım sıralama sorunları, veritabanı kilitleri ve kimlik doğrulama çözümleri."
+group: operations-security
+order: 4
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const doctorExample = `# Çalışma zamanı teşhis komutunu çalıştırın
+npx copypatch doctor`;
+
+<h1>Sorun Giderme ve SSS</h1>
+  <p class="lead">
+    CopyPatch v2 entegrasyonlarında karşılaşabileceğiniz yapılandırma, rota yönlendirme, yetkilendirme ve veritabanı durumlarını hızla teşhis edin.
+  </p>
+
+  <h2>1. CLI ile Hızlı Teşhis</h2>
+  <p>
+    Yerel yapılandırmanızı, ortam değişkenlerinizi ve veritabanı bağlantı sağlığınızı test etmenin en hızlı yolu <code>doctor</code> komutudur:
+  </p>
+  <CodeBlock code={doctorExample} lang="bash" title="Terminal" />
+
+  <h2>2. Hata Kodları Başvuru Tablosu</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Hata Kodu</th>
+        <th>HTTP Durumu</th>
+        <th>Olası Neden</th>
+        <th>Çözüm Adımı</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>ORIGIN_REJECTED</code></td>
+        <td><code>403 Forbidden</code></td>
+        <td>İsteğin <code>Origin</code> başlığı uygulamanın host etki alanıyla tam olarak eşleşmiyor.</td>
+        <td>İsteklerin aynı kökenden (same-origin) yapıldığından emin olun. Harici proxy veya CORS ayarlarını kaldırın; uygulamayı doğrudan host adresi üzerinden açın.</td>
+      </tr>
+      <tr>
+        <td><code>CSRF_FAILED</code></td>
+        <td><code>403 Forbidden</code></td>
+        <td><code>x-copypatch-csrf</code> başlığı eksik, geçersiz veya süresi dolmuş.</td>
+        <td><code>?copypatch=1</code> ile sayfayı yenileyip yeniden giriş yapın. Özel bir <code>authAdapter</code> kullanıyorsanız, adaptörün <code>verifyMutation</code> fonksiyonunu denetleyin.</td>
+      </tr>
+      <tr>
+        <td><code>UNAUTHORIZED</code></td>
+        <td><code>401 Unauthorized</code></td>
+        <td>Oturum çerezi eksik, geçersiz veya zaman aşımına uğramış.</td>
+        <td>Parola modalı üzerinden oturum açın veya ana uygulamanızdaki kullanıcı hesabınıza giriş yapın.</td>
+      </tr>
+      <tr>
+        <td><code>FORBIDDEN</code></td>
+        <td><code>403 Forbidden</code></td>
+        <td>Kullanıcı istenen eylem için gerekli role sahip değil (taslak için <code>editor</code>, yayınlama için <code>publisher</code>).</td>
+        <td>Ana uygulamanızın kimlik doğrulama sisteminde veya adaptörünüzdeki rol tanımlamalarını kontrol edin.</td>
+      </tr>
+      <tr>
+        <td><code>REVISION_CONFLICT</code></td>
+        <td><code>409 Conflict</code></td>
+        <td>Siz sayfadayken başka bir ekip üyesi aktif dilde değişiklik yayınladı veya kaydetti.</td>
+        <td>En güncel metinleri yüklemek için sayfayı/anlık görüntüyü yenileyin ve düzenlemenizi veri kaybı olmadan tekrar uygulayın.</td>
+      </tr>
+      <tr>
+        <td><code>VALIDATION_FAILED</code></td>
+        <td><code>400 Bad Request</code></td>
+        <td>Geçersiz metin anahtarı formatı veya yapılandırılan metin sınırı aşıldı. Varsayılan 10.000, sert üst sınır 100.000 karakterdir.</td>
+        <td>İçerik anahtarlarının noktayla ayrılmış alfa-sayısal formatta (örn. <code>hero.title</code>) olduğundan ve metinlerin düz metin olduğundan emin olun.</td>
+      </tr>
+      <tr>
+        <td><code>STORAGE_UNAVAILABLE</code></td>
+        <td><code>503 Service Unavailable</code></td>
+        <td>Veritabanı dosyası kilitli, dizin yazma izni yok veya PostgreSQL bağlantı havuzu yanıt vermiyor.</td>
+        <td>Migrasyonları çalıştırın (<code>copypatch migrate</code>), SQLite dizin izinlerini kontrol edin veya PostgreSQL bağlantı bilgilerinizi test edin.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>3. Sık Karşılaşılan Durumlar ve Çözümleri</h2>
+
+  <h3>Düzenleme Araç Çubuğu Görünmüyor</h3>
+  <ul>
+    <li>URL sorgu parametresinin tam olarak <code>?copypatch=1</code> olduğunu teyit edin.</li>
+    <li><code>CopyPatchProvider</code> sağlayıcısının ilgili bileşen ağacını kapsadığından emin olun.</li>
+    <li>Tembel yükleme sırasında bir hata oluşup oluşmadığını tarayıcınızın Geliştirici Araçları (Console) sekmesinden denetleyin.</li>
+  </ul>
+
+  <h3>Rota 404 Not Found Hatası Veriyor</h3>
+  <ul>
+    <li>Sunucunuzun API rotasını tam olarak <code>/__copypatch/api/v2</code> adresine mount ettiğini doğrulayın.</li>
+    <li>Next.js App Router kullanıyorsanız klasör adının yüzde kodlamalı olduğundan emin olun: <code>app/%5F%5Fcopypatch/api/v2/[...path]/route.ts</code>.</li>
+    <li>Express kullanıyorsanız <code>app.use('/__copypatch/api/v2', expressMiddleware(backend))</code> tanımının <code>express.json()</code> ve SPA fallback'lerinden <strong>önce</strong> yer aldığını kontrol edin.</li>
+  </ul>
+
+  <h2>4. Sıkça Sorulan Sorular (SSS)</h2>
+
+  <h3>CopyPatch içinde zengin metin (Rich-text / HTML) kullanabilir miyim?</h3>
+  <p>
+    <strong>Hayır.</strong> CopyPatch bilinçli olarak katı bir düz metin (plain-text) ilkesi uygular. HTML girişine izin vermek hem depolanmış XSS güvenlik riskleri yaratır hem de teknik bilgisi olmayan editörlerin sitenizin CSS ve mobil yerleşimini bozmasına neden olur.
+  </p>
+
+  <h3>CopyPatch'i tamamen statik bir CDN sitesinde (örn. GitHub Pages) çalıştırabilir miyim?</h3>
+  <p>
+    Statik çıktılar varsayılan yedek metinleri render edebilir; ancak salt statik bir barındırmada canlı düzenleme veya kaydetme yapılamaz. Güvenli mutasyonları işlemek ve veritabanına yazmak için Node.js, sunucusuz (serverless) veya konteyner tabanlı aktif bir sunucu çalışma zamanı gereklidir.
+  </p>

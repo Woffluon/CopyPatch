@@ -1,0 +1,118 @@
+---
+title: "Backend Çalışma Zamanı ve Adaptörler"
+description: "Çerçeveden bağımsız CopyPatch v2 backend çekirdeğini, kalıcılık motorlarını ve kimlik doğrulama adaptörlerini yapılandırın."
+group: operations-security
+order: 1
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const basicBackend = `import { createCopyPatchBackend } from '@copypatch/backend';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
+
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+
+const copypatch = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});`;
+
+export const customAuthAdapter = `import { createCopyPatchBackend, type CopyPatchAuthAdapter } from '@copypatch/backend';
+import { createPostgresPersistence } from '@copypatch/storage-postgres';
+
+// Mevcut kimlik doğrulama sisteminizi (NextAuth, Clerk, Auth0 vb.) bağlayan özel adaptör
+const hostAuthAdapter: CopyPatchAuthAdapter = {
+  async resolvePrincipal(context) {
+    const user = context.hostAuth?.user;
+    if (!user) return null;
+
+    const roles: ('editor' | 'publisher')[] = [];
+    if (user.isAdmin || user.canEditCopy) roles.push('editor');
+    if (user.isAdmin || user.canPublishCopy) roles.push('publisher');
+
+    return { id: user.id, roles };
+  },
+
+  async verifyMutation(request, context) {
+    // Ana uygulamanın CSRF belirtecini veya oturum geçerliliğini denetleyin
+    return context.hostAuth?.csrfValid === true;
+  },
+};
+
+const backend = createCopyPatchBackend({
+  persistence: createPostgresPersistence({ connectionString: process.env.DATABASE_URL! }),
+  authAdapter: hostAuthAdapter,
+});`;
+
+<h1>Backend Çalışma Zamanı ve Adaptörler</h1>
+  <p class="lead">
+    <code>@copypatch/backend</code> paketi, CopyPatch v2'nin harici süreç gerektirmeyen gömülü çekirdeğidir. Standart Web <code>Request</code>/<code>Response</code> hattı üzerinde rota yönlendirmeyi, yetkilendirmeyi, CSRF denetimlerini ve iyimser revizyon koordinasyonunu yönetir.
+  </p>
+
+  <h2>1. Backend Çalışma Zamanını Başlatma</h2>
+  <p>
+    İstediğiniz depolama adaptörü ve kimlik doğrulama stratejisi ile backend nesnesini oluşturun:
+  </p>
+  <CodeBlock code={basicBackend} lang="ts" title="lib/copypatch.ts" />
+
+  <h2>2. Kimlik Doğrulama Stratejileri</h2>
+  <p>
+    <code>createCopyPatchBackend</code> birbirinden bağımsız iki stratejiden tam olarak birini kabul eder:
+  </p>
+
+  <h3>Strateji A: Dahili Parola Oturumu (<code>passphraseHash</code>)</h3>
+  <ul>
+    <li>Mevcut kullanıcı veritabanı olmayan projeler için CopyPatch tarafından tamamen bağımsız yönetilir.</li>
+    <li><strong>Argon2id</strong> parola özeti (RFC 9106 önerilen parametreleri) kullanır.</li>
+    <li><code>HttpOnly</code>, <code>SameSite=Strict</code> oturum çerezleri ve çift belirteçli (dual-token) CSRF koruması üretir.</li>
+    <li>Müşteri teslimatları, ajans projeleri ve pazarlama web siteleri için idealdir.</li>
+  </ul>
+
+  <h3>Strateji B: Host Kimlik Doğrulama Adaptörü (<code>authAdapter</code>)</h3>
+  <ul>
+    <li>Kullanıcı çözümlemesini ve rol atamasını mevcut kimlik sağlayıcınıza (NextAuth, Lucia, Clerk, Auth0, Supabase vb.) devreder.</li>
+    <li>Kullanıcı yetkilerinizi CopyPatch'in <code>editor</code> ve <code>publisher</code> rollerine eşler.</li>
+    <li>Veri değiştiren isteklerin güvenlik doğrulamasını ana uygulamanın mantığına bırakır.</li>
+  </ul>
+  <CodeBlock code={customAuthAdapter} lang="ts" title="lib/copypatch-ozel-auth.ts" />
+
+  <h2>3. Kalıcılık (Depolama) Motorları</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Adaptör</th>
+        <th>Sürücü</th>
+        <th>En Uygun Senaryo</th>
+        <th>Eşzamanlılık ve İşlemler (Transactions)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>@copypatch/storage-sqlite</code></td>
+        <td><code>better-sqlite3</code></td>
+        <td>Tek Node sunucusu, VPS (Hetzner, DigitalOcean), disk bağlı Docker konteyneri.</td>
+        <td>Senkron SQLite işlemleri, WAL günlük modu, atomik CAS revizyon doğrulaması.</td>
+      </tr>
+      <tr>
+        <td><code>@copypatch/storage-postgres</code></td>
+        <td><code>pg</code></td>
+        <td>Yatayda ölçeklenen çoklu sunucular, Kubernetes, sunucusuz bulut ortamları (Vercel, AWS, Fly.io).</td>
+        <td>Bağlantı havuzu yönetimi, PostgreSQL advisory transaction kilitleri, sunucular arası hız sınırları.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Node Çerçeve Adaptörleri</h2>
+  <p>
+    <code>@copypatch/node</code> paketi, popüler Node.js sunucu çatıları için hafif HTTP köprüleri sağlar:
+  </p>
+  <ul>
+    <li><code>createNodeHandler(backend)</code> – Yerel Node.js <code>http.createServer</code></li>
+    <li><code>expressMiddleware(backend)</code> – Express ara yazılımı</li>
+    <li><code>fastifyCopyPatchHandler(backend)</code> – Fastify rota işleyicisi</li>
+    <li><code>createHonoHandler(backend)</code> – Hono Web standart işleyicisi</li>
+  </ul>
+
+  <blockquote>
+    <strong>Geçmiş Sürüm Notu:</strong> <code>@copypatch/server</code> v1 sürümündeki bağımsız sunucu süreciydi. v2'de yerini tamamen gömülü çalışan <code>@copypatch/backend</code> ve <code>@copypatch/node</code> kütüphanelerine bırakmıştır. Yayınlanmış eski paketler npm üzerinde kalacaktır; yeni projelerde doğrudan v2 kullanılmalıdır.
+  </blockquote>

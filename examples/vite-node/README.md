@@ -1,5 +1,7 @@
 # Vite + Node same-deployment fixture
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 This is the serverful counterpart to `examples/vite-react`. It starts Vite in
 middleware mode and mounts the Node adapter before the Vite SPA fallback, so
 `/__copypatch/api/v2/*` stays in the same deployment and origin as the React

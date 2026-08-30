@@ -1,0 +1,54 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props { lang: Locale; }
+const { lang } = Astro.props;
+const copy = lang === 'tr'
+  ? {
+      title: 'Gerçek istek ve veri akışı',
+      caption: 'Düzenleme, uygulamanızın aynı kökenindeki CopyPatch çalışma zamanı üzerinden ilerler.',
+      nodes: ['Tarayıcı ve React', 'Uygulama rotası', 'CopyPatch backend', 'SQLite veya PostgreSQL'],
+      detail: ['Kullanıcı düzenleme kipini açar ve işaretli metni değiştirir.', 'Host adaptörü isteği /__copypatch/api/v2 yoluna iletir.', 'Kimlik doğrulama, yetkilendirme, doğrulama ve yayınlama burada uygulanır.', 'Taslaklar, yayınlanmış anlık görüntüler ve denetim verisi kalıcı olur.'],
+    }
+  : {
+      title: 'The real request and data flow',
+      caption: 'Editing travels through the CopyPatch runtime at your application’s same origin.',
+      nodes: ['Browser and React', 'Application route', 'CopyPatch backend', 'SQLite or PostgreSQL'],
+      detail: ['A user enters edit mode and changes marked copy.', 'The host adapter forwards the request to /__copypatch/api/v2.', 'Authentication, authorization, validation, and publishing happen here.', 'Drafts, published snapshots, and audit data are persisted.'],
+    };
+---
+
+<figure class="request-flow" aria-labelledby="request-flow-title">
+  <div class="flow-heading">
+    <p>02</p>
+    <h2 id="request-flow-title">{copy.title}</h2>
+  </div>
+  <div class="flow-diagram" role="img" aria-label={`${copy.nodes.join(' → ')}. ${copy.caption}`}>
+    {copy.nodes.map((node, index) => (
+      <>
+        <div class="flow-node"><span>{String(index + 1).padStart(2, '0')}</span><strong>{node}</strong></div>
+        {index < copy.nodes.length - 1 && <span class="flow-arrow" aria-hidden="true">→</span>}
+      </>
+    ))}
+  </div>
+  <figcaption>{copy.caption}</figcaption>
+  <ol class="flow-equivalent">
+    {copy.detail.map((detail, index) => <li><strong>{copy.nodes[index]}.</strong> {detail}</li>)}
+  </ol>
+</figure>
+
+<style>
+  .request-flow { border-block: 1px solid var(--cp-border); margin: 2.5rem 0; padding: 1.25rem 0; }
+  .flow-heading { align-items: baseline; display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+  .flow-heading p { color: var(--cp-accent); font: 0.72rem var(--cp-font-mono); margin: 0; }
+  .flow-heading h2 { font-size: 1.1rem; margin: 0; }
+  .flow-diagram { align-items: stretch; display: flex; gap: 0.45rem; margin-bottom: 0.8rem; overflow-x: auto; padding-bottom: 0.25rem; }
+  .flow-node { background: var(--cp-surface); border: 1px solid var(--cp-border); display: grid; flex: 1 0 148px; gap: 0.5rem; min-height: 78px; padding: 0.75rem; }
+  .flow-node span { color: var(--cp-accent); font: 0.67rem var(--cp-font-mono); }
+  .flow-node strong { color: var(--cp-text); font-size: 0.86rem; }
+  .flow-arrow { align-self: center; color: var(--cp-text-dim); font: 1rem var(--cp-font-mono); }
+  figcaption { color: var(--cp-text-muted); font-size: 0.82rem; line-height: 1.5; }
+  .flow-equivalent { color: var(--cp-text-muted); font-size: 0.8rem; line-height: 1.55; margin: 0.8rem 0 0; padding-left: 1.2rem; }
+  .flow-equivalent strong { color: var(--cp-text); }
+  @media (max-width: 640px) { .flow-diagram { margin-inline: -0.15rem; } }
+</style>

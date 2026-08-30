@@ -1,5 +1,7 @@
 # @copypatch/backend
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 Framework-neutral CopyPatch v2 backend runtime. It exposes a Web
 `Request`/`Response` API that is mounted inside the host application, so
 CopyPatch does not require a separate server, port, proxy, or CORS policy.

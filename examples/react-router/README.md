@@ -1,5 +1,7 @@
 # React Router v7 Framework Mode fixture
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 This fixture uses React Router **v7 Framework Mode** with SSR enabled. Its
 resource route forwards `/__copypatch/api/v2/*` requests to the colocated
 CopyPatch backend, and the home loader reads the server snapshot directly.

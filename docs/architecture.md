@@ -61,6 +61,8 @@ reverse proxy, or CORS mode.
 - `docs/npm-publishing.md` and `docs/npm-readiness-audit-2026-08-24.md` are
   deliberate delete-zone entries. Do not restore them without maintainer
   direction.
-- The README and documentation site are reader-facing summaries. Keep their
-  examples aligned with this map, especially the v2 API path and same-origin
-  deployment model.
+- The README and documentation site are reader-facing summaries. The site uses
+  paired `apps/site/src/content/docs/en` and `tr` MDX entries to generate its
+  navigation, routes, sitemap, and local search index. Keep both locales and
+  their examples aligned with this map, especially the v2 API path and
+  same-origin deployment model.

@@ -20,6 +20,9 @@ const {
 } = Astro.props;
 
 const fullTitle = title.includes(SITE_CONFIG.name) ? title : `${title} | ${SITE_CONFIG.name}`;
+const pathname = Astro.url.pathname.replace(/\/$/, '') || '/';
+const englishPath = lang === 'tr' ? (pathname.replace(/^\/tr/, '') || '/') : pathname;
+const turkishPath = lang === 'tr' ? pathname : (pathname === '/' ? '/tr' : `/tr${pathname}`);
 
 const structuredData = {
   '@context': 'https://schema.org',
@@ -60,6 +63,9 @@ const structuredData = {
     <meta name="title" content={fullTitle} />
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang="en" href={new URL(englishPath, Astro.url)} />
+    <link rel="alternate" hreflang="tr" href={new URL(turkishPath, Astro.url)} />
+    <link rel="alternate" hreflang="x-default" href={new URL(englishPath, Astro.url)} />
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -92,7 +98,7 @@ const structuredData = {
       })();
     </script>
   </head>
-  <body>
+  <body data-pagefind-filter={`locale:${lang}`}>
     <a href="#main-content" class="skip-link">
       {lang === 'tr' ? 'Ana içeriğe atla' : 'Skip to main content'}
     </a>

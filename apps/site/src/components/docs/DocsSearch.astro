@@ -1,0 +1,90 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props {
+  lang: Locale;
+  mode?: 'desktop' | 'mobile';
+}
+
+const { lang, mode = 'desktop' } = Astro.props;
+const label = lang === 'tr' ? 'Dokümanlarda ara' : 'Search documentation';
+const hint = lang === 'tr' ? 'Ara' : 'Search';
+---
+
+<div class="docs-search" data-docs-search data-locale={lang} data-mode={mode}>
+  <button type="button" class="docs-search-trigger" aria-label={label}>
+    <span>{hint}</span>
+    <kbd>Ctrl K</kbd>
+  </button>
+  <div class="docs-search-panel" hidden>
+    <div class="docs-search-mount" aria-label={label}></div>
+  </div>
+</div>
+
+<script is:inline>
+  document.querySelectorAll('[data-docs-search]').forEach((search) => {
+    if (search.getAttribute('data-docs-search-ready') === 'true') return;
+    search.setAttribute('data-docs-search-ready', 'true');
+
+    const trigger = search.querySelector('.docs-search-trigger');
+    const panel = search.querySelector('.docs-search-panel');
+    const mount = search.querySelector('.docs-search-mount');
+    const locale = search.getAttribute('data-locale');
+    const mode = search.getAttribute('data-mode');
+    let initialized = false;
+
+    async function openSearch() {
+      // Both desktop and mobile controls are present so the layout can adapt
+      // without a client-side route change. Only the visible control should
+      // respond to the global keyboard shortcut.
+      const isMobileViewport = window.matchMedia('(max-width: 860px)').matches;
+      if (!trigger || !panel || !mount || (mode === 'mobile' && !isMobileViewport) || (mode === 'desktop' && isMobileViewport)) return;
+      panel.hidden = false;
+      if (!initialized) {
+        const module = await import('/pagefind/pagefind-ui.js');
+        const PagefindUI = module.PagefindUI || window.PagefindUI;
+        if (PagefindUI) {
+          new PagefindUI({
+            element: mount,
+            showImages: false,
+            resetStyles: false,
+            autofocus: true,
+            filters: { locale },
+          });
+          initialized = true;
+        }
+      }
+      mount.querySelector('input')?.focus();
+    }
+
+    function closeSearch() {
+      if (!panel || panel.hidden) return;
+      panel.hidden = true;
+      trigger?.focus();
+    }
+
+    trigger?.addEventListener('click', openSearch);
+    window.addEventListener('keydown', (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        openSearch();
+      }
+      if (event.key === 'Escape') closeSearch();
+    });
+    document.addEventListener('click', (event) => {
+      if (!panel?.hidden && !search.contains(event.target)) closeSearch();
+    });
+  });
+</script>
+
+<style>
+  .docs-search { position: relative; margin-bottom: 1.25rem; }
+  .docs-search-trigger { align-items: center; background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: var(--cp-radius-md); color: var(--cp-text-muted); cursor: pointer; display: flex; font: inherit; justify-content: space-between; min-height: 36px; padding: 0.45rem 0.6rem; width: 100%; }
+  .docs-search-trigger:hover, .docs-search-trigger:focus-visible { border-color: var(--cp-accent); color: var(--cp-text); outline: none; }
+  kbd { background: var(--cp-surface-elevated); border: 1px solid var(--cp-border-subtle); border-radius: var(--cp-radius-sm); color: var(--cp-text-dim); font: 0.65rem var(--cp-font-mono); padding: 0.1rem 0.25rem; }
+  .docs-search-panel { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: var(--cp-radius-md); box-shadow: var(--cp-shadow-xl); left: 0; padding: 0.75rem; position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 120; }
+  .docs-search-panel[hidden] { display: none; }
+  .docs-search-mount :global(.pagefind-ui__search-input) { background: var(--cp-surface-elevated); border: 1px solid var(--cp-border); border-radius: var(--cp-radius-sm); color: var(--cp-text); padding: 0.55rem; width: 100%; }
+  .docs-search-mount :global(.pagefind-ui__result-link) { color: var(--cp-text); }
+  .docs-search-mount :global(.pagefind-ui__result-excerpt) { color: var(--cp-text-muted); }
+</style>

@@ -1,0 +1,36 @@
+---
+title: "Paket API referansı"
+description: "İhtiyacınız olan sözleşmenin, çalışma zamanının, adaptörün veya framework entegrasyonunun sahibi olan CopyPatch paketini seçin."
+group: api-reference
+order: 1
+---
+
+# Paket API referansı
+
+CopyPatch, tarayıcı, sunucu, depolama ve framework sorumluluklarını ayrı paketlerde tutar. Davranışın sahibi olan en dar paketten import edin.
+
+| Paket | Genel giriş noktaları | Kullanım amacı |
+| --- | --- | --- |
+| `@copypatch/core` | `API_BASE_PATH`, içerik snapshot'ları, istek sözleşmeleri, doğrulama yardımcıları | Paylaşılan tipler ve özel kalıcılık uygulamaları |
+| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText` | React istemci render'ı ve satır içi düzenleme |
+| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` | Gömülü Web Request/Response çalışma zamanı |
+| `@copypatch/storage-sqlite` | `createSQLitePersistence` | Yerel veya tek örnekli kalıcılık |
+| `@copypatch/storage-postgres` | `createPostgresPersistence` | Uygulama örnekleri arasında paylaşılan kalıcılık |
+| `@copypatch/node` | Node, Express, Fastify ve Hono adaptörleri; `copypatch` CLI | Node sunucusu yüzeyi sunan host'lar |
+| `@copypatch/next` | `NextCopyPatchProvider`, `createCopyPatchRouteHandlers`, `readPublishedSnapshot` | Next.js App Router rotaları ve SSR/RSC snapshot'ları |
+
+## Backend yapılandırması
+
+`createCopyPatchBackend`, bir kalıcılık uygulaması ve tam olarak bir kimlik doğrulama stratejisi ister: Argon2id `passphraseHash` veya host `authAdapter`.
+
+Varsayılan metin sınırı düzenlenen her değer için 10.000 karakterdir. Gerekirse `maxTextLength` ayarlayın; sert sınır 100.000 karakterdir. Backend varsayılan olarak 12 saat boşta kalma oturum süresi, yedi gün mutlak süre ve her hız sınırı anahtarı için dakikada 30 güvenli olmayan istek kullanır.
+
+## React entegrasyonu
+
+`CopyPatchProvider`, `apiBase` verilmezse `/__copypatch/api/v2` kullanır. Locale verin ve SSR veya RSC host'larında `initialSnapshot` sağlayın. `EditableText`, ziyaretçilere fallback metni render eder ve yalnızca düzenleme modunda `contentEditable` yüzeyini etkinleştirir. Düzenlenebilir değer bir öznitelikte, seçenekte veya buton etiketinde kullanılacaksa `useCopyPatch` kullanın.
+
+## Kalıcılık sözleşmesi
+
+İki yerleşik adaptör de `CopyPatchPersistence` sözleşmesini uygular. Her mutasyon, yayınlanmış ve taslak revizyonlar üzerinde atomik compare-and-swap işlemidir. Trafik almadan önce `migrate()` çağırın; adaptör bağlantının sahibiyse kapanışta `close()` çağırın.
+
+İstek ve yanıt şekilleri için [HTTP API referansına](/tr/docs/http-api) geçin.

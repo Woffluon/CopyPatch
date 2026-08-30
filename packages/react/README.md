@@ -1,5 +1,7 @@
 # @copypatch/react
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 React bindings for CopyPatch. This package gives you the provider, inline editable text component, hooks, and optional editor overlay export needed to let approved users edit copy directly on the page.
 
 ## Install

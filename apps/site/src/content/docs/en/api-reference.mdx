@@ -1,0 +1,36 @@
+---
+title: "Package API reference"
+description: "Choose the CopyPatch package that owns the contract, runtime, adapter, or framework integration you need."
+group: api-reference
+order: 1
+---
+
+# Package API reference
+
+CopyPatch keeps browser, server, storage, and framework concerns in separate packages. Import from the narrowest package that owns the behavior.
+
+| Package | Public entry points | Use it for |
+| --- | --- | --- |
+| `@copypatch/core` | `API_BASE_PATH`, content snapshots, request contracts, validation helpers | Shared types and custom persistence implementations |
+| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText` | React client rendering and inline editing |
+| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` | The embedded Web Request/Response runtime |
+| `@copypatch/storage-sqlite` | `createSQLitePersistence` | Local or single-instance persistence |
+| `@copypatch/storage-postgres` | `createPostgresPersistence` | Shared persistence across application instances |
+| `@copypatch/node` | Node, Express, Fastify, and Hono adapters; `copypatch` CLI | Hosts that expose a Node server surface |
+| `@copypatch/next` | `NextCopyPatchProvider`, `createCopyPatchRouteHandlers`, `readPublishedSnapshot` | Next.js App Router routes and SSR/RSC snapshots |
+
+## Backend configuration
+
+`createCopyPatchBackend` requires a persistence implementation and exactly one authentication strategy: an Argon2id `passphraseHash` or a host `authAdapter`.
+
+The default text limit is 10,000 characters per edited value. Set `maxTextLength` when needed, up to the hard 100,000-character limit. The backend defaults to a 12-hour idle session timeout, a seven-day absolute timeout, and 30 unsafe requests per minute for each rate-limit key.
+
+## React integration
+
+`CopyPatchProvider` uses `/__copypatch/api/v2` unless `apiBase` is supplied. Give it a locale and, for SSR or RSC hosts, an `initialSnapshot`. `EditableText` renders the fallback string for visitors and activates a `contentEditable` surface only in edit mode. Use `useCopyPatch` when an editable value belongs in an attribute, option, or button label.
+
+## Storage contract
+
+Both built-in adapters implement the `CopyPatchPersistence` contract. Each mutation is an atomic compare-and-swap operation over published and draft revisions. Call `migrate()` before serving traffic, and call `close()` during shutdown when the adapter owns its connection.
+
+For request and response shapes, continue to the [HTTP API reference](/docs/http-api).

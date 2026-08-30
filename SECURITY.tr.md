@@ -20,7 +20,7 @@ Backend iki kimlik doğrulama seçeneği sunar:
 - **Dahili Parola:** Argon2id, güvenli `HttpOnly` `SameSite=Strict` çerezleri, kısa ömürlü bellek içi CSRF belirteçleri ve kalıcı hız sınırları kullanır.
 - **Host Auth Adaptörü:** Ana uygulamanın kullanıcısını tanımlar ve mutasyonları ana uygulamanın CSRF veya istek doğrulama kurallarıyla denetler.
 
-Tüm içerikler normalize edilmiş düz metin olarak işlenir. Depolama adaptörleri açık oturum anahtarlarını değil, yalnızca SHA-256 özetlerini saklar. Rol denetimleri `editor` ve `publisher` eylemlerini birbirinden ayırır. Ayrıntılar için [tehdit modeli](docs/threat-model.tr.md) belgesini inceleyin.
+Tüm içerikler normalize edilmiş düz metin olarak işlenir. Depolama adaptörleri açık oturum anahtarlarını değil, yalnızca SHA-256 özetlerini saklar. Rol denetimleri `editor` ve `publisher` eylemlerini birbirinden ayırır. Ayrıntılar için [tehdit modeli](docs/threat-model.tr.md) belgesini inceleyin. Operasyon ayrıntıları için [güvenlik mimarisi rehberine](https://copypatch.vercel.app/tr/docs/security) ve [HTTP API referansına](https://copypatch.vercel.app/tr/docs/http-api) bakın.
 
 ## Güvenlik Açığı Bildirimi
 

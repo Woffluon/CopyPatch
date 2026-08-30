@@ -1,4 +1,4 @@
-# 📝 CopyPatch
+# CopyPatch
 
 > React uygulamaları için modern ve aynı köken (same-origin) satır içi metin düzenleyici.
 
@@ -8,7 +8,12 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
 [![Dökümantasyon](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
 
-[English](README.md) • [Türkçe](README.tr.md)
+[English](README.md) | [Türkçe](README.tr.md)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="apps/site/public/banner-dark.png">
+  <img alt="CopyPatch" src="apps/site/public/banner-white.png">
+</picture>
 
 ---
 
@@ -18,22 +23,22 @@ Düzenlenebilir alanları React bileşenleriyle işaretleyin, gömülü backend 
 
 ---
 
-## 🧭 Navigasyon Portalı
+## Dokümantasyon portalı
 
 | Kategori | Bağlantı | Açıklama |
 | :--- | :--- | :--- |
-| 📦 **Core ve React** | [`@copypatch/core`](packages/core)<br>[`@copypatch/react`](packages/react) | Ortak tipler, şemalar, `<EditableText>`, `<CopyPatchProvider>` ve düzenleyici katmanı. |
-| ⚙️ **Backend ve Node** | [`@copypatch/backend`](packages/backend)<br>[`@copypatch/node`](packages/node) | Depolamadan bağımsız HTTP denetleyicisi, Express/Fastify/Hono adaptörleri ve proje CLI aracı. |
-| 🗄️ **Kalıcılık (Depolama)** | [`@copypatch/storage-sqlite`](packages/storage-sqlite)<br>[`@copypatch/storage-postgres`](packages/storage-postgres) | SQLite (tek sunucu/yerel) ve PostgreSQL (yatayda ölçeklenen kümeler) depolama adaptörleri. |
-| ⚡ **Next.js** | [`@copypatch/next`](packages/next) | Next.js App Router rota işleyicileri, sunucuda snapshot okuma yardımcıları ve sağlayıcı. |
-| 🏛️ **Mimari** | [`docs/architecture.tr.md`](docs/architecture.tr.md) | Çalışma zamanı yapısı, paket sınırları, veri akışı ve dökümantasyon kuralları. |
-| 🛡️ **Güvenlik** | [`docs/threat-model.tr.md`](docs/threat-model.tr.md)<br>[`SECURITY.tr.md`](SECURITY.tr.md) | Güvenlik modeli, Argon2id şifreleme, CSRF başlıkları ve güvenlik açığı bildirim politikası. |
-| 🚀 **Örnekler** | [`examples/`](examples) | Next.js, Astro, React Router ve Vite için çalıştırılabilir referans projeler. |
-| 🌐 **Canlı Demo ve Site** | [`apps/site`](apps/site) | Resmi Astro dökümantasyon ve etkileşimli canlı gösterim sitesi. |
+| **Core ve React** | [`@copypatch/core`](packages/core)<br>[`@copypatch/react`](packages/react) | Ortak tipler, şemalar, `<EditableText>`, `<CopyPatchProvider>` ve düzenleyici katmanı. |
+| **Backend ve Node** | [`@copypatch/backend`](packages/backend)<br>[`@copypatch/node`](packages/node) | Depolamadan bağımsız HTTP denetleyicisi, Express/Fastify/Hono adaptörleri ve proje CLI aracı. |
+| **Kalıcılık** | [`@copypatch/storage-sqlite`](packages/storage-sqlite)<br>[`@copypatch/storage-postgres`](packages/storage-postgres) | SQLite ve PostgreSQL depolama adaptörleri. |
+| **Next.js** | [`@copypatch/next`](packages/next) | Next.js App Router rota işleyicileri, sunucuda snapshot okuma yardımcıları ve sağlayıcı. |
+| **Mimari** | [`docs/architecture.tr.md`](docs/architecture.tr.md) | Çalışma zamanı yapısı, paket sınırları ve veri akışı. |
+| **Güvenlik** | [`docs/threat-model.tr.md`](docs/threat-model.tr.md)<br>[`SECURITY.tr.md`](SECURITY.tr.md) | Tehdit sınırı, kimlik doğrulama, CSRF ve bildirim politikası. |
+| **Örnekler** | [`examples/`](examples) | Next.js, Astro, React Router ve Vite için çalıştırılabilir referans projeler. |
+| **Dokümantasyon sitesi** | [English docs](https://copypatch.vercel.app/docs)<br>[Türkçe dokümanlar](https://copypatch.vercel.app/tr/docs) | Framework rehberleri, API referansı, operasyon ve yerel tam metin arama. |
 
 ---
 
-## 🏗️ Genel Mimari
+## Genel mimari
 
 CopyPatch uygulamanızın kendi çalışma ortamında gömülü çalışır. Harici bir API sunucusu, açık portlar veya CORS yapılandırması gerektirmez:
 
@@ -55,7 +60,7 @@ flowchart LR
 
 ---
 
-## ⚡ 3 Adımda Hızlı Başlangıç
+## Hızlı başlangıç
 
 ### 1. Paketleri yükleyin
 
@@ -91,7 +96,7 @@ Herhangi bir sayfayı `?copypatch=1` parametresiyle ziyaret edin (örneğin `htt
 
 ---
 
-## 📦 Monorepo Paketleri
+## Monorepo paketleri
 
 Tüm genel paketler kilit adımlı (lockstep) sürümleme (`2.0.0`) ile yayınlanır:
 
@@ -107,7 +112,7 @@ Tüm genel paketler kilit adımlı (lockstep) sürümleme (`2.0.0`) ile yayınla
 
 ---
 
-## 🚀 Çerçeve (Framework) Entegrasyon Rehberleri
+## Framework seçin
 
 CopyPatch, popüler modern web çatıları için test edilmiş referans uygulamalar sunar:
 
@@ -119,7 +124,7 @@ CopyPatch, popüler modern web çatıları için test edilmiş referans uygulama
 
 ---
 
-## 🛠️ CLI Hızlı Başvuru
+## CLI hızlı başvuru
 
 `@copypatch/node` paketi `copypatch` komut satırı aracını içerir:
 
@@ -136,10 +141,10 @@ pnpm exec copypatch doctor
 
 ---
 
-## 🛡️ Güvenlik ve Yetkilendirme
+## Güvenlik ve yetkilendirme
 
 - **Parola Doğrulama:** Güvenli parametrelerle yapılandırılmış yerleşik Argon2id özet doğrulaması.
-- **İmzalı Oturum Çerezleri:** HTTP-only, SameSite ve şifrelenmiş oturum çerezleri.
+- **Oturum Çerezleri:** HTTP-only, güvenli ve SameSite çerezleri yüksek entropili belirteç taşır; kalıcılık katmanı ham belirteç yerine hash saklar.
 - **CSRF Koruması:** Değişiklik isteklerinde oturumla eşleşen `x-copypatch-csrf` başlığı zorunludur.
 - **Rol Hiyerarşisi:** `editor` (taslak kaydetme/silme) ve `publisher` (canlıya alma) yetki ayrımı.
 - **Özel Kimlik Doğrulama Adaptörleri:** Mevcut oturum sistemleriyle (NextAuth, Clerk, Lucia, Supabase) kolay entegrasyon.
@@ -148,7 +153,7 @@ Ayrıntılar için [Tehdit Modeli](docs/threat-model.tr.md) ve [Güvenlik Politi
 
 ---
 
-## 🤝 Katkıda Bulunma ve Sürüm Süreci
+## Katkıda bulunma ve sürüm süreci
 
 Katkılarınızı memnuniyetle karşılıyoruz! Geliştirme adımları için [CONTRIBUTING.tr.md](CONTRIBUTING.tr.md) belgesine göz atabilirsiniz.
 
@@ -170,6 +175,6 @@ pnpm release:prepare -- "feat: ozelliginizi tanimlayin"
 
 ---
 
-## 📄 Lisans
+## Lisans
 
 MIT Lisansı. Detaylar için [LICENSE](LICENSE) dosyasına bakın.

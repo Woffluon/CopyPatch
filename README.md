@@ -1,4 +1,4 @@
-# 📝 CopyPatch
+# CopyPatch
 
 > Modern, same-origin inline copy editor for React applications.
 
@@ -8,7 +8,12 @@
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
 [![Documentation](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
 
-[English](README.md) • [Türkçe](README.tr.md)
+[English](README.md) | [Türkçe](README.tr.md)
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="apps/site/public/banner-dark.png">
+  <img alt="CopyPatch" src="apps/site/public/banner-white.png">
+</picture>
 
 ---
 
@@ -18,32 +23,32 @@ Mark editable strings with React components, mount the embedded backend inside y
 
 ---
 
-## 🧭 Navigation Portal
+## Documentation portal
 
 | Category | Destination | Description |
 | :--- | :--- | :--- |
-| 📦 **Core & React** | [`@copypatch/core`](packages/core)<br>[`@copypatch/react`](packages/react) | Shared types, contracts, `<EditableText>`, `<CopyPatchProvider>`, and editor overlay. |
-| ⚙️ **Backend & Node** | [`@copypatch/backend`](packages/backend)<br>[`@copypatch/node`](packages/node) | Storage-independent HTTP controller, Express/Fastify/Hono adapters, and project CLI. |
-| 🗄️ **Persistence** | [`@copypatch/storage-sqlite`](packages/storage-sqlite)<br>[`@copypatch/storage-postgres`](packages/storage-postgres) | SQLite (single-node) and PostgreSQL (distributed horizontal clusters) adapters. |
-| ⚡ **Next.js** | [`@copypatch/next`](packages/next) | Next.js App Router route handlers, server snapshot pre-fetching, and provider wrappers. |
-| 🏛️ **Architecture** | [`docs/architecture.md`](docs/architecture.md) | Comprehensive runtime shape, boundaries, data flow, and documentation governance. |
-| 🛡️ **Security** | [`docs/threat-model.md`](docs/threat-model.md)<br>[`SECURITY.md`](SECURITY.md) | Cryptographic security model, Argon2id hashing, CSRF headers, and disclosure policy. |
-| 🚀 **Examples** | [`examples/`](examples) | Runnable reference integrations for Next.js, Astro, React Router, and Vite. |
-| 🌐 **Live Demo** | [`apps/site`](apps/site) | Official Astro documentation and interactive live showcase site. |
+| **Core & React** | [`@copypatch/core`](packages/core)<br>[`@copypatch/react`](packages/react) | Shared types, contracts, `<EditableText>`, `<CopyPatchProvider>`, and editor overlay. |
+| **Backend & Node** | [`@copypatch/backend`](packages/backend)<br>[`@copypatch/node`](packages/node) | Storage-independent HTTP controller, Express/Fastify/Hono adapters, and project CLI. |
+| **Persistence** | [`@copypatch/storage-sqlite`](packages/storage-sqlite)<br>[`@copypatch/storage-postgres`](packages/storage-postgres) | SQLite (single-node) and PostgreSQL (distributed horizontal clusters) adapters. |
+| **Next.js** | [`@copypatch/next`](packages/next) | Next.js App Router route handlers, server snapshot pre-fetching, and provider wrappers. |
+| **Architecture** | [`docs/architecture.md`](docs/architecture.md) | Runtime shape, boundaries, data flow, and documentation governance. |
+| **Security** | [`docs/threat-model.md`](docs/threat-model.md)<br>[`SECURITY.md`](SECURITY.md) | Threat boundary, authentication, CSRF, and disclosure policy. |
+| **Examples** | [`examples/`](examples) | Runnable reference integrations for Next.js, Astro, React Router, and Vite. |
+| **Documentation site** | [English docs](https://copypatch.vercel.app/docs)<br>[Türkçe dokümanlar](https://copypatch.vercel.app/tr/docs) | Framework guides, API reference, operations, and local full-text search. |
 
 ---
 
-## 🏗️ Architecture at a Glance
+## Architecture at a glance
 
 CopyPatch runs embedded inside your application runtime. It does not require a standalone API server, additional open ports, reverse proxies, or external CORS configuration:
 
 ```mermaid
 flowchart LR
-  Browser["🌐 Browser (?copypatch=1)"] --> Host["🖥️ Host Application"]
-  Host --> ReactView["⚛️ React Components (<EditableText>)"]
-  Host --> ApiRoute["🔌 API Route (/__copypatch/api/v2/*)"]
-  ApiRoute --> Backend["⚙️ @copypatch/backend"]
-  Backend --> Storage["💾 SQLite / PostgreSQL"]
+  Browser["Browser (?copypatch=1)"] --> Host["Host application"]
+  Host --> ReactView["React components (<EditableText>)"]
+  Host --> ApiRoute["API route (/__copypatch/api/v2/*)"]
+  ApiRoute --> Backend["@copypatch/backend"]
+  Backend --> Storage["SQLite / PostgreSQL"]
 ```
 
 ### Key Architectural Pillars
@@ -55,7 +60,7 @@ flowchart LR
 
 ---
 
-## ⚡ 3-Step Quick Start
+## Quick start
 
 ### 1. Install packages
 
@@ -91,7 +96,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
 Navigate to any page with `?copypatch=1` (for example, `http://localhost:3000/?copypatch=1`). Authenticate with your configured passphrase, edit copy directly on the page, and save drafts or publish changes instantly.
 
 
-## 📦 Monorepo Packages
+## Monorepo packages
 
 All public packages publish in lockstep versioning (`2.0.0`):
 
@@ -107,7 +112,7 @@ All public packages publish in lockstep versioning (`2.0.0`):
 
 ---
 
-## 🚀 Framework Integration Guides
+## Choose your framework
 
 CopyPatch provides tested, production-grade example implementations for major frameworks:
 
@@ -119,7 +124,7 @@ CopyPatch provides tested, production-grade example implementations for major fr
 
 ---
 
-## 🛠️ CLI Quick Reference
+## CLI quick reference
 
 The `@copypatch/node` package includes the `copypatch` CLI utility:
 
@@ -136,10 +141,10 @@ pnpm exec copypatch doctor
 
 ---
 
-## 🛡️ Security & Access Control
+## Security and access control
 
 - **Passphrase Authentication:** Built-in Argon2id password hashing with time-safe verification.
-- **Signed Session Cookies:** HTTP-only, SameSite, cryptographically signed cookies.
+- **Session Cookies:** HTTP-only, secure, SameSite cookies hold high-entropy tokens; persistence stores token hashes rather than raw tokens.
 - **CSRF Defense:** Mutation requests require the `x-copypatch-csrf` header matching the active session.
 - **Role Hierarchy:** Enforces `editor` (save and discard drafts) and `publisher` (promote drafts to live copy) permissions.
 - **Custom Auth Adapters:** Integrate with existing session stores (NextAuth, Clerk, Lucia, Supabase) via custom auth adapters.
@@ -148,7 +153,7 @@ See the full [Threat Model](docs/threat-model.md) and [Security Policy](SECURITY
 
 ---
 
-## 🤝 Contributing & Release Workflow
+## Contributing and release workflow
 
 We welcome contributions! Please review [CONTRIBUTING.md](CONTRIBUTING.md) for repository guidelines and local setup instructions.
 
@@ -170,6 +175,6 @@ pnpm release:prepare -- "feat: describe your feature"
 
 ---
 
-## 📄 License
+## License
 
 MIT License. See [LICENSE](LICENSE) for details.

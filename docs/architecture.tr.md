@@ -48,4 +48,8 @@ Ana uygulama API rotasını doğrudan kendi bünyesinde barındırır. Tarayıc�
 - Bu dosya projenin mimari haritası ve güncel genel sözleşme referansıdır.
 - `docs/threat-model.tr.md` güvenlik durumunu ve tasarım kararları geçmişini tutar.
 - `docs/npm-publishing.md` ve `docs/npm-readiness-audit-2026-08-24.md` kasıtlı silme bölgesindedir (delete-zone); bakımcı onayı olmadan yeniden oluşturulmamalıdır.
-- README ve dökümantasyon sitesi son kullanıcıya dönük özetlerdir.
+- README ve dökümantasyon sitesi son kullanıcıya dönük özetlerdir. Site;
+  navigasyonu, rotaları, sitemap'i ve yerel arama indeksini eşlenmiş
+  `apps/site/src/content/docs/en` ve `tr` MDX girişlerinden üretir. İki dili
+  ve örneklerini bu haritayla, özellikle v2 API yolu ve same-origin dağıtım
+  modeliyle uyumlu tutun.

@@ -1,0 +1,48 @@
+---
+import type { Locale } from '../../config/site';
+
+interface Props { lang: Locale; }
+const { lang } = Astro.props;
+const paths = lang === 'tr'
+  ? [
+      { href: '/tr/docs/nextjs', title: 'Next.js App Router', detail: "Rota işleyicileri ve RSC snapshot'ları" },
+      { href: '/tr/docs/vite', title: 'Vite + Node', detail: 'Express, Fastify, Hono veya yerel Node' },
+      { href: '/tr/docs/react', title: 'React istemcisi', detail: "Provider, editable bileşenler ve hook'lar" },
+      { href: '/tr/docs/server', title: 'Host adaptörleri', detail: 'Backend, auth ve depolama sınırları' },
+    ]
+  : [
+      { href: '/docs/nextjs', title: 'Next.js App Router', detail: 'Route handlers and RSC snapshots' },
+      { href: '/docs/vite', title: 'Vite + Node', detail: 'Express, Fastify, Hono, or native Node' },
+      { href: '/docs/react', title: 'React client', detail: 'Provider, editable components, and hooks' },
+      { href: '/docs/server', title: 'Host adapters', detail: 'Backend, auth, and storage boundaries' },
+    ];
+const heading = lang === 'tr' ? 'Framework yolunuzu seçin' : 'Choose your framework path';
+---
+
+<section class="framework-chooser" aria-labelledby="framework-paths">
+  <div class="chooser-heading">
+    <p>01</p>
+    <h2 id="framework-paths">{heading}</h2>
+  </div>
+  <div class="chooser-paths">
+    {paths.map((path) => (
+      <a href={path.href} class="framework-path">
+        <strong>{path.title}</strong>
+        <span>{path.detail}</span>
+      </a>
+    ))}
+  </div>
+</section>
+
+<style>
+  .framework-chooser { border-block: 1px solid var(--cp-border); margin: 2.5rem 0; padding: 1.25rem 0; }
+  .chooser-heading { align-items: baseline; display: flex; gap: 0.75rem; margin-bottom: 0.9rem; }
+  .chooser-heading p { color: var(--cp-accent); font: 0.72rem var(--cp-font-mono); margin: 0; }
+  .chooser-heading h2 { font-size: 1.1rem; margin: 0; }
+  .chooser-paths { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .framework-path { background: var(--cp-surface); border-left: 2px solid var(--cp-border); display: grid; gap: 0.25rem; min-height: 76px; padding: 0.8rem; text-decoration: none; }
+  .framework-path:hover, .framework-path:focus-visible { background: var(--cp-surface-elevated); border-left-color: var(--cp-accent); outline: none; }
+  .framework-path strong { color: var(--cp-text); font-size: 0.9rem; }
+  .framework-path span { color: var(--cp-text-muted); font-size: 0.77rem; line-height: 1.4; }
+  @media (max-width: 560px) { .chooser-paths { grid-template-columns: 1fr; } }
+</style>

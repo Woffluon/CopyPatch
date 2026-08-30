@@ -1,5 +1,7 @@
 # `@copypatch/storage-postgres`
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 PostgreSQL persistence for CopyPatch v2. The adapter uses the vendor-neutral `pg` driver and implements the `CopyPatchPersistence` contract from `@copypatch/core`.
 
 ## Install

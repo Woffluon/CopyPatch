@@ -2,6 +2,8 @@
 
 [English](threat-model.md) | [Türkçe](threat-model.tr.md)
 
+For implementation guidance, see the [security operations guide](https://copypatch.vercel.app/docs/security) and the [HTTP API reference](https://copypatch.vercel.app/docs/http-api).
+
 This document records the current security boundary and material design
 decisions. Update it when authentication, persistence, API behavior, or a
 threat boundary changes.

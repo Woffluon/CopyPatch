@@ -1,0 +1,93 @@
+---
+title: "Düzenleme Modu ve Satır İçi Mekanikler"
+description: "?copypatch=1 parametresi ile düzenleme modunu başlatın, klavye kısayollarını, tembel yüklemeyi ve DOM portal izolasyonunu keşfedin."
+group: editing-publishing
+order: 1
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const keyboardShortcuts = `Cmd + S / Ctrl + S   -> Bekleyen değişiklikleri taslak olarak kaydet (veya yetkiliyseniz yayınla)
+Escape               -> Aktif metin seçimini kaldır / Düzenlemeyi iptal et / Modalı kapat
+Enter                -> Tek satır modunda: onayla ve odağı bırak; çok satırlıda: yeni satır ekle
+Tab / Shift + Tab    -> Sayfadaki sonraki / önceki düzenlenebilir metin alanına odaklan`;
+
+export const portalExample = `<!-- Uygulama bileşen ağacının dışına yerleştirilen izole portal kapsayıcısı -->
+<div id="copypatch-portal-root" aria-live="polite"></div>`;
+
+<h1>Düzenleme Modu ve Satır İçi Mekanikler</h1>
+  <p class="lead">
+    CopyPatch, yetkili bir ekip üyesi tarafından açıkça tetiklenene kadar düzenleyici katmanını genel ziyaretçilerden tamamen gizli ve ayrık tutar.
+  </p>
+
+  <h2>1. Düzenleme Modunu Başlatma</h2>
+  <ol>
+    <li>Web sitesi adresinin sonuna <code>?copypatch=1</code> parametresini ekleyin (örneğin <code>https://siteniz.com/fiyatlar?copypatch=1</code>).</li>
+    <li><code>CopyPatchProvider</code> bu parametreyi algılar ve düzenleyici paketini (<code>~12 kB gzip</code>) dinamik olarak tembel yükler (lazy-load). Ziyaretçiler bu kodu asla indirmez.</li>
+    <li>Aktif bir oturum yoksa, <strong>Kimlik Doğrulama Modalı</strong> yönetim parolanızı (veya ana uygulama oturumunuzu) ister.</li>
+    <li>Giriş başarılı olduğunda, ekranın altında yüzen <strong>Düzenleme Araç Çubuğu</strong> belirir ve tüm <code>&lt;EditableText&gt;</code> alanları tıklanabilir hale gelir.</li>
+  </ol>
+
+  <h2>2. Klavye Kısayolları</h2>
+  <CodeBlock code={keyboardShortcuts} lang="text" title="Klavye Kısayolları" />
+
+  <h2>3. Araç Çubuğu Kontrolleri Referansı</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Kontrol</th>
+        <th>Görsel Gösterge</th>
+        <th>Eylem ve İşlev</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Dil Rozeti</strong></td>
+        <td><code>TR</code> / <code>EN</code> / <code>DE</code></td>
+        <td>Aktif olarak düzenlenen dil kapsamını görüntüler.</td>
+      </tr>
+      <tr>
+        <td><strong>Durum Rozeti</strong></td>
+        <td>Yeşil / Kehribar nabız noktası</td>
+        <td>Değişikliklerin sunucuyla eşitlendiğini (<code>Ready</code>) veya bekleyen değişiklik olduğunu (<code>Unsaved</code>) gösterir.</td>
+      </tr>
+      <tr>
+        <td><strong>Geri Al (Discard)</strong></td>
+        <td>Çerçeveli buton</td>
+        <td>Kaydedilmemiş tüm yerel satır içi değişiklikleri yayınlanan son duruma geri döndürür.</td>
+      </tr>
+      <tr>
+        <td><strong>Taslak Kaydet</strong></td>
+        <td>Mavi buton (<code>⌘S</code>)</td>
+        <td>Değişiklikleri atomik CAS doğrulamasıyla veritabanındaki taslak (draft) durumuna kaydeder.</td>
+      </tr>
+      <tr>
+        <td><strong>Yayınla (Publish)</strong></td>
+        <td>Yeşil aksiyon butonu</td>
+        <td>Taslak değişiklikleri tüm ziyaretçiler için anında canlıya alır (<code>publisher</code> rolü gerektirir).</td>
+      </tr>
+      <tr>
+        <td><strong>Çıkış (Esc)</strong></td>
+        <td>Kapatma ikon butonu</td>
+        <td>URL'den <code>?copypatch=1</code> parametresini kaldırarak normal ziyaretçi görünümüne döner.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Doğal İmleç ve Seçim Kararlılığı</h2>
+  <p>
+    React yeniden render edildiğinde imlecin başa veya sona zıplamasına yol açan ilkel contenteditable sarmalayıcılarının aksine, CopyPatch özel bir imleç koruma mekanizması kullanır:
+  </p>
+  <ul>
+    <li>Metin düğümleri doğal <code>contenteditable="plaintext-only"</code> kullanır; yapıştırmalarda harici stiller ve HTML etiketleri otomatik temizlenir.</li>
+    <li>Yazım sırasında tuş vuruşları tüm React bileşen ağacını tetiklemeden doğrudan yerel bellek deposuna yazılır.</li>
+    <li>Odak dışına çıkıldığında veya kaydedildiğinde, React metin seçimini veya imleç konumunu bozmadan durumu eşitler.</li>
+  </ul>
+
+  <h2>5. DOM İzolasyonu ve Portal Mimarisi</h2>
+  <p>
+    Araç çubuğu ve kimlik doğrulama modalı, uygulamanızın işaretlemesi dışındaki özel bir DOM konteynerine render edilir:
+  </p>
+  <CodeBlock code={portalExample} lang="html" title="HTML" />
+  <p>
+    Bu sayede CopyPatch arayüzü ana sitenizin CSS sıfırlamalarından, form stillerinden veya z-index katman kırpmalarından asla etkilenmez.
+  </p>

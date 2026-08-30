@@ -1,0 +1,17 @@
+---
+import DocsPage from '../../components/docs/DocsPage.astro';
+import { buildDocsNav, getDocs, getDocSlug } from '../../lib/docs';
+
+export async function getStaticPaths() {
+  const entries = await getDocs('en');
+  return entries.map((entry) => {
+    const slug = getDocSlug(entry);
+    return { params: { slug: slug === 'overview' ? undefined : slug }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const navigation = buildDocsNav('en', await getDocs('en'));
+---
+
+<DocsPage entry={entry} lang="en" navigation={navigation} />

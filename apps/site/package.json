@@ -5,12 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev --port 3000",
-    "build": "astro build",
+    "build": "astro build && pagefind --site dist",
     "preview": "astro preview --port 3000",
     "typecheck": "astro check && tsc --noEmit"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
+    "@astrojs/mdx": "^6.0.3",
     "@astrojs/react": "^4.2.1",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*",
@@ -21,6 +22,7 @@
   "devDependencies": {
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
+    "pagefind": "^1.5.2",
     "typescript": "^5.8.0"
   }
 }

@@ -1,5 +1,7 @@
 # @copypatch/core
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 Shared ESM contracts and helpers for the CopyPatch package family. Use this package when you need the canonical request/response types, validation helpers, and API constants outside the ready-made React or Next.js integrations.
 
 ## Install

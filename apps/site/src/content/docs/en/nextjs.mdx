@@ -1,0 +1,98 @@
+---
+title: "Next.js App Router Integration"
+description: "Mount CopyPatch v2 route handlers and render zero-overhead Server Component snapshots in Next.js."
+group: framework-guides
+order: 2
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const backendSingleton = `// lib/copypatch.ts
+import { createCopyPatchBackend } from '@copypatch/backend';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
+
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+
+const copypatch = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});`;
+
+export const routeHandler = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
+
+const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch, {
+    // Optional: resolve host-authenticated context or trusted IP for rate limiting
+    resolveContext: async (request) => ({
+      clientAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+    }),
+  });`;
+
+export const serverPage = `// app/[locale]/page.tsx
+import { NextCopyPatchProvider, EditableText } from '@copypatch/next';
+import { readPublishedSnapshot } from '@copypatch/next/server';
+import { copypatch } from '@/lib/copypatch';
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+
+  // Direct storage read inside Server Component (Zero HTTP overhead)
+  const initialSnapshot = await readPublishedSnapshot(copypatch, locale, {
+    fallback: { 'home.hero.title': 'Welcome to our platform' },
+  });
+
+  return (
+    <NextCopyPatchProvider locale={locale} initialSnapshot={initialSnapshot}>
+      <main className="container">
+        <EditableText contentKey="home.hero.title" as="h1">
+          Welcome to our platform
+        </EditableText>
+      </main>
+    </NextCopyPatchProvider>
+  );
+}`;
+
+<h1>Next.js App Router Integration</h1>
+  <p class="lead">
+    The <code>@copypatch/next</code> package integrates CopyPatch v2 directly with the Next.js App Router (React Server Components). It mounts same-origin route handlers and reads published snapshots directly from storage during server rendering.
+  </p>
+
+  <h2>1. Initialize the Shared Backend Singleton</h2>
+  <p>
+    Create a server-side module that instantiates your persistence adapter and the CopyPatch backend instance:
+  </p>
+  <CodeBlock code={backendSingleton} lang="ts" title="lib/copypatch.ts" />
+
+  <h2>2. Mount the Same-Origin Route Handler</h2>
+  <p>
+    Create a catch-all route handler at <code>app/%5F%5Fcopypatch/api/v2/[...path]/route.ts</code>:
+  </p>
+  <CodeBlock code={routeHandler} lang="ts" title="app/%5F%5Fcopypatch/api/v2/[...path]/route.ts" />
+
+  <blockquote>
+    <strong>Why <code>%5F%5Fcopypatch</code>?</strong> Next.js treats underscore-prefixed folders (e.g. <code>_copypatch</code>) as private folders and excludes them from routing. By percent-encoding the underscores as <code>%5F%5Fcopypatch</code> in the filesystem, Next.js properly serves the canonical public URL: <code>/__copypatch/api/v2/...</code>.
+  </blockquote>
+
+  <h2>3. Pre-Render with Server Component Snapshots</h2>
+  <p>
+    In your Server Components or root page, call <code>readPublishedSnapshot()</code>. This reads directly from your persistence layer with zero HTTP overhead or internal fetch latency, and passes the hydrated state to <code>NextCopyPatchProvider</code>:
+  </p>
+  <CodeBlock code={serverPage} lang="tsx" title="app/[locale]/page.tsx" />
+
+  <h2>Benefits of the Next.js Integration</h2>
+  <ul>
+    <li><strong>Zero Layout Shifts:</strong> Content is pre-rendered into the initial HTML response during SSR/RSC.</li>
+    <li><strong>Zero Self-Fetch:</strong> The server component accesses storage directly via memory or database pool without calling <code>http://localhost...</code>.</li>
+    <li><strong>No Proxy / Rewrite Config:</strong> No custom rewrite rules in <code>next.config.js</code> are needed because the route lives inside your application tree.</li>
+  </ul>
+
+  <h2>Static Export Notice</h2>
+  <blockquote>
+    <strong>Important:</strong> CopyPatch requires a server runtime (Node.js or serverless/edge). If your Next.js project is configured with <code>output: 'export'</code>, you cannot host the authenticated editing API or dynamic database persistence.
+  </blockquote>

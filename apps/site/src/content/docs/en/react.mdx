@@ -1,0 +1,146 @@
+---
+title: "React Client Integration"
+description: "Integrate CopyPatchProvider, EditableText, and React hooks with your frontend components."
+group: framework-guides
+order: 1
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const providerExample = `import { CopyPatchProvider, EditableText, useCopyPatch } from '@copypatch/react';
+
+export function HomePage() {
+  // Read editable copy for attributes, placeholders, or button labels
+  const buttonLabel = useCopyPatch('home.cta.button', 'Get Started Free');
+  const searchPlaceholder = useCopyPatch('home.search.placeholder', 'Search documentation...');
+
+  return (
+    <CopyPatchProvider locale="en">
+      <header className="hero">
+        <EditableText contentKey="home.hero.title" as="h1" className="hero-title">
+          Let clients edit the copy. Not the website.
+        </EditableText>
+        <EditableText contentKey="home.hero.subtitle" as="p" className="hero-desc">
+          Safe, same-origin inline copy editing for React applications.
+        </EditableText>
+        <div className="hero-actions">
+          <input type="text" placeholder={searchPlaceholder} />
+          <button type="button">{buttonLabel}</button>
+        </div>
+      </header>
+    </CopyPatchProvider>
+  );
+}`;
+
+export const customHookExample = `import { useEditableText } from '@copypatch/react';
+
+export function CustomBadge({ contentKey, defaultLabel }: { contentKey: string; defaultLabel: string }) {
+  const { value, isEditing, editProps } = useEditableText(contentKey, defaultLabel);
+
+  return (
+    <span className="badge" {...editProps}>
+      {value}
+    </span>
+  );
+}`;
+
+<h1>React Client Integration</h1>
+  <p class="lead">
+    The <code>@copypatch/react</code> package provides the React context provider, editable text components, and hooks. It automatically connects to the same-origin <code>/__copypatch/api/v2</code> route by default.
+  </p>
+
+  <h2>CopyPatchProvider</h2>
+  <p>
+    Wrap your component tree (or root page layout) with <code>CopyPatchProvider</code>. The provider manages the active locale, published text cache, draft revisions, and lazy editor loading:
+  </p>
+  <CodeBlock code={providerExample} lang="tsx" title="HomePage.tsx" />
+
+  <h2>Provider Configuration Props</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Prop</th>
+        <th>Type</th>
+        <th>Default</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>locale</code></td>
+        <td><code>string</code></td>
+        <td><strong>Required</strong></td>
+        <td>The active language identifier (e.g. <code>"en"</code>, <code>"tr"</code>, <code>"de"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>initialSnapshot</code></td>
+        <td><code>ContentSnapshot</code></td>
+        <td><code>undefined</code></td>
+        <td>Pre-rendered content snapshot from the server (eliminates client layout shifts on load).</td>
+      </tr>
+      <tr>
+        <td><code>apiBase</code></td>
+        <td><code>string</code></td>
+        <td><code>"/__copypatch/api/v2"</code></td>
+        <td>The base API path. Leave unset for standard same-origin hosting.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Components & Hooks API Reference</h2>
+
+  <h3><code>&lt;EditableText&gt;</code></h3>
+  <p>
+    Renders an inline editable text element. When normal visitors browse the site, it renders standard React elements with zero editing overhead. When an editor activates edit mode, it enables inline editing on click:
+  </p>
+  <table>
+    <thead>
+      <tr>
+        <th>Prop</th>
+        <th>Type</th>
+        <th>Default</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>contentKey</code></td>
+        <td><code>string</code></td>
+        <td><strong>Required</strong></td>
+        <td>Unique dot-separated identifier (e.g. <code>"pricing.pro.title"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>as</code></td>
+        <td><code>string | ComponentType</code></td>
+        <td><code>"span"</code></td>
+        <td>HTML tag or React component to render (e.g. <code>"h1"</code>, <code>"h2"</code>, <code>"p"</code>).</td>
+      </tr>
+      <tr>
+        <td><code>children</code></td>
+        <td><code>string</code></td>
+        <td><code>""</code></td>
+        <td>Fallback text rendered if no published snapshot is found in storage.</td>
+      </tr>
+      <tr>
+        <td><code>className</code></td>
+        <td><code>string</code></td>
+        <td><code>undefined</code></td>
+        <td>CSS class names passed to the rendered DOM element.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3><code>useCopyPatch(contentKey, fallback)</code></h3>
+  <p>
+    A React hook to read editable string values for attributes where HTML elements cannot be directly rendered (e.g. <code>placeholder</code>, <code>aria-label</code>, <code>title</code>, <code>alt</code>, or option values).
+  </p>
+
+  <h3><code>useEditableText(contentKey, fallback)</code></h3>
+  <p>
+    A lower-level hook to build custom interactive components that integrate with CopyPatch's selection and mutation pipeline:
+  </p>
+  <CodeBlock code={customHookExample} lang="tsx" title="CustomBadge.tsx" />
+
+  <h2>Strict Plain-Text Invariant</h2>
+  <blockquote>
+    <strong>Zero XSS Design:</strong> CopyPatch stores and renders only plain text strings. HTML tags, <code>&lt;script&gt;</code> payloads, or markdown markup entered into editable fields are treated strictly as literal text, completely eliminating stored Cross-Site Scripting (XSS) risks.
+  </blockquote>

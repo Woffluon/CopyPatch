@@ -1,5 +1,7 @@
 # @copypatch/node
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 Node.js 20+ adapters and the `copypatch` project-scaffolding CLI for a `@copypatch/backend` runtime.
 
 ```ts

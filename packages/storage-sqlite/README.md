@@ -1,5 +1,7 @@
 # @copypatch/storage-sqlite
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 SQLite persistence for CopyPatch v2. The adapter implements the asynchronous
 `CopyPatchPersistence` contract while using transactional, synchronous SQLite
 operations internally.

@@ -14,7 +14,7 @@ Thank you for your interest in contributing to **CopyPatch**!
    ```bash
    git clone https://github.com/woffluon/CopyPatch.git
    cd CopyPatch
-   pnpm install
+   pnpm install --frozen-lockfile
    ```
 
 3. Build all workspace packages:
@@ -32,8 +32,14 @@ Thank you for your interest in contributing to **CopyPatch**!
    pnpm test:e2e
    ```
 
+6. Verify bilingual documentation metadata and source-aligned claims:
+   ```bash
+   pnpm docs:verify
+   ```
+
 ## Code Quality & Philosophy
 
 - **Small Surface, Serious Quality**: Always choose simple, robust primitives over heavy generalized abstractions.
 - **Strict Invariant**: CopyPatch stores only plain text. Never introduce rich text, markdown, or HTML persistence.
 - **Security-First**: Keep session cookies `HttpOnly`, require CSRF & Origin checks for all state-changing endpoints.
+- **Documentation parity**: Update the English and Turkish MDX entries together. The documentation site builds navigation, routes, sitemap entries, and search from their frontmatter.

@@ -1,34 +1,14 @@
 import type { APIRoute } from 'astro';
 import { SITE_CONFIG } from '../config/site';
+import { docPath, getDocSlug, getDocs } from '../lib/docs';
 
 export const GET: APIRoute = async () => {
+  const [englishDocs, turkishDocs] = await Promise.all([getDocs('en'), getDocs('tr')]);
   const staticPages = [
     '',
     '/tr',
-    '/docs',
-    '/docs/installation',
-    '/docs/react',
-    '/docs/nextjs',
-    '/docs/vite',
-    '/docs/server',
-    '/docs/edit-mode',
-    '/docs/publishing',
-    '/docs/locales',
-    '/docs/security',
-    '/docs/deployment',
-    '/docs/troubleshooting',
-    '/tr/docs',
-    '/tr/docs/installation',
-    '/tr/docs/react',
-    '/tr/docs/nextjs',
-    '/tr/docs/vite',
-    '/tr/docs/server',
-    '/tr/docs/edit-mode',
-    '/tr/docs/publishing',
-    '/tr/docs/locales',
-    '/tr/docs/security',
-    '/tr/docs/deployment',
-    '/tr/docs/troubleshooting',
+    ...englishDocs.map((entry) => docPath('en', getDocSlug(entry))),
+    ...turkishDocs.map((entry) => docPath('tr', getDocSlug(entry))),
   ];
 
   const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>

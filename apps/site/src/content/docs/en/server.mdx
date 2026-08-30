@@ -1,0 +1,118 @@
+---
+title: "Backend Runtime & Adapters"
+description: "Configure the framework-neutral CopyPatch v2 backend, storage persistence, and authentication adapters."
+group: operations-security
+order: 1
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const basicBackend = `import { createCopyPatchBackend } from '@copypatch/backend';
+import { createSQLitePersistence } from '@copypatch/storage-sqlite';
+
+const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+await persistence.migrate();
+
+const copypatch = createCopyPatchBackend({
+  persistence,
+  passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
+});`;
+
+export const customAuthAdapter = `import { createCopyPatchBackend, type CopyPatchAuthAdapter } from '@copypatch/backend';
+import { createPostgresPersistence } from '@copypatch/storage-postgres';
+
+// Custom adapter connecting CopyPatch to your existing auth system (e.g. NextAuth, Clerk, Auth0)
+const hostAuthAdapter: CopyPatchAuthAdapter = {
+  async resolvePrincipal(context) {
+    const user = context.hostAuth?.user;
+    if (!user) return null;
+
+    const roles: ('editor' | 'publisher')[] = [];
+    if (user.isAdmin || user.canEditCopy) roles.push('editor');
+    if (user.isAdmin || user.canPublishCopy) roles.push('publisher');
+
+    return { id: user.id, roles };
+  },
+
+  async verifyMutation(request, context) {
+    // Verify host CSRF token or session integrity
+    return context.hostAuth?.csrfValid === true;
+  },
+};
+
+const backend = createCopyPatchBackend({
+  persistence: createPostgresPersistence({ connectionString: process.env.DATABASE_URL! }),
+  authAdapter: hostAuthAdapter,
+});`;
+
+<h1>Backend Runtime & Adapters</h1>
+  <p class="lead">
+    The <code>@copypatch/backend</code> package is the headless core of CopyPatch v2. It provides a standard Web <code>Request</code>/<code>Response</code> pipeline that handles routing, authorization, CSRF checks, and optimistic revision coordination.
+  </p>
+
+  <h2>1. Creating a Backend Instance</h2>
+  <p>
+    Instantiate the backend with your choice of storage adapter and authentication strategy:
+  </p>
+  <CodeBlock code={basicBackend} lang="ts" title="lib/copypatch.ts" />
+
+  <h2>2. Authentication Strategies</h2>
+  <p>
+    <code>createCopyPatchBackend</code> accepts exactly one of two mutually exclusive authentication options:
+  </p>
+
+  <h3>Strategy A: Built-in Passphrase (<code>passphraseHash</code>)</h3>
+  <ul>
+    <li>Managed entirely by CopyPatch with zero host auth configuration required.</li>
+    <li>Uses an <strong>Argon2id</strong> password hash (RFC 9106 recommended parameters).</li>
+    <li>Issues secure <code>HttpOnly</code>, <code>SameSite=Strict</code> session cookies and dual-token CSRF headers.</li>
+    <li>Ideal for marketing sites, agency handoffs, and teams without complex existing auth.</li>
+  </ul>
+
+  <h3>Strategy B: Host Auth Adapter (<code>authAdapter</code>)</h3>
+  <ul>
+    <li>Delegates user resolution and role assignment to your application's existing auth provider (e.g. NextAuth, Lucia, Clerk, Auth0, Supabase).</li>
+    <li>Maps your user permissions to CopyPatch's <code>editor</code> and <code>publisher</code> roles.</li>
+    <li>Delegates mutation integrity verification to the host.</li>
+  </ul>
+  <CodeBlock code={customAuthAdapter} lang="ts" title="lib/copypatch-custom-auth.ts" />
+
+  <h2>3. Persistence Engines</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Adapter</th>
+        <th>Driver</th>
+        <th>Best Suited For</th>
+        <th>Concurrency & Transactions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>@copypatch/storage-sqlite</code></td>
+        <td><code>better-sqlite3</code></td>
+        <td>Single Node server, VPS (Hetzner, DigitalOcean), Docker container with mounted volume.</td>
+        <td>Synchronous SQLite transactions, WAL journal mode, atomic CAS revisions.</td>
+      </tr>
+      <tr>
+        <td><code>@copypatch/storage-postgres</code></td>
+        <td><code>pg</code></td>
+        <td>Horizontally scaled clusters, Kubernetes, serverless platforms (Vercel, AWS ECS, Fly.io).</td>
+        <td>Connection pooling, PostgreSQL advisory transaction locks, multi-instance rate limits.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Node Framework Adapters</h2>
+  <p>
+    The <code>@copypatch/node</code> package exports lightweight HTTP bridges for all major Node server runtimes:
+  </p>
+  <ul>
+    <li><code>createNodeHandler(backend)</code> – Native Node.js <code>http.createServer</code></li>
+    <li><code>expressMiddleware(backend)</code> – Express middleware</li>
+    <li><code>fastifyCopyPatchHandler(backend)</code> – Fastify route handler</li>
+    <li><code>createHonoHandler(backend)</code> – Hono Web standard handler</li>
+  </ul>
+
+  <blockquote>
+    <strong>Legacy Note:</strong> <code>@copypatch/server</code> was the v1 standalone server process. In v2, it is fully replaced by the embedded <code>@copypatch/backend</code> and <code>@copypatch/node</code> libraries. Existing v1 packages remain published on npm, but new projects should use v2.
+  </blockquote>

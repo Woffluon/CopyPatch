@@ -2,22 +2,24 @@
 import BaseLayout from './BaseLayout.astro';
 import Header from '../components/header/Header.astro';
 import Footer from '../components/footer/Footer.astro';
-import { getDocsNav, type Locale } from '../config/site';
+import type { DocsSection, Locale } from '../config/site';
+import DocsSearch from '../components/docs/DocsSearch.astro';
 
 interface Props {
   title: string;
   description?: string;
   currentPath?: string;
   lang?: Locale;
+  navigation: DocsSection[];
 }
 
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/docs';
 const isTr = pathname.startsWith('/tr');
 const currentLang: Locale = Astro.props.lang || (isTr ? 'tr' : 'en');
-const { title, description } = Astro.props;
+const { title, description, navigation } = Astro.props;
 
 // Find current section and neighboring prev/next pages
-const docsNav = getDocsNav(currentLang);
+const docsNav = navigation;
 const allDocItems = docsNav.flatMap((section) => section.items);
 const currentIndex = allDocItems.findIndex((item) => item.href === pathname);
 const prevItem = currentIndex > 0 ? allDocItems[currentIndex - 1] : null;
@@ -26,6 +28,7 @@ const nextItem = currentIndex < allDocItems.length - 1 ? allDocItems[currentInde
 // Find active section title for mobile header
 const currentSection = docsNav.find((section) => section.items.some((item) => item.href === pathname));
 const currentSectionTitle = currentSection ? currentSection.title : (currentLang === 'tr' ? 'Dokümantasyon' : 'Documentation');
+const relatedItems = currentSection?.items.filter((item) => item.href !== pathname) ?? [];
 
 const docsHomeHref = currentLang === 'tr' ? '/tr/docs' : '/docs';
 const docsRootLabel = currentLang === 'tr' ? 'Dokümanlar' : 'Docs';
@@ -45,6 +48,8 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
         <div class="sidebar-header">
           <span class="sidebar-title">{sidebarTitle}</span>
         </div>
+
+        <DocsSearch lang={currentLang} mode="desktop" />
 
         <nav class="sidebar-nav">
           {
@@ -71,8 +76,11 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     </aside>
 
     <!-- Main Documentation Content -->
-    <main id="main-content" class="docs-main">
+    <main id="main-content" class="docs-main" data-pagefind-body>
       <!-- Breadcrumb & Custom Mobile Doc Navigator -->
+      <div class="docs-mobile-search">
+        <DocsSearch lang={currentLang} mode="mobile" />
+      </div>
       <div class="docs-mobile-nav">
         <button
           type="button"
@@ -137,6 +145,17 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
       <article class="prose docs-article">
         <slot />
       </article>
+
+      {
+        relatedItems.length > 0 && (
+          <aside class="docs-related" aria-label={currentLang === 'tr' ? 'Bu bölümde' : 'In this section'}>
+            <span>{currentLang === 'tr' ? 'Bu bölümde' : 'In this section'}</span>
+            <div>
+              {relatedItems.map((item) => <a href={item.href}>{item.title}</a>)}
+            </div>
+          </aside>
+        )
+      }
 
       <!-- Prev / Next Pagination -->
       <nav class="docs-pagination" aria-label={currentLang === 'tr' ? 'Sayfa gezintisi' : 'Page navigation'}>
@@ -296,6 +315,8 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     width: 100%;
     min-width: 0;
   }
+
+  .docs-mobile-search { display: none; }
 
   .docs-mobile-trigger {
     width: 100%;
@@ -510,6 +531,12 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     box-sizing: border-box;
   }
 
+  .docs-related { border-top: 1px solid var(--cp-border); margin-top: var(--cp-space-10); padding-top: var(--cp-space-5); }
+  .docs-related > span { color: var(--cp-text-dim); display: block; font: 0.7rem var(--cp-font-mono); letter-spacing: 0.06em; margin-bottom: 0.6rem; text-transform: uppercase; }
+  .docs-related > div { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .docs-related a { background: var(--cp-surface); border: 1px solid var(--cp-border); border-radius: var(--cp-radius-sm); color: var(--cp-text-muted); font-size: 0.8rem; padding: 0.35rem 0.5rem; }
+  .docs-related a:hover { border-color: var(--cp-accent); color: var(--cp-text); }
+
   .pagination-link {
     display: flex;
     flex-direction: column;
@@ -560,6 +587,7 @@ const titleSuffix = currentLang === 'tr' ? 'CopyPatch Dokümantasyonu' : 'CopyPa
     .docs-mobile-nav {
       display: block;
     }
+    .docs-mobile-search { display: block; }
     .docs-main {
       max-width: 100%;
       width: 100%;

@@ -1,0 +1,26 @@
+---
+title: "HTTP API and error codes"
+description: "Reference the same-origin v2 endpoints, mutation roles, cache behavior, and response error codes."
+group: api-reference
+order: 2
+---
+
+# HTTP API and error codes
+
+All browser traffic stays under the host-owned base path `/__copypatch/api/v2`. Unsafe methods require an exact same-origin `Origin` header. Built-in sessions also require the current `x-copypatch-csrf` header.
+
+| Method | Path | Access | Result |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Public | `{ "status": "ok" }` or `{ "status": "unavailable" }` |
+| `GET` | `/content/:locale` | Public | Published `ContentSnapshot`; supports weak revision ETags |
+| `POST`, `GET`, `DELETE` | `/session` | Authentication flow | Create, read, or clear a session |
+| `GET` | `/editor/:locale` | `editor` or `publisher` | Full `EditorSnapshot` |
+| `PUT` | `/editor/:locale/changes` | `editor` | Save draft changes with expected revisions |
+| `POST` | `/editor/:locale/publish` | `publisher` | Promote drafts to published copy |
+| `DELETE` | `/editor/:locale/drafts` | `editor` | Discard drafts with expected revisions |
+
+## Errors
+
+Errors use `{ "error": { "code", "message" } }`. The public error codes are `VALIDATION_ERROR`, `UNAUTHENTICATED`, `CSRF_FAILED`, `ORIGIN_REJECTED`, `RATE_LIMITED`, `REVISION_CONFLICT`, `UNSUPPORTED_OPERATION`, `INTERNAL_ERROR`, and `NOT_FOUND`.
+
+`REVISION_CONFLICT` returns the current editor snapshot so the client can reconcile its pending edits. Public content reads can return the most recent in-memory snapshot or an empty fallback when storage is temporarily unavailable.

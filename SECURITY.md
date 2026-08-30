@@ -29,7 +29,10 @@ The backend provides two authentication choices:
 All content is normalized as plain text. Storage adapters persist token hashes,
 not raw session or rate-limit identifiers. Role checks separate `editor` and
 `publisher` actions. See [the threat model](docs/threat-model.md) for the
-supported threat boundaries and deployment responsibilities.
+supported threat boundaries and deployment responsibilities. The
+[security architecture guide](https://copypatch.vercel.app/docs/security) and
+[HTTP API reference](https://copypatch.vercel.app/docs/http-api) cover the
+operational details.
 
 ## Reporting a vulnerability
 

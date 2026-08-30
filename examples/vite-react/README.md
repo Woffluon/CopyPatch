@@ -1,5 +1,7 @@
 # Vite React static fixture
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 This browser-only fixture uses the canonical same-origin
 `/__copypatch/api/v2` base path and deliberately has no Vite dev-server proxy.
 

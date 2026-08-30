@@ -2,6 +2,8 @@
 
 [English](threat-model.md) | [Türkçe](threat-model.tr.md)
 
+Uygulama rehberi için [güvenlik operasyonları sayfasına](https://copypatch.vercel.app/tr/docs/security) ve [HTTP API referansına](https://copypatch.vercel.app/tr/docs/http-api) bakın.
+
 Bu belge, CopyPatch v2'nin güvenlik sınırlarını ve mimari tasarım kararlarını belgeler. Kimlik doğrulama, kalıcılık, API davranışları veya tehdit sınırları değiştiğinde bu belgeyi güncelleyin.
 
 ## Kapsam ve Çalışma Sınırı

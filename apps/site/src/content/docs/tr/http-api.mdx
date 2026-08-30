@@ -1,0 +1,26 @@
+---
+title: "HTTP API ve hata kodları"
+description: "Aynı kökenli v2 uç noktalarını, mutasyon rollerini, önbellek davranışını ve yanıt hata kodlarını inceleyin."
+group: api-reference
+order: 2
+---
+
+# HTTP API ve hata kodları
+
+Tüm tarayıcı trafiği host'un sahip olduğu `/__copypatch/api/v2` temel yolunda kalır. Güvenli olmayan yöntemler tam eşleşen same-origin `Origin` başlığı ister. Dahili oturumlarda geçerli `x-copypatch-csrf` başlığı da zorunludur.
+
+| Yöntem | Yol | Erişim | Sonuç |
+| --- | --- | --- | --- |
+| `GET` | `/health` | Genel | `{ "status": "ok" }` veya `{ "status": "unavailable" }` |
+| `GET` | `/content/:locale` | Genel | Yayınlanmış `ContentSnapshot`; zayıf revizyon ETag'lerini destekler |
+| `POST`, `GET`, `DELETE` | `/session` | Kimlik doğrulama akışı | Oturum oluşturur, okur veya temizler |
+| `GET` | `/editor/:locale` | `editor` veya `publisher` | Tam `EditorSnapshot` |
+| `PUT` | `/editor/:locale/changes` | `editor` | Beklenen revizyonlarla taslak değişiklikleri kaydeder |
+| `POST` | `/editor/:locale/publish` | `publisher` | Taslakları yayınlanmış metne yükseltir |
+| `DELETE` | `/editor/:locale/drafts` | `editor` | Beklenen revizyonlarla taslakları siler |
+
+## Hatalar
+
+Hatalar `{ "error": { "code", "message" } }` biçimini kullanır. Genel hata kodları `VALIDATION_ERROR`, `UNAUTHENTICATED`, `CSRF_FAILED`, `ORIGIN_REJECTED`, `RATE_LIMITED`, `REVISION_CONFLICT`, `UNSUPPORTED_OPERATION`, `INTERNAL_ERROR` ve `NOT_FOUND` değerleridir.
+
+`REVISION_CONFLICT`, istemcinin bekleyen düzenlemelerini uzlaştırabilmesi için güncel editor snapshot'ını döndürür. Genel içerik okumaları, depolama geçici olarak kullanılamadığında en son bellek içi snapshot'a veya boş fallback değerine dönebilir.

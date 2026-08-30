@@ -1,0 +1,81 @@
+---
+title: "Yayınlama ve Taslak İş Akışları"
+description: "Taslak kaydetme, canlıya alma, rol bazlı yetkilendirme ve iyimser revizyon çakışma yönetimini keşfedin."
+group: editing-publishing
+order: 2
+---
+import CodeBlock from '../../../components/ui/CodeBlock.astro';
+
+export const conflictExample = `// 409 Conflict (Revizyon Çakışması) Hata Yanıtı
+{
+  "error": {
+    "code": "REVISION_CONFLICT",
+    "message": "Oturumunuz başladığından bu yana aktif dil başka bir editör tarafından güncellendi.",
+    "currentPublishedRevision": 14,
+    "currentDraftRevision": 18,
+    "expectedPublishedRevision": 12,
+    "expectedDraftRevision": 15,
+    "latest": {
+      "revision": 14,
+      "content": {
+        "hero.title": "Ekip arkadaşınız tarafından güncellenen başlık"
+      }
+    }
+  }
+}`;
+
+<h1>Yayınlama ve Taslak İş Akışları</h1>
+  <p class="lead">
+    CopyPatch v2, her dil (locale) için bağımsız çalışan iki aşamalı bir yayınlama modeli (Taslak ve Canlı Yayın) sunar. Bu mekanizma, atomik karşılaştır-ve-değiştir (CAS) revizyon sayaçları ve rol tabanlı yetkilendirme kuralları ile güvenceye alınmıştır.
+  </p>
+
+  <h2>1. Taslak (Draft) ve Canlı (Published) Aşamaları</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Aşama</th>
+        <th>Hedef Kapsam</th>
+        <th>Ziyaretçi Görünürlüğü</th>
+        <th>Gerekli Rol</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Taslak (Staging)</strong></td>
+        <td><code>draftRevision</code></td>
+        <td><strong>Gizli:</strong> Yalnızca <code>?copypatch=1</code> üzerinden giriş yapmış yetkili editörlere gösterilir.</td>
+        <td><code>editor</code> veya <code>publisher</code></td>
+      </tr>
+      <tr>
+        <td><strong>Yayınlanmış (Canlı)</strong></td>
+        <td><code>publishedRevision</code></td>
+        <td><strong>Herkese Açık:</strong> SSR/RSC ve sayfa yüklemelerinde tüm ziyaretçilere sunulur.</td>
+        <td><code>publisher</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>2. Adım Adım İş Akışı Yaşam Döngüsü</h2>
+  <ol>
+    <li><strong>Satır İçi Düzenleme:</strong> Editör <code>?copypatch=1</code> ile sayfayı açar, metinleri doğrudan canlı arayüzde düzenler ve <strong>Taslak Kaydet</strong> (<code>⌘S</code>) butonuna tıklar.</li>
+    <li><strong>Taslak Kalıcılığı:</strong> Backend, güncellenen metin haritasını SQLite veya PostgreSQL veritabanındaki taslak durumuna atomik olarak yazar ve <code>draftRevision</code> sayacını artırır.</li>
+    <li><strong>İnceleme ve Önizleme:</strong> Paydaşlar ve müşteriler onay öncesinde yapılan değişiklikleri canlı sayfa yerleşimi üzerinde önizler.</li>
+    <li><strong>Canlıya Yayınlama:</strong> <code>publisher</code> rolüne sahip yetkili bir kullanıcı <strong>Yayınla</strong> butonuna tıklar. Backend, tek bir atomik işlemde taslak metinleri canlı anlık görüntüye aktarır ve <code>publishedRevision</code> sayacını artırır.</li>
+    <li><strong>Canlı Dağıtım:</strong> Bir sonraki sunucu tarafı render (SSR/RSC) veya istemci isteği güncellenmiş metinleri anında kullanıcılara ulaştırır.</li>
+  </ol>
+
+  <h2>3. İyimser Eşzamanlılık Denetimi (OCC / CAS)</h2>
+  <p>
+    Birden fazla editör aynı dil üzerinde eşzamanlı olarak çalışırken, CopyPatch birbirlerinin çalışmalarını sessizce ezmelerini matematiksel olarak engeller:
+  </p>
+  <ul>
+    <li>Her taslak veya yayınlama isteği hem <code>expectedPublishedRevision</code> hem de <code>expectedDraftRevision</code> değerlerini sunucuya iletir.</li>
+    <li>Siz sayfadayken arka planda başka bir editör değişiklik yaptıysa, sunucu isteği HTTP <code>409 REVISION_CONFLICT</code> hatasıyla geri çevirir.</li>
+    <li>Yanıt, veritabanındaki en güncel anlık görüntüyü içerir; böylece arayüz veri kaybı yaşanmadan değişiklikleri birleştirmenize yardımcı olur.</li>
+  </ul>
+  <CodeBlock code={conflictExample} lang="json" title="409 Çakışma Hata Yanıtı" />
+
+  <h2>4. Denetim Kayıtları ve Geçmiş Uyarısı</h2>
+  <blockquote>
+    <strong>Tasarım Notu:</strong> CopyPatch hafif, yüksek performanslı ve yalın bir kalıcılık hedefler; veritabanı tabloları içinde sınırsız geçmiş denetim kütüğü tutmaz. Kurumsal denetim veya mevzuat gereksinimleriniz için ana uygulamanızın loglama altyapısını veya veritabanı replikasyon akışını kullanabilirsiniz.
+  </blockquote>

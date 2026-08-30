@@ -1,5 +1,7 @@
 # @copypatch/next
 
+[English](README.md) | [Türkçe](README.tr.md)
+
 Next.js App Router helpers for CopyPatch. It wraps the React client integration, adapts a colocated v2 backend to an App Router catch-all route, and reads published snapshots directly during SSR/RSC.
 
 ## Install
