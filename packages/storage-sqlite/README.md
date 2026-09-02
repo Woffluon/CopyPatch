@@ -12,7 +12,10 @@ operations internally.
 pnpm add @copypatch/core @copypatch/storage-sqlite better-sqlite3
 ```
 
-Node.js 20 or newer is required.
+`@copypatch/storage-sqlite` supports Node.js `20.x`, `22.x`, `23.x`,
+`24.x`, `25.x`, and `26.x`, matching its `better-sqlite3@12` runtime.
+Node.js 21 is not supported. This SQLite-specific range does not change the
+`>=20` requirement of the other CopyPatch packages.
 
 ## Usage
 

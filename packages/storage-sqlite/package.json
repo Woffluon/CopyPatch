@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/storage-sqlite",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "SQLite persistence adapter for CopyPatch",
   "license": "MIT",
   "type": "module",
@@ -33,7 +33,7 @@
   ],
   "sideEffects": false,
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x || 22.x || 23.x || 24.x || 25.x || 26.x"
   },
   "publishConfig": {
     "access": "public",

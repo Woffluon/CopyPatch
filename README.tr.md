@@ -3,7 +3,7 @@
 > React uygulamaları için modern ve aynı köken (same-origin) satır içi metin düzenleyici.
 
 [![CI Durumu](https://img.shields.io/github/actions/workflow/status/Woffluon/CopyPatch/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Woffluon/CopyPatch/actions/workflows/ci.yml)
-[![Sürüm](https://img.shields.io/badge/version-3.0.1-blue.svg?style=flat-square)](packages)
+[![Sürüm](https://img.shields.io/badge/version-3.0.2-blue.svg?style=flat-square)](packages)
 [![Lisans](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
 [![Dökümantasyon](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
@@ -68,6 +68,11 @@ flowchart LR
 pnpm add @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/node @copypatch/next
 ```
 
+`@copypatch/storage-sqlite` dışındaki genel paketler Node.js `>=20` destekler.
+SQLite adaptörü, `better-sqlite3@12` paketinin daha dar çalışma zamanı
+aralığıyla eşleşir: Node.js `20.x`, `22.x`, `23.x`, `24.x`, `25.x` veya
+`26.x`. `@copypatch/storage-sqlite` Node.js 21'i desteklemez.
+
 ### 2. Layout bileşeninizi sarmalayın ve metinleri etiketleyin
 
 ```tsx
@@ -98,17 +103,17 @@ Herhangi bir sayfayı `?copypatch=1` parametresiyle ziyaret edin (örneğin `htt
 
 ## Monorepo paketleri
 
-Tüm genel paketler kilit adımlı (lockstep) sürümleme (`3.0.1`) ile yayınlanır:
+Tüm genel paketler kilit adımlı (lockstep) sürümleme (`3.0.2`) ile yayınlanır:
 
 | Paket | Sürüm | Açıklama | Rehber |
 | :--- | :--- | :--- | :--- |
-| [`@copypatch/core`](packages/core) | `3.0.1` | Ortak sözleşmeler, sabitler, şemalar ve kalıcılık arayüzleri. | [README](packages/core/README.md) |
-| [`@copypatch/react`](packages/react) | `3.0.1` | Sağlayıcı, hook'lar, `<EditableText>` ve düzenleyici çalışma zamanı. | [README](packages/react/README.md) |
-| [`@copypatch/backend`](packages/backend) | `3.0.1` | Depolamadan bağımsız HTTP denetleyicisi ve yetkilendirme motoru. | [README](packages/backend/README.md) |
-| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.1` | Tek sunuculu ve yerel ortamlar için SQLite adaptörü. | [README](packages/storage-sqlite/README.md) |
-| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.1` | Yatayda ölçeklenen çoklu sunucular için PostgreSQL adaptörü. | [README](packages/storage-postgres/README.md) |
-| [`@copypatch/node`](packages/node) | `3.0.1` | Express, Fastify, Hono, Node HTTP adaptörleri ve `copypatch` CLI aracı. | [README](packages/node/README.md) |
-| [`@copypatch/next`](packages/next) | `3.0.1` | Next.js App Router rota işleyicileri ve RSC snapshot okuyucuları. | [README](packages/next/README.md) |
+| [`@copypatch/core`](packages/core) | `3.0.2` | Ortak sözleşmeler, sabitler, şemalar ve kalıcılık arayüzleri. | [README](packages/core/README.md) |
+| [`@copypatch/react`](packages/react) | `3.0.2` | Sağlayıcı, hook'lar, `<EditableText>` ve düzenleyici çalışma zamanı. | [README](packages/react/README.md) |
+| [`@copypatch/backend`](packages/backend) | `3.0.2` | Depolamadan bağımsız HTTP denetleyicisi ve yetkilendirme motoru. | [README](packages/backend/README.md) |
+| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.2` | Tek sunuculu ve yerel ortamlar için SQLite adaptörü. | [README](packages/storage-sqlite/README.md) |
+| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.2` | Yatayda ölçeklenen çoklu sunucular için PostgreSQL adaptörü. | [README](packages/storage-postgres/README.md) |
+| [`@copypatch/node`](packages/node) | `3.0.2` | Express, Fastify, Hono, Node HTTP adaptörleri ve `copypatch` CLI aracı. | [README](packages/node/README.md) |
+| [`@copypatch/next`](packages/next) | `3.0.2` | Next.js App Router rota işleyicileri ve RSC snapshot okuyucuları. | [README](packages/next/README.md) |
 
 ---
 

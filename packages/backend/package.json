@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/backend",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "Storage-independent CopyPatch backend runtime",
   "license": "MIT",
   "type": "module",

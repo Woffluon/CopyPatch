@@ -68,4 +68,4 @@ HTTP taban yolu CopyPatch v3'te de `/__copypatch/api/v2` olarak kalır. Next.js 
 app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
 ```
 
-CopyPatch paketleri yalnız ESM'dir ve Node.js 20 veya üstünü gerektirir. Önce v1'den gömülü backend mimarisine geçişi doğrulayın, ardından yukarıdaki tüm v3 sözleşme değişikliklerini uygulayın.
+CopyPatch paketleri yalnız ESM'dir. `@copypatch/storage-sqlite` dışındaki genel paketler Node.js 20 veya üstünü gerektirir. SQLite adaptörü, `better-sqlite3@12` paketinin daha dar çalışma zamanı aralığıyla eşleşir: Node.js `20.x`, `22.x`, `23.x`, `24.x`, `25.x` veya `26.x`. `@copypatch/storage-sqlite` Node.js 21'i desteklemez. Önce v1'den gömülü backend mimarisine geçişi doğrulayın, ardından yukarıdaki tüm v3 sözleşme değişikliklerini uygulayın.

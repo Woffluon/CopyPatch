@@ -68,4 +68,4 @@ The HTTP base path remains `/__copypatch/api/v2` in CopyPatch v3. For a Next.js 
 app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
 ```
 
-CopyPatch packages are ESM-only and require Node.js 20 or newer. Validate the v1-to-embedded-backend migration first, then apply every v3 contract change above.
+CopyPatch packages are ESM-only. Public packages other than `@copypatch/storage-sqlite` require Node.js 20 or newer. The SQLite adapter matches the narrower native-runtime range of `better-sqlite3@12`: Node.js `20.x`, `22.x`, `23.x`, `24.x`, `25.x`, or `26.x`. `@copypatch/storage-sqlite` does not support Node.js 21. Validate the v1-to-embedded-backend migration first, then apply every v3 contract change above.

@@ -3,7 +3,7 @@
 > Modern, same-origin inline copy editor for React applications.
 
 [![CI Status](https://img.shields.io/github/actions/workflow/status/Woffluon/CopyPatch/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Woffluon/CopyPatch/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-3.0.1-blue.svg?style=flat-square)](packages)
+[![Version](https://img.shields.io/badge/version-3.0.2-blue.svg?style=flat-square)](packages)
 [![License](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
 [![Documentation](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
@@ -68,6 +68,11 @@ flowchart LR
 pnpm add @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/node @copypatch/next
 ```
 
+Public packages other than `@copypatch/storage-sqlite` support Node.js `>=20`.
+The SQLite adapter matches the narrower native-runtime range of
+`better-sqlite3@12`: Node.js `20.x`, `22.x`, `23.x`, `24.x`, `25.x`, or
+`26.x`. `@copypatch/storage-sqlite` does not support Node.js 21.
+
 ### 2. Wrap your layout and tag editable copy
 
 ```tsx
@@ -98,17 +103,17 @@ Navigate to any page with `?copypatch=1` (for example, `http://localhost:3000/?c
 
 ## Monorepo packages
 
-All public packages publish in lockstep versioning (`3.0.1`):
+All public packages publish in lockstep versioning (`3.0.2`):
 
 | Package | Version | Description | Readme |
 | :--- | :--- | :--- | :--- |
-| [`@copypatch/core`](packages/core) | `3.0.1` | Shared contracts, constants, schemas, and persistence interfaces. | [README](packages/core/README.md) |
-| [`@copypatch/react`](packages/react) | `3.0.1` | Provider, hooks, `<EditableText>`, and on-demand editor runtime. | [README](packages/react/README.md) |
-| [`@copypatch/backend`](packages/backend) | `3.0.1` | Storage-agnostic HTTP handler, auth contract, and mutation engine. | [README](packages/backend/README.md) |
-| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.1` | SQLite adapter for single-node and local deployments. | [README](packages/storage-sqlite/README.md) |
-| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.1` | PostgreSQL adapter for horizontal multi-instance clusters. | [README](packages/storage-postgres/README.md) |
-| [`@copypatch/node`](packages/node) | `3.0.1` | Adapters for Express, Fastify, Hono, Node HTTP, and `copypatch` CLI. | [README](packages/node/README.md) |
-| [`@copypatch/next`](packages/next) | `3.0.1` | Next.js App Router route handlers, RSC snapshot readers, and provider. | [README](packages/next/README.md) |
+| [`@copypatch/core`](packages/core) | `3.0.2` | Shared contracts, constants, schemas, and persistence interfaces. | [README](packages/core/README.md) |
+| [`@copypatch/react`](packages/react) | `3.0.2` | Provider, hooks, `<EditableText>`, and on-demand editor runtime. | [README](packages/react/README.md) |
+| [`@copypatch/backend`](packages/backend) | `3.0.2` | Storage-agnostic HTTP handler, auth contract, and mutation engine. | [README](packages/backend/README.md) |
+| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.2` | SQLite adapter for single-node and local deployments. | [README](packages/storage-sqlite/README.md) |
+| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.2` | PostgreSQL adapter for horizontal multi-instance clusters. | [README](packages/storage-postgres/README.md) |
+| [`@copypatch/node`](packages/node) | `3.0.2` | Adapters for Express, Fastify, Hono, Node HTTP, and `copypatch` CLI. | [README](packages/node/README.md) |
+| [`@copypatch/next`](packages/next) | `3.0.2` | Next.js App Router route handlers, RSC snapshot readers, and provider. | [README](packages/next/README.md) |
 
 ---
 
