@@ -9,17 +9,17 @@ export interface ExpressRequest extends IncomingMessage {
 export type ExpressNext = (error?: Error) => void;
 
 /** Mount this middleware before Express body parsers and any SPA fallback. */
-export function expressMiddleware<THostAuth = unknown>(
+export function expressMiddleware<THostAuth = unknown, TRequest extends ExpressRequest = ExpressRequest>(
   backend: BackendLike<THostAuth>,
-  options: NodeHandlerOptions<THostAuth> = {},
-): (request: ExpressRequest, response: ServerResponse, next: ExpressNext) => Promise<void> {
+  options: NodeHandlerOptions<THostAuth, TRequest> = {},
+): (request: TRequest, response: ServerResponse, next: ExpressNext) => Promise<void> {
   return async (request, response, next) => {
     if (request.readableEnded && request.method !== 'GET' && request.method !== 'HEAD') {
       next(new Error('CopyPatch Express middleware must be mounted before body parsers because the request body has already been consumed.'));
       return;
     }
     try {
-      await handleNodeRequest(backend, request, response, options);
+      await handleNodeRequest(backend, request, response, options, request);
     } catch (error) {
       next(error instanceof Error ? error : new Error('CopyPatch Express middleware failed.'));
     }

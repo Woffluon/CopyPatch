@@ -1,6 +1,6 @@
 ---
 title: "Multi-Locale & Translation Isolation"
-description: "Manage independent published snapshots and draft revisions per language locale in CopyPatch v2."
+description: "Manage independent published snapshots and draft revisions per language locale in CopyPatch v3."
 group: editing-publishing
 order: 3
 ---
@@ -93,12 +93,12 @@ export function PricingHeader({ locale }: { locale: string }) {
         <td><code>en-US</code>, <code>pt-BR</code>, <code>zh-CN</code></td>
         <td>Language and regional country subtags.</td>
       </tr>
-      <tr>
-        <td><code>en_US</code>, <code>tr_TR</code></td>
-        <td>POSIX / system format tags.</td>
-      </tr>
     </tbody>
   </table>
+
+  <p>
+    Underscore-separated POSIX forms such as <code>en_US</code> and <code>tr_TR</code> are rejected. Convert them to hyphenated BCP 47 tags before passing them to CopyPatch.
+  </p>
 
   <blockquote>
     <strong>Scope Note:</strong> CopyPatch is a copy-persistence and inline editing system, not an automated translation service or an i18n URL router. You maintain full ownership of your application's routing and URL design.

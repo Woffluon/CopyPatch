@@ -15,7 +15,7 @@ import {
   readManifestEntries,
   updateManifestVersionsAtomically,
 } from './manifests.mjs';
-import { buildPackageTarball, transformWorkspaceDependencies } from './pack-package.mjs';
+import { SOURCE_PUBLISH_GUARD, buildPackageTarball, transformWorkspaceDependencies } from './pack-package.mjs';
 import { packAllPackages } from './pack-packages.mjs';
 import { prepareVersion } from './prepare-version.mjs';
 import { classifyRegistryRecords } from './registry-status.mjs';
@@ -127,7 +127,8 @@ test('CI verifies Node 20 and 24 with PostgreSQL, coverage, and browser acceptan
   assert.match(workflow, /node-version:\s*\$\{\{\s*matrix\.node-version\s*\}\}/);
   assert.match(workflow, /node-version:\s*\[20,\s*24\]/);
   assert.match(workflow, /services:\s*\r?\n\s+postgres:/);
-  assert.match(workflow, /pnpm test:coverage/);
+  assert.match(workflow, /pnpm test:coverage:stable/);
+  assert.match(workflow, /matrix\.os == 'windows-latest' \|\| matrix\.os == 'ubuntu-latest'/);
   assert.match(workflow, /pnpm test:e2e/);
 });
 
@@ -234,6 +235,8 @@ test('temporary npm tarball contains exact lockstep dependencies, never workspac
     const core = JSON.parse(await readFile(corePath, 'utf8'));
     core.files = ['dist'];
     core.dependencies = { '@copypatch/react': 'workspace:*' };
+    core.peerDependencies = { '@copypatch/backend': 'workspace:*' };
+    core.scripts = { ...core.scripts, prepublishOnly: SOURCE_PUBLISH_GUARD };
     await writeFile(corePath, `${JSON.stringify(core, null, 2)}\n`, 'utf8');
     await mkdir(path.join(repoRoot, 'packages/core/dist'), { recursive: true });
     await writeFile(path.join(repoRoot, 'packages/core/dist/index.js'), 'export const fixture = true;\n', 'utf8');
@@ -242,9 +245,12 @@ test('temporary npm tarball contains exact lockstep dependencies, never workspac
     const outputDirectory = path.join(repoRoot, 'packs');
     const packed = await buildPackageTarball(repoRoot, 'packages/core', outputDirectory);
     assert.equal(packed.manifest.dependencies['@copypatch/react'], '1.2.3');
+    assert.equal(packed.manifest.peerDependencies['@copypatch/backend'], '1.2.3');
     const archiveManifest = JSON.parse(readTarEntry(await readFile(packed.tarball), 'package/package.json').toString('utf8'));
     assert.equal(archiveManifest.dependencies['@copypatch/react'], '1.2.3');
+    assert.equal(archiveManifest.peerDependencies['@copypatch/backend'], '1.2.3');
     assert.equal(JSON.stringify(archiveManifest).includes('workspace:'), false);
+    assert.equal(archiveManifest.scripts.prepublishOnly, undefined);
     assert.equal(readTarEntry(await readFile(packed.tarball), 'package/README.md').toString('utf8'), '# Core fixture\n');
     assert.throws(
       () => transformWorkspaceDependencies({ name: 'bad', dependencies: { x: 'workspace:^' } }, '1.2.3'),
@@ -270,6 +276,8 @@ test('seven-package pack inspection rejects unexpected files and returns every p
     assert.deepEqual(results.map(({ name }) => name), PUBLISH_PACKAGES.map(({ name }) => name));
     for (const result of results) {
       assert.equal(result.entries.includes('package/package.json'), true);
+      assert.equal(result.entries.includes('package/README.md'), true);
+      assert.equal(result.entries.includes('package/LICENSE'), true);
       assert.equal(result.entries.includes('package/dist/index.js'), true);
     }
   });

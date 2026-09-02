@@ -1,6 +1,6 @@
 ---
 title: "Backend Çalışma Zamanı ve Adaptörler"
-description: "Çerçeveden bağımsız CopyPatch v2 backend çekirdeğini, kalıcılık motorlarını ve kimlik doğrulama adaptörlerini yapılandırın."
+description: "Çerçeveden bağımsız CopyPatch v3 backend çekirdeğini, kalıcılık motorlarını ve kimlik doğrulama adaptörlerini yapılandırın."
 group: operations-security
 order: 1
 ---
@@ -9,7 +9,7 @@ import CodeBlock from '../../../components/ui/CodeBlock.astro';
 export const basicBackend = `import { createCopyPatchBackend } from '@copypatch/backend';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const copypatch = createCopyPatchBackend({
@@ -17,12 +17,23 @@ const copypatch = createCopyPatchBackend({
   passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
 });`;
 
-export const customAuthAdapter = `import { createCopyPatchBackend, type CopyPatchAuthAdapter } from '@copypatch/backend';
+export const customAuthAdapter = `import { createCopyPatchBackend } from '@copypatch/backend';
+import { type CopyPatchAuthAdapter } from '@copypatch/core';
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
 // Mevcut kimlik doğrulama sisteminizi (NextAuth, Clerk, Auth0 vb.) bağlayan özel adaptör
-const hostAuthAdapter: CopyPatchAuthAdapter = {
-  async resolvePrincipal(context) {
+interface HostAuthContext {
+  user?: {
+    id: string;
+    isAdmin: boolean;
+    canEditCopy: boolean;
+    canPublishCopy: boolean;
+  };
+  csrfValid?: boolean;
+}
+
+const hostAuthAdapter: CopyPatchAuthAdapter<HostAuthContext> = {
+  async authenticate(_request, context) {
     const user = context.hostAuth?.user;
     if (!user) return null;
 
@@ -30,23 +41,23 @@ const hostAuthAdapter: CopyPatchAuthAdapter = {
     if (user.isAdmin || user.canEditCopy) roles.push('editor');
     if (user.isAdmin || user.canPublishCopy) roles.push('publisher');
 
-    return { id: user.id, roles };
+    return { subject: user.id, roles };
   },
 
-  async verifyMutation(request, context) {
+  async verifyMutation(_request, _principal, context) {
     // Ana uygulamanın CSRF belirtecini veya oturum geçerliliğini denetleyin
     return context.hostAuth?.csrfValid === true;
   },
 };
 
 const backend = createCopyPatchBackend({
-  persistence: createPostgresPersistence({ connectionString: process.env.DATABASE_URL! }),
+  persistence: createPostgresPersistence({ connectionString: process.env.COPYPATCH_DATABASE_URL! }),
   authAdapter: hostAuthAdapter,
 });`;
 
 <h1>Backend Çalışma Zamanı ve Adaptörler</h1>
   <p class="lead">
-    <code>@copypatch/backend</code> paketi, CopyPatch v2'nin harici süreç gerektirmeyen gömülü çekirdeğidir. Standart Web <code>Request</code>/<code>Response</code> hattı üzerinde rota yönlendirmeyi, yetkilendirmeyi, CSRF denetimlerini ve iyimser revizyon koordinasyonunu yönetir.
+    <code>@copypatch/backend</code> paketi, CopyPatch v3'ün harici süreç gerektirmeyen gömülü çekirdeğidir. Standart Web <code>Request</code>/<code>Response</code> hattı üzerinde rota yönlendirmeyi, yetkilendirmeyi, CSRF denetimlerini ve iyimser revizyon koordinasyonunu yönetir.
   </p>
 
   <h2>1. Backend Çalışma Zamanını Başlatma</h2>

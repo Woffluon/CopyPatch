@@ -5,10 +5,11 @@ import React, {
   useEffect,
   useState,
   useSyncExternalStore,
-  ReactNode,
 } from 'react';
-import { ContentSnapshot, API_BASE_PATH } from '@copypatch/core';
-import { CopyPatchStore } from './store/store.js';
+import type { ReactNode } from 'react';
+import { API_BASE_PATH, type ContentSnapshot } from '@copypatch/core';
+import { CopyPatchStore, type CopyPatchStoreApi } from './store/store.js';
+import { loadCopyPatchEditor, type CopyPatchEditorComponent } from './editor-loader.js';
 
 export interface CopyPatchContextValue {
   store: CopyPatchStore;
@@ -22,6 +23,7 @@ export interface CopyPatchProviderProps {
   locale: string;
   apiBase?: string;
   initialSnapshot?: ContentSnapshot;
+  onEditorLoadError?: (error: Error) => void;
   children: ReactNode;
 }
 
@@ -32,6 +34,7 @@ export function CopyPatchProvider({
   locale,
   apiBase = API_BASE_PATH,
   initialSnapshot,
+  onEditorLoadError,
   children,
 }: CopyPatchProviderProps) {
   const storeRef = useRef<CopyPatchStore | null>(null);
@@ -39,6 +42,12 @@ export function CopyPatchProvider({
     storeRef.current = new CopyPatchStore(locale, initialSnapshot);
   }
   const store = storeRef.current;
+  const onEditorLoadErrorRef = useRef(onEditorLoadError);
+  const editorLoadErrorReportedRef = useRef(false);
+
+  useEffect(() => {
+    onEditorLoadErrorRef.current = onEditorLoadError;
+  }, [onEditorLoadError]);
 
   // Sync locale changes
   useEffect(() => {
@@ -111,19 +120,18 @@ export function CopyPatchProvider({
     () => false
   );
 
-  const [EditorComponent, setEditorComponent] = useState<React.ComponentType<{
-    store: CopyPatchStore;
-    apiBase: string;
-  }> | null>(null);
+  const [EditorComponent, setEditorComponent] = useState<CopyPatchEditorComponent | null>(null);
 
   useEffect(() => {
     if (isEditorActive && !EditorComponent) {
-      import('./editor/index.js')
-        .then((mod) => {
-          setEditorComponent(() => mod.CopyPatchEditor);
+      loadCopyPatchEditor()
+        .then((Editor) => {
+          setEditorComponent(() => Editor);
         })
-        .catch((err) => {
-          console.error('[CopyPatch] Failed to load editor runtime:', err);
+        .catch((error: unknown) => {
+          if (editorLoadErrorReportedRef.current) return;
+          editorLoadErrorReportedRef.current = true;
+          onEditorLoadErrorRef.current?.(toError(error));
         });
     }
   }, [isEditorActive, EditorComponent]);
@@ -138,10 +146,14 @@ export function CopyPatchProvider({
   );
 }
 
-export function useCopyPatchStore(): CopyPatchStore {
+export function useCopyPatchStore(): CopyPatchStoreApi {
   const ctx = useContext(CopyPatchContext);
   if (!ctx) {
     throw new Error('useCopyPatch must be used within a <CopyPatchProvider>');
   }
   return ctx.store;
+}
+
+function toError(error: unknown): Error {
+  return error instanceof Error ? error : new Error('Failed to load the CopyPatch editor runtime.');
 }

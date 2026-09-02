@@ -1,6 +1,6 @@
 ---
 title: "Next.js App Router Entegrasyonu"
-description: "CopyPatch v2 rota işleyicilerini Next.js App Router'a ekleyin ve React Server Components (RSC) ile sıfır gecikmeli anlık görüntüler oluşturun."
+description: "CopyPatch v3 rota işleyicilerini Next.js App Router'a ekleyin ve React Server Components (RSC) ile sıfır gecikmeli anlık görüntüler oluşturun."
 group: framework-guides
 order: 2
 ---
@@ -10,7 +10,7 @@ export const backendSingleton = `// lib/copypatch.ts
 import { createCopyPatchBackend } from '@copypatch/backend';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const copypatch = createCopyPatchBackend({
@@ -22,11 +22,14 @@ export const routeHandler = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
 import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
-const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+// Bunu deployment platformunuzun sağladığı ya da forwarding header'larına
+// açıkça güvendiğiniz bir proxy'nin doğrulanmış adresiyle uygulayın.
+declare function resolveTrustedClientAddress(request: Request): Promise<string>;
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
   createCopyPatchRouteHandlers(copypatch, {
-    // İsteğe bağlı: oturum çözümleme veya hız sınırlaması için istemci IP'si alma
     resolveContext: async (request) => ({
-      clientAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+      clientAddress: await resolveTrustedClientAddress(request),
     }),
   });`;
 
@@ -44,7 +47,10 @@ export default async function Page({
 
   // Sunucu Bileşeni içinde doğrudan veritabanı okuması (Sıfır HTTP gecikmesi)
   const initialSnapshot = await readPublishedSnapshot(copypatch, locale, {
-    fallback: { 'home.hero.title': 'Platformumuza Hoş Geldiniz' },
+    fallback: {
+      revision: 1,
+      content: { 'home.hero.title': 'Platformumuza Hoş Geldiniz' },
+    },
   });
 
   return (
@@ -60,7 +66,7 @@ export default async function Page({
 
 <h1>Next.js App Router Entegrasyonu</h1>
   <p class="lead">
-    <code>@copypatch/next</code> paketi, CopyPatch v2'yi Next.js App Router (React Server Components) ile doğrudan entegre eder. Same-origin rota işleyicilerini sağlar ve sunucu tarafı render sırasında doğrudan veritabanından yayınlanmış metinleri okur.
+    <code>@copypatch/next</code> paketi, CopyPatch v3'ü Next.js App Router (React Server Components) ile doğrudan entegre eder. Same-origin rota işleyicilerini sağlar ve sunucu tarafı render sırasında doğrudan veritabanından yayınlanmış metinleri okur.
   </p>
 
   <h2>1. Paylaşılan Backend Singleton Nesnesini Tanımlayın</h2>
@@ -74,6 +80,10 @@ export default async function Page({
     <code>app/%5F%5Fcopypatch/api/v2/[...path]/route.ts</code> dosya yolunda catch-all bir rota işleyicisi oluşturun:
   </p>
   <CodeBlock code={routeHandler} lang="ts" title="app/%5F%5Fcopypatch/api/v2/[...path]/route.ts" />
+
+  <p>
+    Güvenilir bir <code>clientAddress</code> çözümlenmezse unsafe istekler <code>CLIENT_ADDRESS_UNAVAILABLE</code> ile fail-closed olur. CopyPatch <code>x-forwarded-for</code> başlığına otomatik olarak güvenmez. Deployment'ınız bilinçli olarak tek bir paylaşımlı rate-limit bucket'ı kabul ediyorsa bunun yerine <code>unsafeRequestWithoutClientAddress: 'shared-bucket'</code> seçeneğini açıkça kullanın.
+  </p>
 
   <blockquote>
     <strong>Neden <code>%5F%5Fcopypatch</code>?</strong> Next.js dosya sisteminde alt çizgi ile başlayan klasörleri (örn. <code>_copypatch</code>) özel (private) kabul eder ve bunları URL yönlendirmesinden hariç tutar. Alt çizgileri yüzde kodlamasıyla (URL percent-encoding) <code>%5F%5Fcopypatch</code> olarak adlandırarak, Next.js'in standart genel <code>/__copypatch/api/v2/...</code> yolunu sorunsuz sunması sağlanır.
@@ -94,5 +104,5 @@ export default async function Page({
 
   <h2>Statik Dışa Aktarma (Static Export) Uyarısı</h2>
   <blockquote>
-    <strong>Önemli:</strong> CopyPatch bir sunucu çalışma zamanı (Node.js veya serverless/edge) gerektirir. Next.js projeniz <code>output: 'export'</code> olarak yapılandırılmışsa, dinamik düzenleme API'si ve veritabanı bağlantısı çalıştırılamaz.
+    <strong>Önemli:</strong> CopyPatch, serverless Node deployment'ları dahil Node.js sunucu runtime'ı gerektirir. Edge ve <code>output: 'export'</code> çalışma zamanları kimlik doğrulamalı düzenleme API'sini veya native veritabanı kalıcılığını barındıramaz.
   </blockquote>

@@ -1,9 +1,26 @@
 {
   "name": "@copypatch/node",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Node.js adapters and project CLI for CopyPatch",
   "license": "MIT",
   "type": "module",
+  "homepage": "https://copypatch.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/node"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "node",
+    "express",
+    "fastify",
+    "hono",
+    "content-editing"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
@@ -24,6 +41,9 @@
   "files": [
     "dist"
   ],
+  "sideEffects": [
+    "./dist/cli/bin.js"
+  ],
   "engines": {
     "node": ">=20.0.0"
   },
@@ -34,14 +54,31 @@
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/node",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "dependencies": {
+    "@copypatch/core": "workspace:*"
+  },
+  "peerDependencies": {
     "@copypatch/backend": "workspace:*",
-    "@copypatch/core": "workspace:*",
     "@copypatch/storage-postgres": "workspace:*",
     "@copypatch/storage-sqlite": "workspace:*",
     "@node-rs/argon2": "^2.0.2"
+  },
+  "peerDependenciesMeta": {
+    "@copypatch/backend": {
+      "optional": true
+    },
+    "@copypatch/storage-postgres": {
+      "optional": true
+    },
+    "@copypatch/storage-sqlite": {
+      "optional": true
+    },
+    "@node-rs/argon2": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

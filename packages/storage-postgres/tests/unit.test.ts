@@ -1,11 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  PostgresPersistence,
   createPostgresPersistence,
   type PgClientLike,
   type PgPoolLike,
   type PgQueryResult,
 } from '../src/index.js';
+import * as publicApi from '../src/index.js';
+
+const ownedPool = vi.hoisted(() => ({
+  connect: vi.fn(),
+  end: vi.fn(),
+  query: vi.fn(),
+}));
+
+vi.mock('pg', () => ({
+  Pool: class {
+    constructor() {
+      return ownedPool;
+    }
+  },
+}));
 
 function result(rows: Record<string, unknown>[] = [], rowCount = rows.length): PgQueryResult {
   return { rows, rowCount };
@@ -39,7 +53,7 @@ describe('PostgresPersistence without a live database', () => {
       query: vi.fn().mockRejectedValue(new Error('database unavailable')),
     } as unknown as PgPoolLike;
 
-    await expect(new PostgresPersistence(pool).health()).resolves.toEqual({
+    await expect(createPostgresPersistence(pool).health()).resolves.toEqual({
       ok: false,
       message: 'database unavailable',
     });
@@ -50,12 +64,37 @@ describe('PostgresPersistence without a live database', () => {
       query: vi.fn().mockResolvedValue(result()),
     } as unknown as PgPoolLike;
 
-    await expect(new PostgresPersistence(pool, { schema: 'missing_schema' }).health()).resolves.toEqual({
+    await expect(createPostgresPersistence({ pool, schema: 'missing_schema' }).health()).resolves.toEqual({
       ok: false,
       message: expect.stringMatching(/schema.*not migrated|missing/i),
     });
     expect(pool.query).toHaveBeenCalled();
     expect(String((pool.query as ReturnType<typeof vi.fn>).mock.calls[0]?.[0])).toContain('information_schema.tables');
+  });
+
+  it('keeps constructor ownership internal while closing only factory-owned pools', async () => {
+    expect('PostgresPersistence' in publicApi).toBe(false);
+
+    ownedPool.query.mockResolvedValue(result());
+    const owned = createPostgresPersistence('postgres://copypatch.test/database');
+    await owned.health();
+    await owned.close();
+    expect(ownedPool.end).toHaveBeenCalledTimes(1);
+
+    const injectedEnd = vi.fn();
+    const injectedPool = {
+      async connect(): Promise<never> {
+        throw new Error('health checks must not acquire a transaction client');
+      },
+      end: injectedEnd,
+      async query<TRow extends Record<string, unknown> = Record<string, unknown>>(): Promise<PgQueryResult<TRow>> {
+        return { rows: [], rowCount: 0 };
+      },
+    } satisfies PgPoolLike;
+    const injected = createPostgresPersistence(injectedPool);
+    await injected.health();
+    await injected.close();
+    expect(injectedEnd).not.toHaveBeenCalled();
   });
 
   it('reads public and editor snapshots inside repeatable-read transactions', async () => {

@@ -67,6 +67,33 @@ describe('native Node handler', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(signal?.aborted).toBe(true);
   });
+
+  it('combines a host abort signal with the Node transport signal', async () => {
+    const hostAbort = new AbortController();
+    let signal: AbortSignal | undefined;
+    let started!: () => void;
+    const handling = new Promise<void>((resolve) => { started = resolve; });
+    const handler = createNodeHandler(backend(async (_request, context) => {
+      signal = context?.signal;
+      started();
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      return new Response('late');
+    }), { context: () => ({ signal: hostAbort.signal }) });
+    const server = createServer(handler);
+    servers.push(server);
+    server.listen(0, '127.0.0.1');
+    await once(server, 'listening');
+    const address = server.address();
+    if (!address || typeof address === 'string') throw new Error('Expected TCP address');
+
+    const pending = fetch(`http://127.0.0.1:${address.port}/`);
+    await handling;
+    hostAbort.abort();
+    await new Promise((resolve) => setTimeout(resolve, 5));
+
+    expect(signal?.aborted).toBe(true);
+    await pending;
+  });
 });
 
 describe('framework adapters', () => {

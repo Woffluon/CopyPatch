@@ -1,11 +1,27 @@
 {
   "name": "@copypatch/backend",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Storage-independent CopyPatch backend runtime",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
+  "homepage": "https://copypatch.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Woffluon/CopyPatch.git",
+    "directory": "packages/backend"
+  },
+  "bugs": {
+    "url": "https://github.com/Woffluon/CopyPatch/issues"
+  },
+  "keywords": [
+    "copypatch",
+    "backend",
+    "content-editing",
+    "headless-cms",
+    "typescript"
+  ],
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -26,8 +42,9 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json",
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/backend",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "dependencies": {
     "@copypatch/core": "workspace:*",

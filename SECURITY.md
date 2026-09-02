@@ -4,7 +4,7 @@
 
 ## Supported versions
 
-CopyPatch v2 is the supported release line. The v1 `@copypatch/server` package
+CopyPatch v3 is the supported release line. The v1 `@copypatch/server` package
 is deprecated for new integrations and remains available while users migrate;
 published versions are not unpublished.
 
@@ -15,7 +15,7 @@ published versions are not unpublished.
 
 ## Security model
 
-CopyPatch v2 mounts in the host application at `/__copypatch/api/v2`. Mutating
+CopyPatch v3 mounts in the host application at `/__copypatch/api/v2`. Mutating
 requests require an exact same-origin `Origin` header. CopyPatch does not
 support a separate API origin, CORS configuration, or proxy-based deployment.
 

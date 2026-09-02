@@ -1,5 +1,12 @@
-import type { CopyPatchBackend } from '@copypatch/backend';
-import type { ContentSnapshot, CopyPatchHandleContext } from '@copypatch/core';
+import type {
+  ApiErrorResponse,
+  ContentSnapshot,
+  CopyPatchHandleContext,
+  CopyPatchRequestHandler,
+  PublishedSnapshotReader,
+} from '@copypatch/core';
+
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 export type CopyPatchRouteHandler = (request: Request) => Promise<Response>;
 
@@ -18,6 +25,8 @@ export interface CopyPatchRouteHandlerOptions<THostAuth = unknown> {
   resolveContext?: (
     request: Request,
   ) => CopyPatchHandleContext<THostAuth> | undefined | Promise<CopyPatchHandleContext<THostAuth> | undefined>;
+  /** Explicitly accepts one shared backend rate-limit bucket when no trusted address is available. */
+  unsafeRequestWithoutClientAddress?: 'shared-bucket';
 }
 
 /**
@@ -25,11 +34,29 @@ export interface CopyPatchRouteHandlerOptions<THostAuth = unknown> {
  * Requests and responses pass through without cloning or serialization.
  */
 export function createCopyPatchRouteHandlers<THostAuth = unknown>(
-  backend: CopyPatchBackend<THostAuth>,
+  backend: CopyPatchRequestHandler<THostAuth>,
   options: CopyPatchRouteHandlerOptions<THostAuth> = {},
 ): CopyPatchRouteHandlers {
   const handle: CopyPatchRouteHandler = async (request) => {
     const context = options.resolveContext ? await options.resolveContext(request) : undefined;
+    const hasClientAddress = typeof context?.clientAddress === 'string'
+      && context.clientAddress.trim().length > 0;
+    if (
+      UNSAFE_METHODS.has(request.method.toUpperCase())
+      && !hasClientAddress
+      && options.unsafeRequestWithoutClientAddress !== 'shared-bucket'
+    ) {
+      const body: ApiErrorResponse = {
+        error: {
+          code: 'CLIENT_ADDRESS_UNAVAILABLE',
+          message: 'A trusted client address is required for unsafe requests.',
+        },
+      };
+      return Response.json(body, {
+        status: 503,
+        headers: { 'cache-control': 'no-store' },
+      });
+    }
     return backend.handle(request, context);
   };
 
@@ -46,20 +73,23 @@ export function createCopyPatchRouteHandlers<THostAuth = unknown>(
 
 export interface ReadPublishedSnapshotOptions {
   /** Used only when the backend read rejects, so the host can keep rendering safely. */
-  fallback?: ContentSnapshot;
+  readonly fallback?: ContentSnapshot;
 }
 
-export const EMPTY_CONTENT_SNAPSHOT: ContentSnapshot = { revision: 1, content: {} };
+function freezeSnapshot(snapshot: ContentSnapshot): ContentSnapshot {
+  const content = Object.freeze({ ...snapshot.content });
+  return Object.freeze({ revision: snapshot.revision, content });
+}
 
 /** Reads published copy in SSR/RSC directly from the colocated backend. */
 export async function readPublishedSnapshot(
-  backend: Pick<CopyPatchBackend, 'readPublished'>,
+  backend: PublishedSnapshotReader,
   locale: string,
   options: ReadPublishedSnapshotOptions = {},
 ): Promise<ContentSnapshot> {
   try {
-    return await backend.readPublished(locale);
+    return freezeSnapshot(await backend.readPublished(locale));
   } catch {
-    return options.fallback ?? EMPTY_CONTENT_SNAPSHOT;
+    return freezeSnapshot(options.fallback ?? { revision: 1, content: {} });
   }
 }

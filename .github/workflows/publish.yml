@@ -94,6 +94,7 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
+          registry-url: https://registry.npmjs.org
 
       - name: Validate version history
         env:
@@ -161,6 +162,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit production dependencies
+        run: pnpm audit:prod
+
       - name: Build packages
         run: pnpm build
 
@@ -170,16 +174,27 @@ jobs:
       - name: Run unit and release tests
         run: pnpm test
 
+      - name: Refuse skipped PostgreSQL contracts when CI database is configured
+        run: node scripts/verify-postgres-ci.mjs
+
       - name: Enforce coverage threshold
         run: pnpm test:coverage
 
       - name: Measure bundle sizes
-        run: node scripts/measure-bundle.mjs
+        run: pnpm bundle
+
+      - name: Verify bundle budget exit gate
+        run: pnpm test:bundle
 
       - name: Inspect all package tarballs
         env:
           PACK_DIR: ${{ runner.temp }}/copypatch-verify-packs
-        run: pnpm release:pack -- --out "$PACK_DIR"
+        run: |
+          pnpm release:pack -- --out "$PACK_DIR"
+          node scripts/release/verify-packed-exports.mjs --out "$PACK_DIR"
+
+      - name: Verify canonical npm, pnpm, and yarn consumers
+        run: pnpm test:packed
 
       - name: Pack and publish missing exact versions
         env:

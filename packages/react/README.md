@@ -22,7 +22,10 @@ function HeroButton() {
 
 export function App() {
   return (
-    <CopyPatchProvider locale="en">
+    <CopyPatchProvider
+      locale="en"
+      onEditorLoadError={(error) => reportError(error)}
+    >
       <EditableText contentKey="home.hero.title" as="h1">
         Let clients edit the copy, not the website.
       </EditableText>
@@ -34,7 +37,7 @@ export function App() {
 
 ## Exports
 
-- `@copypatch/react`: `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText`, `useCopyPatchStore`
+- `@copypatch/react`: `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText`, `useCopyPatchStore`, and the readonly `CopyPatchStoreApi` / `CopyPatchStoreState` types
 - `@copypatch/react/editor`: `CopyPatchEditor`
 
 ## Requirements
@@ -44,6 +47,9 @@ export function App() {
 - Peer dependencies: `react` and `react-dom`
 - A server-capable host that mounts `@copypatch/backend` at the same-origin
   `/__copypatch/api/v2` path. The provider uses that path by default.
+
+`onEditorLoadError` receives a lazy editor-runtime load failure once, allowing
+the host to report it through its own telemetry or error UI.
 
 ## Links
 

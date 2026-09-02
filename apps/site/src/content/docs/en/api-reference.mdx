@@ -12,8 +12,8 @@ CopyPatch keeps browser, server, storage, and framework concerns in separate pac
 | Package | Public entry points | Use it for |
 | --- | --- | --- |
 | `@copypatch/core` | `API_BASE_PATH`, content snapshots, request contracts, validation helpers | Shared types and custom persistence implementations |
-| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText` | React client rendering and inline editing |
-| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` | The embedded Web Request/Response runtime |
+| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText`, `useCopyPatchStore` | React client rendering and inline editing |
+| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` type | The embedded Web Request/Response runtime |
 | `@copypatch/storage-sqlite` | `createSQLitePersistence` | Local or single-instance persistence |
 | `@copypatch/storage-postgres` | `createPostgresPersistence` | Shared persistence across application instances |
 | `@copypatch/node` | Node, Express, Fastify, and Hono adapters; `copypatch` CLI | Hosts that expose a Node server surface |
@@ -28,6 +28,8 @@ The default text limit is 10,000 characters per edited value. Set `maxTextLength
 ## React integration
 
 `CopyPatchProvider` uses `/__copypatch/api/v2` unless `apiBase` is supplied. Give it a locale and, for SSR or RSC hosts, an `initialSnapshot`. `EditableText` renders the fallback string for visitors and activates a `contentEditable` surface only in edit mode. Use `useCopyPatch` when an editable value belongs in an attribute, option, or button label.
+
+The store snapshot returned by `useCopyPatchStore` is deeply readonly and stable until a real state change occurs. Use `onEditorLoadError` on the provider to report a lazy editor-runtime load failure through host telemetry.
 
 ## Storage contract
 

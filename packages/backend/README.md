@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-Framework-neutral CopyPatch v2 backend runtime. It exposes a Web
+Framework-neutral CopyPatch v3 backend runtime. It exposes a Web
 `Request`/`Response` API that is mounted inside the host application, so
 CopyPatch does not require a separate server, port, proxy, or CORS policy.
 
@@ -21,7 +21,7 @@ multiple instances or does not have persistent local disk.
 import { createCopyPatchBackend } from '@copypatch/backend';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 export const backend = createCopyPatchBackend({
@@ -49,8 +49,9 @@ unavailable.
 
 - `createCopyPatchBackend(options)`
 - `CopyPatchBackend`
-- `hashToken`, `hashRateLimitKey`, and token helpers
-- `SESSION_COOKIE_NAME`
+
+Session-cookie names, token generation, hashing, and passphrase verification are
+internal security details and are not exported from the package root.
 
 CopyPatch is ESM-only and requires Node.js 20 or newer.
 

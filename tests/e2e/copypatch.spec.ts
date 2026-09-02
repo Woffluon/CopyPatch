@@ -57,7 +57,7 @@ async function visitorPage(context: BrowserContext, suffix: string): Promise<Pag
   return page;
 }
 
-test.describe('CopyPatch v2 same-origin editing', () => {
+test.describe('CopyPatch v3 same-origin editing', () => {
   test('serves a public snapshot without loading editor controls', async ({ page }) => {
     await page.goto('/');
 

@@ -1,6 +1,6 @@
 ---
 title: "Installation & Project Scaffolding"
-description: "Install CopyPatch v2 packages and scaffold same-origin route integrations with the copypatch CLI."
+description: "Install CopyPatch v3 packages and scaffold same-origin route integrations with the copypatch CLI."
 group: getting-started
 order: 2
 ---
@@ -16,7 +16,7 @@ pnpm add @copypatch/backend @copypatch/storage-sqlite
 pnpm add @copypatch/next    # For Next.js App Router
 pnpm add @copypatch/node    # For Astro, Express, Fastify, Hono, React Router`;
 
-export const npmInstall = `npm install @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/next`;
+export const npmInstall = `npm install @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/node @copypatch/next`;
 
 export const cliUsage = `# Interactive scaffolding (or provide explicit flags)
 npx copypatch init --framework next --storage sqlite
@@ -33,7 +33,7 @@ npx copypatch migrate --storage sqlite
 # Verify runtime configuration and health
 npx copypatch doctor`;
 
-<h1>Install CopyPatch v2</h1>
+<h1>Install CopyPatch v3</h1>
   <p class="lead">
     CopyPatch packages are published under the <code>@copypatch</code> npm scope. Install only the packages required for your client and server architecture.
   </p>
@@ -42,7 +42,7 @@ npx copypatch doctor`;
   <ul>
     <li><strong>Runtime:</strong> Node.js <code>&gt;=20.0.0</code> (Node.js 24 LTS recommended)</li>
     <li><strong>Module Format:</strong> Pure ESM (ECMAScript Modules)</li>
-    <li><strong>Peer Dependencies:</strong> React <code>&gt;=18.0.0</code> and React DOM <code>&gt;=18.0.0</code></li>
+    <li><strong>Peer Dependencies:</strong> React and React DOM <code>&gt;=18 &lt;20</code></li>
     <li><strong>Environment:</strong> Server-capable host application with same-origin routing</li>
   </ul>
 
@@ -68,7 +68,7 @@ npx copypatch doctor`;
       </tr>
       <tr>
         <td><code>@copypatch/backend</code></td>
-        <td>Node / Edge Server</td>
+        <td>Node Server</td>
         <td>Embedded Web <code>Request</code>/<code>Response</code> API runtime, Argon2id auth, and CSRF protection.</td>
       </tr>
       <tr>
@@ -117,7 +117,7 @@ npx copypatch doctor`;
       <tr>
         <td><code>copypatch init</code></td>
         <td><code>--framework &lt;next|astro|react-router|vite-node&gt;</code><br/><code>--storage &lt;sqlite|postgres&gt;</code><br/><code>--dry-run</code>, <code>--cwd &lt;dir&gt;</code></td>
-        <td>Generates <code>copypatch.config.ts</code>, <code>copypatch.env.example</code>, and the matching route file. Safe to re-run; never overwrites conflicting files.</td>
+        <td>Generates the configuration and route files, adds their direct dependencies to the host <code>package.json</code>, and prints the detected install command without running it. Safe to re-run; never overwrites conflicting files.</td>
       </tr>
       <tr>
         <td><code>copypatch hash</code></td>
@@ -132,7 +132,7 @@ npx copypatch doctor`;
       <tr>
         <td><code>copypatch doctor</code></td>
         <td>None</td>
-        <td>Inspects the local configuration, environment variables, and storage connectivity.</td>
+        <td>Inspects the generated configuration and required CopyPatch environment variables.</td>
       </tr>
     </tbody>
   </table>

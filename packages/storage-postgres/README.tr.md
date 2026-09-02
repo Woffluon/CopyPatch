@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-CopyPatch v2 için PostgreSQL kalıcılığı. Birden fazla uygulama örneğinin içerik, oturum ve hız sınırı durumunu paylaşması gerektiğinde kullanın.
+CopyPatch v3 için PostgreSQL kalıcılığı. Birden fazla uygulama örneğinin içerik, oturum ve hız sınırı durumunu paylaşması gerektiğinde kullanın.
 
 ```bash
 pnpm add @copypatch/storage-postgres pg

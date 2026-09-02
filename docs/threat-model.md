@@ -1,4 +1,4 @@
-# CopyPatch v2 threat model and security status
+# CopyPatch v3 threat model and security status
 
 [English](threat-model.md) | [Türkçe](threat-model.tr.md)
 
@@ -10,7 +10,7 @@ threat boundary changes.
 
 ## Scope
 
-CopyPatch v2 is embedded in a host application at
+CopyPatch v3 is embedded in a host application at
 `/__copypatch/api/v2`. The host owns transport, TLS, deployment, and access to
 the route. CopyPatch does not support a remote API, separate server, CORS
 allowlist, or proxy configuration.

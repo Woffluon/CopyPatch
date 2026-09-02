@@ -1,5 +1,5 @@
 ---
-title: "Introduction to CopyPatch v2"
+title: "Introduction to CopyPatch v3"
 description: "Embed secure, same-origin inline copy editing directly into your server-capable React application."
 group: getting-started
 order: 1
@@ -11,8 +11,14 @@ export const quickExample = `// 1. Mount in your host server (e.g. Next.js, Expr
 import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
-const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
-  createCopyPatchRouteHandlers(copypatch);
+declare function resolveTrustedClientAddress(request: Request): Promise<string>;
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch, {
+    resolveContext: async (request) => ({
+      clientAddress: await resolveTrustedClientAddress(request),
+    }),
+  });
 
 // 2. Wrap components in your client layout
 import { CopyPatchProvider, EditableText } from '@copypatch/react';

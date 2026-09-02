@@ -1,9 +1,10 @@
 {
   "name": "@copypatch/next",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Next.js App Router and SSR integration package for CopyPatch",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
   "homepage": "https://copypatch.vercel.app",
   "repository": {
     "type": "git",
@@ -22,7 +23,6 @@
     "inline-editing"
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -49,12 +49,13 @@
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/next",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "peerDependencies": {
-    "next": ">=14.0.0 || >=15.0.0",
-    "react": ">=18.0.0 || >=19.0.0",
-    "react-dom": ">=18.0.0 || >=19.0.0"
+    "next": ">=14.0.0 <16.0.0",
+    "react": ">=18.0.0 <20.0.0",
+    "react-dom": ">=18.0.0 <20.0.0"
   },
   "peerDependenciesMeta": {
     "next": {
@@ -68,7 +69,6 @@
     }
   },
   "dependencies": {
-    "@copypatch/backend": "workspace:*",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*"
   },

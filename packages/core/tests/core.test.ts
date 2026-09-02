@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import { describe, it, expect } from 'vitest';
 import {
   API_BASE_PATH,
@@ -6,11 +7,38 @@ import {
   normalizeText,
   RevisionConflictError,
   type CopyPatchAuthAdapter,
+  type CopyPatchRequestHandler,
   type CopyPatchPersistence,
+  type PublishedSnapshotReader,
 } from '../src/index.js';
 
 const persistenceContract = (persistence: CopyPatchPersistence): CopyPatchPersistence => persistence;
 const authContract = (adapter: CopyPatchAuthAdapter): CopyPatchAuthAdapter => adapter;
+const requestHandlerContract = (handler: CopyPatchRequestHandler): CopyPatchRequestHandler => handler;
+const snapshotReaderContract = (reader: PublishedSnapshotReader): PublishedSnapshotReader => reader;
+
+type Equal<TLeft, TRight> =
+  (<T>() => T extends TLeft ? 1 : 2) extends
+  (<T>() => T extends TRight ? 1 : 2) ? true : false;
+type Expect<T extends true> = T;
+type VerifyMutationReturnsBoolean = Expect<Equal<
+  ReturnType<CopyPatchAuthAdapter['verifyMutation']>,
+  Promise<boolean>
+>>;
+
+const verifyMutationReturnsBoolean: VerifyMutationReturnsBoolean = true;
+
+function parseJsonObject(text: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(text);
+  if (!isRecord(value)) {
+    throw new TypeError('Expected a JSON object.');
+  }
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 describe('Core Validation & Formatting', () => {
   it('exposes the v2 API base path', () => {
@@ -20,7 +48,24 @@ describe('Core Validation & Formatting', () => {
   it('exports storage-independent async backend contracts', () => {
     expect(typeof persistenceContract).toBe('function');
     expect(typeof authContract).toBe('function');
+    expect(typeof requestHandlerContract).toBe('function');
+    expect(typeof snapshotReaderContract).toBe('function');
+    expect(verifyMutationReturnsBoolean).toBe(true);
     expect(new RevisionConflictError('conflict').code).toBe('REVISION_CONFLICT');
+  });
+
+  it('declares public content snapshots as deeply readonly', async () => {
+    const source = await readFile(new URL('../src/index.ts', import.meta.url), 'utf8');
+
+    expect(source).toMatch(/interface ContentSnapshot[\s\S]*readonly revision: number;/);
+    expect(source).toMatch(/interface ContentSnapshot[\s\S]*readonly content: Readonly<Record<string, string>>;/);
+  });
+
+  it('publishes ESM metadata without a redundant module field', async () => {
+    const packageJson = parseJsonObject(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+
+    expect(packageJson.module).toBeUndefined();
+    expect(packageJson.sideEffects).toBe(false);
   });
   it('validates content keys correctly', () => {
     expect(isValidContentKey('home.hero.title')).toBe(true);

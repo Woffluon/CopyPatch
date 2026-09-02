@@ -3,8 +3,10 @@ import { Readable } from 'node:stream';
 import type { CopyPatchHandleContext } from '@copypatch/core';
 import type { AdapterOptions, BackendLike } from './types.js';
 
-export interface NodeHandlerOptions<THostAuth = unknown> extends AdapterOptions<THostAuth, IncomingMessage> {
+export interface NodeHandlerOptions<THostAuth = unknown, TContextInput = IncomingMessage> extends AdapterOptions<THostAuth, TContextInput> {
   origin?: string | undefined;
+  /** Honor x-forwarded-host and x-forwarded-proto only behind a trusted proxy. */
+  trustProxy?: boolean | undefined;
 }
 
 export function createNodeHandler<THostAuth = unknown>(
@@ -12,44 +14,44 @@ export function createNodeHandler<THostAuth = unknown>(
   options: NodeHandlerOptions<THostAuth> = {},
 ): (request: IncomingMessage, response: ServerResponse) => void {
   return (request, response) => {
-    void handleNodeRequest(backend, request, response, options).catch(() => {
+    void handleNodeRequest(backend, request, response, options, request).catch(() => {
       if (!response.headersSent) response.statusCode = 500;
       if (!response.writableEnded) response.end();
     });
   };
 }
 
-export async function handleNodeRequest<THostAuth = unknown>(
+export async function handleNodeRequest<THostAuth = unknown, TContextInput = IncomingMessage>(
   backend: BackendLike<THostAuth>,
   request: IncomingMessage,
   response: ServerResponse,
-  options: NodeHandlerOptions<THostAuth> = {},
+  options: NodeHandlerOptions<THostAuth, TContextInput> = {},
+  contextInput: TContextInput,
 ): Promise<void> {
-  const abort = new AbortController();
-  const abortRequest = () => abort.abort();
-  request.once('aborted', abortRequest);
-  request.once('error', abortRequest);
-  if ('once' in response && typeof response.once === 'function') response.once('close', abortRequest);
+  const transportAbort = createTransportAbortSignal(request, response);
 
   try {
-    const context = await options.context?.(request);
+    const context = await options.context?.(contextInput);
+    const abort = combineAbortSignals(transportAbort.signal, context?.signal);
     const address = context?.clientAddress ?? request.socket.remoteAddress;
     const backendContext: CopyPatchHandleContext<THostAuth> = {
       ...context,
       ...(address ? { clientAddress: address } : {}),
       signal: abort.signal,
     };
-    const result = await backend.handle(toRequest(request, options.origin), backendContext);
-    await writeNodeResponse(response, result);
+    try {
+      const result = await backend.handle(toRequest(request, options.origin, options.trustProxy), backendContext);
+      await writeNodeResponse(response, result);
+    } finally {
+      abort.cleanup();
+    }
   } finally {
-    request.off('aborted', abortRequest);
-    request.off('error', abortRequest);
-    if ('off' in response && typeof response.off === 'function') response.off('close', abortRequest);
+    transportAbort.cleanup();
   }
 }
 
-export function toRequest(request: IncomingMessage, configuredOrigin?: string): Request {
-  const origin = configuredOrigin ?? requestOrigin(request.headers);
+export function toRequest(request: IncomingMessage, configuredOrigin?: string, trustProxy = false): Request {
+  const origin = configuredOrigin ?? requestOrigin(request.headers, trustProxy);
   const method = request.method ?? 'GET';
   const hasBody = method !== 'GET' && method !== 'HEAD';
   return new Request(new URL(request.url ?? '/', origin), {
@@ -60,11 +62,50 @@ export function toRequest(request: IncomingMessage, configuredOrigin?: string): 
   } as RequestInit);
 }
 
-function requestOrigin(headers: IncomingHttpHeaders): string {
-  const host = headers.host ?? 'localhost';
-  const forwarded = headers['x-forwarded-proto'];
-  const protocol = typeof forwarded === 'string' ? forwarded.split(',')[0]?.trim() : 'http';
+function requestOrigin(headers: IncomingHttpHeaders, trustProxy: boolean): string {
+  const host = trustProxy ? firstForwardedValue(headers['x-forwarded-host']) ?? headers.host ?? 'localhost' : headers.host ?? 'localhost';
+  const protocol = trustProxy ? firstForwardedValue(headers['x-forwarded-proto']) : undefined;
   return `${protocol === 'https' ? 'https' : 'http'}://${host}`;
+}
+
+function firstForwardedValue(value: string | string[] | undefined): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const first = value.split(',')[0]?.trim();
+  return first || undefined;
+}
+
+function createTransportAbortSignal(request: IncomingMessage, response: ServerResponse): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  request.once('aborted', abort);
+  request.once('error', abort);
+  if (typeof request.socket.once === 'function') request.socket.once('close', abort);
+  if (typeof response.once === 'function') response.once('close', abort);
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      request.off('aborted', abort);
+      request.off('error', abort);
+      if (typeof request.socket.off === 'function') request.socket.off('close', abort);
+      if (typeof response.off === 'function') response.off('close', abort);
+    },
+  };
+}
+
+function combineAbortSignals(...signals: readonly (AbortSignal | undefined)[]): { signal: AbortSignal; cleanup: () => void } {
+  const controller = new AbortController();
+  const activeSignals = signals.filter((signal): signal is AbortSignal => signal !== undefined);
+  const abort = () => controller.abort();
+  for (const signal of activeSignals) {
+    if (signal.aborted) abort();
+    else signal.addEventListener('abort', abort, { once: true });
+  }
+  return {
+    signal: controller.signal,
+    cleanup: () => {
+      for (const signal of activeSignals) signal.removeEventListener('abort', abort);
+    },
+  };
 }
 
 export async function writeNodeResponse(response: Pick<ServerResponse, 'setHeader' | 'end' | 'write'> & { writableEnded?: boolean }, result: Response): Promise<void> {

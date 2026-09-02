@@ -1,0 +1,71 @@
+---
+title: "v3'e geçiş"
+description: "v2 uygulamalarını CopyPatch v3'ün fail-closed kimlik doğrulamasına, güvenilir istek kimliğine, readonly React state'ine ve factory-only depolama API'lerine yükseltin."
+group: getting-started
+order: 3
+---
+
+# v3'e geçiş
+
+CopyPatch v3, güvenlik ve paket sınırlarını sıkılaştırır. Yedi genel paket lockstep sürümlendiği için uygulamada kullanılan tüm CopyPatch paketlerini birlikte yükseltin.
+
+## 1. Seçilen paketleri yükseltin
+
+Uygulamanın kullandığı her CopyPatch paketinin v3 sürümünü kurun. SQLite kullanan bir Next.js uygulaması genellikle şu paketleri günceller:
+
+```bash
+pnpm up @copypatch/core@^3 @copypatch/react@^3 @copypatch/backend@^3 @copypatch/storage-sqlite@^3 @copypatch/node@^3 @copypatch/next@^3
+```
+
+`@copypatch/node`, backend ve depolama entegrasyonlarını optional peer olarak tutar. CLI veya runtime adaptörlerini kullanırken `@copypatch/backend` ile seçilen depolama paketini açıkça kurun.
+
+## 2. Mutation doğrulamasını açık hale getirin
+
+`CopyPatchAuthAdapter` tipini `@copypatch/core` paketinden alın. `verifyMutation(request, principal, context)` metodu, unsafe bir isteğin devam etmesi için `true` değerine resolve olmalıdır. Eksik return artık fail-closed davranır.
+
+Dağıtımdan önce özel kimlik doğrulama testlerinde hem kabul edilen hem reddedilen mutation akışlarını yeniden kontrol edin.
+
+## 3. Güvenilir istek kimliği sağlayın
+
+Next.js unsafe istekleri `context.clientAddress` gerektirir. Bu değeri platformun istek metadatasından veya yalnız host açık bir trusted-proxy politikası uyguladıktan sonra forwarding header'larından üretin.
+
+Güvenilir adres yoksa ve tek bir ortak rate-limit bucket kabul edilebiliyorsa bunu açıkça seçin:
+
+```ts
+const handlers = createCopyPatchRouteHandlers(backend, {
+  unsafeRequestWithoutClientAddress: 'shared-bucket',
+});
+```
+
+İki seçenekten biri sağlanmazsa unsafe Next.js istekleri `503 CLIENT_ADDRESS_UNAVAILABLE` döndürür.
+
+## 4. Kaldırılan veya internal import'ları değiştirin
+
+- `CopyPatchAuthAdapter` dahil ortak sözleşmeleri `@copypatch/core` paketinden alın.
+- Backend crypto yardımcılarını, `SESSION_COOKIE_NAME` sabitini veya internal backend option tiplerini `@copypatch/backend` paketinden almayın.
+- PostgreSQL kalıcılığını `createPostgresPersistence(...)` ile oluşturun; implementation class artık public runtime export değildir.
+- Yalnız belgelenmiş React entrypoint'lerini kullanın. Store ve context implementation ayrıntıları public API değildir.
+
+## 5. React snapshot'larını readonly kabul edin
+
+React ve Next entegrasyonlarının sunduğu snapshot'lar immutable'dır. Yerinde mutation yerine yeni bir nesne ve yeni bir `content` map'i oluşturun. Bu, subscriber tutarlılığını ve sunucu/istemci snapshot eşliğini korur.
+
+## 6. Yükseltmeyi doğrulayın
+
+- Typecheck ve uygulamanın mevcut testlerini çalıştırın.
+- Kimlik doğrulama, kaydetme, yayımlama, taslak silme ve revision-conflict akışlarını sınayın.
+- Unsafe istekleri güvenilir istemci kimliği varken ve yokken test edin.
+- Uygulamayı veya kütüphaneyi paketleyip ESM entrypoint'leri ile declaration dosyalarının kurulu tarball'lardan çözüldüğünü doğrulayın.
+- v3 istek ve depolama yolları doğrulanana kadar v2 deployment'ını geri dönüş için erişilebilir tutun.
+
+## Doğrudan v1'den geçiş
+
+Önce bağımsız `@copypatch/server` sürecini `@copypatch/backend`, açıkça seçilen bir depolama adaptörü ve `@copypatch/node` veya `@copypatch/next` host adaptörüyle değiştirin. Trafik kabul etmeden önce depolama migrasyonlarını çalıştırın ve API'yi host uygulamanın içine bağlayın.
+
+HTTP taban yolu CopyPatch v3'te de `/__copypatch/api/v2` olarak kalır. Next.js dosya sistemi rotasında baştaki alt çizgileri encode edin:
+
+```text
+app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+```
+
+CopyPatch paketleri yalnız ESM'dir ve Node.js 20 veya üstünü gerektirir. Önce v1'den gömülü backend mimarisine geçişi doğrulayın, ardından yukarıdaki tüm v3 sözleşme değişikliklerini uygulayın.

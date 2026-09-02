@@ -1,6 +1,6 @@
 ---
 title: "Next.js App Router Integration"
-description: "Mount CopyPatch v2 route handlers and render zero-overhead Server Component snapshots in Next.js."
+description: "Mount CopyPatch v3 route handlers and render zero-overhead Server Component snapshots in Next.js."
 group: framework-guides
 order: 2
 ---
@@ -10,7 +10,7 @@ export const backendSingleton = `// lib/copypatch.ts
 import { createCopyPatchBackend } from '@copypatch/backend';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const copypatch = createCopyPatchBackend({
@@ -22,11 +22,14 @@ export const routeHandler = `// app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
 import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
-const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+// Implement this with an address supplied by your deployment platform or a
+// proxy whose forwarding headers your application explicitly trusts.
+declare function resolveTrustedClientAddress(request: Request): Promise<string>;
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
   createCopyPatchRouteHandlers(copypatch, {
-    // Optional: resolve host-authenticated context or trusted IP for rate limiting
     resolveContext: async (request) => ({
-      clientAddress: request.headers.get('x-forwarded-for')?.split(',')[0].trim(),
+      clientAddress: await resolveTrustedClientAddress(request),
     }),
   });`;
 
@@ -44,7 +47,10 @@ export default async function Page({
 
   // Direct storage read inside Server Component (Zero HTTP overhead)
   const initialSnapshot = await readPublishedSnapshot(copypatch, locale, {
-    fallback: { 'home.hero.title': 'Welcome to our platform' },
+    fallback: {
+      revision: 1,
+      content: { 'home.hero.title': 'Welcome to our platform' },
+    },
   });
 
   return (
@@ -60,7 +66,7 @@ export default async function Page({
 
 <h1>Next.js App Router Integration</h1>
   <p class="lead">
-    The <code>@copypatch/next</code> package integrates CopyPatch v2 directly with the Next.js App Router (React Server Components). It mounts same-origin route handlers and reads published snapshots directly from storage during server rendering.
+    The <code>@copypatch/next</code> package integrates CopyPatch v3 directly with the Next.js App Router (React Server Components). It mounts same-origin route handlers and reads published snapshots directly from storage during server rendering.
   </p>
 
   <h2>1. Initialize the Shared Backend Singleton</h2>
@@ -74,6 +80,10 @@ export default async function Page({
     Create a catch-all route handler at <code>app/%5F%5Fcopypatch/api/v2/[...path]/route.ts</code>:
   </p>
   <CodeBlock code={routeHandler} lang="ts" title="app/%5F%5Fcopypatch/api/v2/[...path]/route.ts" />
+
+  <p>
+    Unsafe requests fail with <code>CLIENT_ADDRESS_UNAVAILABLE</code> when no trusted <code>clientAddress</code> is resolved. CopyPatch does not trust <code>x-forwarded-for</code> automatically. If your deployment deliberately accepts one shared rate-limit bucket, opt in with <code>unsafeRequestWithoutClientAddress: 'shared-bucket'</code> instead.
+  </p>
 
   <blockquote>
     <strong>Why <code>%5F%5Fcopypatch</code>?</strong> Next.js treats underscore-prefixed folders (e.g. <code>_copypatch</code>) as private folders and excludes them from routing. By percent-encoding the underscores as <code>%5F%5Fcopypatch</code> in the filesystem, Next.js properly serves the canonical public URL: <code>/__copypatch/api/v2/...</code>.
@@ -94,5 +104,5 @@ export default async function Page({
 
   <h2>Static Export Notice</h2>
   <blockquote>
-    <strong>Important:</strong> CopyPatch requires a server runtime (Node.js or serverless/edge). If your Next.js project is configured with <code>output: 'export'</code>, you cannot host the authenticated editing API or dynamic database persistence.
+    <strong>Important:</strong> CopyPatch requires a Node.js server runtime, including serverless Node deployments. Edge and <code>output: 'export'</code> runtimes cannot host the authenticated editing API or native database persistence.
   </blockquote>

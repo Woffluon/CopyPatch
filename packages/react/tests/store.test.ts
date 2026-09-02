@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { CopyPatchStore } from '../src/store/store.js';
 
 describe('React CopyPatchStore', () => {
@@ -91,5 +91,36 @@ describe('React CopyPatchStore', () => {
     store.setLocale('tr');
 
     expect(store.getState().activeEditingKey).toBeNull();
+  });
+
+  it('keeps immutable snapshots stable until one real mutation and notifies each subscriber once', () => {
+    const store = new CopyPatchStore('en', {
+      revision: 1,
+      content: { 'hero.title': 'Original title' },
+    });
+    const listener = vi.fn();
+    store.subscribe(listener);
+    store.subscribeKey('hero.title', listener);
+
+    const initial = store.getState();
+    expect(Object.isFrozen(initial)).toBe(true);
+    expect(Object.isFrozen(initial.published)).toBe(true);
+    expect(Reflect.set(initial.published, 'hero.title', 'Tampered title')).toBe(false);
+    expect(store.getState()).toBe(initial);
+    expect(store.getState().published['hero.title']).toBe('Original title');
+
+    store.setEditorActive(false);
+    expect(store.getState()).toBe(initial);
+    expect(listener).not.toHaveBeenCalled();
+
+    store.setUnsavedEdit('hero.title', 'Edited title');
+    const edited = store.getState();
+    expect(edited).not.toBe(initial);
+    expect(Object.isFrozen(edited.unsaved)).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    store.setUnsavedEdit('hero.title', 'Edited title');
+    expect(store.getState()).toBe(edited);
+    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

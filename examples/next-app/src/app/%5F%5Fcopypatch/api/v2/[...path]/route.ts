@@ -8,7 +8,11 @@ type RouteHandler = (request: Request) => Promise<Response>;
 function route(method: keyof ReturnType<typeof createCopyPatchRouteHandlers>): RouteHandler {
   return async (request) => {
     const backend = await bootstrapCopyPatch();
-    return createCopyPatchRouteHandlers(backend)[method](request);
+    return createCopyPatchRouteHandlers(backend, {
+      // This single-instance example deliberately shares one rate-limit bucket.
+      // Production hosts should resolve a trusted platform client address.
+      unsafeRequestWithoutClientAddress: 'shared-bucket',
+    })[method](request);
   };
 }
 

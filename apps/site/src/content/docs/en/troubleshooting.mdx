@@ -1,6 +1,6 @@
 ---
 title: "Troubleshooting & Diagnostics"
-description: "Diagnose error codes, middleware ordering issues, database locks, and authentication errors in CopyPatch v2."
+description: "Diagnose error codes, middleware ordering issues, database locks, and authentication errors in CopyPatch v3."
 group: operations-security
 order: 4
 ---
@@ -11,12 +11,12 @@ npx copypatch doctor`;
 
 <h1>Troubleshooting & FAQs</h1>
   <p class="lead">
-    Diagnose common setup, routing, authentication, and database issues in CopyPatch v2 integrations.
+    Diagnose common setup, routing, authentication, and database issues in CopyPatch v3 integrations.
   </p>
 
   <h2>1. Quick Diagnostic with CLI</h2>
   <p>
-    The fastest way to test your local configuration, environment variables, and storage connection is to run the <code>doctor</code> command:
+    The fastest way to inspect the generated configuration and required CopyPatch environment variables is to run the <code>doctor</code> command:
   </p>
   <CodeBlock code={doctorExample} lang="bash" title="Terminal" />
 
@@ -32,46 +32,64 @@ npx copypatch doctor`;
     </thead>
     <tbody>
       <tr>
-        <td><code>ORIGIN_REJECTED</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td>The request's <code>Origin</code> header did not exactly match the host domain.</td>
-        <td>Ensure requests are same-origin. Remove external proxy URLs or CORS headers; access the app directly on its host origin.</td>
+        <td><code>VALIDATION_ERROR</code></td>
+        <td><code>400</code></td>
+        <td>A request body, locale, content key, or text value failed validation.</td>
+        <td>Correct the request shape and respect the configured text limit.</td>
+      </tr>
+      <tr>
+        <td><code>UNAUTHENTICATED</code></td>
+        <td><code>401 / 403</code></td>
+        <td>Authentication is missing or the principal lacks the required role.</td>
+        <td>Authenticate again and verify the adapter's <code>editor</code> or <code>publisher</code> role mapping.</td>
       </tr>
       <tr>
         <td><code>CSRF_FAILED</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td>The <code>x-copypatch-csrf</code> header was missing, invalid, or expired.</td>
-        <td>Log in again at <code>?copypatch=1</code> to refresh the dual-token session. If using a custom <code>authAdapter</code>, verify its <code>verifyMutation</code> implementation.</td>
+        <td><code>403</code></td>
+        <td>The CSRF token or host mutation verification failed.</td>
+        <td>Refresh the session; custom adapters must return <code>true</code> explicitly from <code>verifyMutation</code>.</td>
       </tr>
       <tr>
-        <td><code>UNAUTHORIZED</code></td>
-        <td><code>401 Unauthorized</code></td>
-        <td>The session cookie is missing, expired, or invalid.</td>
-        <td>Authenticate via the passphrase modal or log in to your host application account.</td>
+        <td><code>ORIGIN_REJECTED</code></td>
+        <td><code>403</code></td>
+        <td>The request <code>Origin</code> does not exactly match its URL origin.</td>
+        <td>Use the same-origin API route and review the host's trusted-proxy policy.</td>
       </tr>
       <tr>
-        <td><code>FORBIDDEN</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td>The authenticated user lacks the required role (<code>editor</code> for drafts, <code>publisher</code> for publishing).</td>
-        <td>Verify role assignments in your host auth system or adapter configuration.</td>
+        <td><code>RATE_LIMITED</code></td>
+        <td><code>429</code></td>
+        <td>The unsafe-request limit for the client key was exceeded.</td>
+        <td>Wait for the retry window and verify that clients receive distinct trusted addresses.</td>
+      </tr>
+      <tr>
+        <td><code>CLIENT_ADDRESS_UNAVAILABLE</code></td>
+        <td><code>503</code></td>
+        <td>A Next.js unsafe request has no trusted client address.</td>
+        <td>Resolve one from the deployment platform or explicitly opt in to the shared bucket.</td>
       </tr>
       <tr>
         <td><code>REVISION_CONFLICT</code></td>
-        <td><code>409 Conflict</code></td>
-        <td>Another team member updated the active locale in the background.</td>
-        <td>Refresh the editor snapshot to view the latest copy and re-apply your changes.</td>
+        <td><code>409</code></td>
+        <td>Another editor changed the published or draft revision.</td>
+        <td>Reload the editor snapshot and re-apply the change.</td>
       </tr>
       <tr>
-        <td><code>VALIDATION_FAILED</code></td>
-        <td><code>400 Bad Request</code></td>
-        <td>Invalid content key format or a value exceeded the configured text limit. The default is 10,000 characters; the hard maximum is 100,000.</td>
-        <td>Ensure content keys use alphanumeric dot-separated names (e.g. <code>hero.title</code>) and text strings are plain text.</td>
+        <td><code>UNSUPPORTED_OPERATION</code></td>
+        <td><code>405</code></td>
+        <td>The endpoint does not support the HTTP method.</td>
+        <td>Use the method documented for that endpoint.</td>
       </tr>
       <tr>
-        <td><code>STORAGE_UNAVAILABLE</code></td>
-        <td><code>503 Service Unavailable</code></td>
-        <td>Database file is locked, path is unwriteable, or PostgreSQL pool connection failed.</td>
-        <td>Run migrations (<code>copypatch migrate</code>), verify directory permissions for SQLite, or test PostgreSQL database credentials.</td>
+        <td><code>INTERNAL_ERROR</code></td>
+        <td><code>500</code></td>
+        <td>The backend could not complete the request.</td>
+        <td>Inspect server logs and storage health without exposing internal details to clients.</td>
+      </tr>
+      <tr>
+        <td><code>NOT_FOUND</code></td>
+        <td><code>404</code></td>
+        <td>The requested CopyPatch endpoint does not exist.</td>
+        <td>Verify the canonical <code>/__copypatch/api/v2</code> mount and route suffix.</td>
       </tr>
     </tbody>
   </table>

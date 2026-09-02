@@ -7,9 +7,11 @@ import {
   createNodeHandler,
   expressMiddleware,
   fastifyCopyPatchPlugin,
+  fastifyCopyPatchHandler,
   toRequest,
   writeNodeResponse,
 } from '../src/index.js';
+import type { ExpressRequest, FastifyRequestLike, NodeHandlerOptions } from '../src/index.js';
 
 const servers: ReturnType<typeof createServer>[] = [];
 
@@ -43,16 +45,37 @@ function responseSink() {
 }
 
 describe('Node adapter branch behavior', () => {
-  it('derives forwarded HTTPS origins for bodyless requests and honors an explicit origin', () => {
-    const forwarded = toRequest(rawRequest({
+  it('ignores untrusted forwarded metadata, accepts it only with proxy trust, and prefers explicit origin', () => {
+    const request = rawRequest({
       url: '/content/en?draft=1',
-      headers: { host: 'editor.example.test', 'x-forwarded-proto': 'https, http' },
-    }));
+      headers: { host: 'editor.example.test', 'x-forwarded-host': 'public.example.test', 'x-forwarded-proto': 'https, http' },
+    });
+    const direct = toRequest(request);
+    const trusted = toRequest(request, undefined, true);
     const explicit = toRequest(rawRequest({ url: '/health', headers: { host: 'ignored.example.test' } }), 'https://configured.test');
 
-    expect(forwarded.url).toBe('https://editor.example.test/content/en?draft=1');
-    expect(forwarded.method).toBe('GET');
+    expect(direct.url).toBe('http://editor.example.test/content/en?draft=1');
+    expect(trusted.url).toBe('https://public.example.test/content/en?draft=1');
+    expect(direct.method).toBe('GET');
     expect(explicit.url).toBe('https://configured.test/health');
+  });
+
+  it('types resolver inputs as the framework request, preserving host decorations', () => {
+    interface ExpressUserRequest extends ExpressRequest { user: { id: string }; }
+    interface DecoratedFastifyRequest extends FastifyRequestLike { copyPatchUser: { id: string }; }
+
+    const expressOptions: NodeHandlerOptions<{ id: string }, ExpressUserRequest> = {
+      context: (request) => ({ hostAuth: request.user }),
+    };
+    const fastifyOptions: NodeHandlerOptions<{ id: string }, DecoratedFastifyRequest> = {
+      context: (request) => ({ hostAuth: request.copyPatchUser }),
+    };
+
+    const express = expressMiddleware<{ id: string }, ExpressUserRequest>(backend(async () => new Response('ok')), expressOptions);
+    const fastify = fastifyCopyPatchHandler<{ id: string }, DecoratedFastifyRequest>(backend(async () => new Response('ok')), fastifyOptions);
+
+    expect(express).toBeTypeOf('function');
+    expect(fastify).toBeTypeOf('function');
   });
 
   it('writes empty and non-streaming backend responses to minimal Node response sinks', async () => {

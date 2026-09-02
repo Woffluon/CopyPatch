@@ -1,6 +1,6 @@
 ---
 title: "Production Deployment Guide"
-description: "Deploy CopyPatch v2 in single-server SQLite or horizontally scaled PostgreSQL environments."
+description: "Deploy CopyPatch v3 in single-server SQLite or horizontally scaled PostgreSQL environments."
 group: operations-security
 order: 3
 ---
@@ -9,7 +9,7 @@ import CodeBlock from '../../../components/ui/CodeBlock.astro';
 export const sqliteConfig = `import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
 const persistence = createSQLitePersistence({
-  filename: process.env.COPYPATCH_SQLITE_PATH ?? './data/copypatch.sqlite',
+  filename: process.env.COPYPATCH_SQLITE_PATH ?? './copypatch.sqlite',
   busyTimeoutMs: 5_000,
 });
 
@@ -20,7 +20,7 @@ export const postgresConfig = `import { Pool } from 'pg';
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.COPYPATCH_DATABASE_URL!,
   max: 10,
   idleTimeoutMillis: 30000,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
@@ -44,7 +44,7 @@ export const healthExample = `// Check health endpoint
 
 <h1>Production Deployment Guide</h1>
   <p class="lead">
-    CopyPatch v2 deploys directly inside your application server. Because the API route runs at <code>/__copypatch/api/v2</code> on the same HTTPS origin, no secondary services, extra open ports, or CORS reverse proxies are needed.
+    CopyPatch v3 deploys directly inside your application server. Because the API route runs at <code>/__copypatch/api/v2</code> on the same HTTPS origin, no secondary services, extra open ports, or CORS reverse proxies are needed.
   </p>
 
   <h2>1. Storage Adapter Configuration</h2>
@@ -87,17 +87,12 @@ export const healthExample = `// Check health endpoint
       <tr>
         <td><code>COPYPATCH_SQLITE_PATH</code></td>
         <td>No (SQLite only)</td>
-        <td>Absolute or relative filesystem path to the SQLite database file (default: <code>./data/copypatch.sqlite</code>).</td>
+        <td>Absolute or relative filesystem path to the SQLite database file (default: <code>./copypatch.sqlite</code>).</td>
       </tr>
       <tr>
-        <td><code>DATABASE_URL</code></td>
+        <td><code>COPYPATCH_DATABASE_URL</code></td>
         <td>Yes (Postgres only)</td>
         <td>PostgreSQL connection URI (e.g. <code>postgres://user:pass@host:5432/dbname</code>).</td>
-      </tr>
-      <tr>
-        <td><code>NODE_ENV</code></td>
-        <td>Recommended</td>
-        <td>Set to <code>production</code> to enforce secure cookie flags and HTTPS policies.</td>
       </tr>
     </tbody>
   </table>

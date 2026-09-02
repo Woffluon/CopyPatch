@@ -13,15 +13,17 @@ import {
   type CopyPatchHandleContext,
   type CopyPatchPersistence,
   type CopyPatchPrincipal,
+  type CopyPatchRequestHandler,
   type CopyPatchRole,
   type EditorSnapshot,
   type ErrorCode,
   type PersistenceMutationResult,
+  type PublishedSnapshotReader,
   type StoredSession,
 } from '@copypatch/core';
 import { generateToken, hashesEqual, hashRateLimitKey, hashToken, verifyPassphrase } from './crypto.js';
 
-export const SESSION_COOKIE_NAME = '__Host-copypatch-session';
+const SESSION_COOKIE_NAME = '__Host-copypatch-session';
 
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 const MAX_CHANGES = 500;
@@ -48,10 +50,8 @@ export type CopyPatchBackendOptions<THostAuth = unknown> = BackendBaseOptions & 
   | { authAdapter: CopyPatchAuthAdapter<THostAuth>; passphraseHash?: never }
 );
 
-export interface CopyPatchBackend<THostAuth = unknown> {
-  handle(request: Request, context?: CopyPatchHandleContext<THostAuth>): Promise<Response>;
-  readPublished(locale: string): Promise<ContentSnapshot>;
-}
+export interface CopyPatchBackend<THostAuth = unknown>
+  extends CopyPatchRequestHandler<THostAuth>, PublishedSnapshotReader {}
 
 interface ResolvedOptions<THostAuth> {
   persistence: CopyPatchPersistence;
@@ -303,7 +303,7 @@ class CopyPatchBackendRuntime<THostAuth> implements CopyPatchBackend<THostAuth> 
       if (!principal || !this.validPrincipal(principal)) return this.error(401, 'UNAUTHENTICATED', 'Authentication is required.');
       if (mutation) {
         const verified = await this.options.authAdapter!.verifyMutation(request.clone(), principal, context);
-        if (verified === false) return this.error(403, 'CSRF_FAILED', 'Mutation verification failed.');
+        if (verified !== true) return this.error(403, 'CSRF_FAILED', 'Mutation verification failed.');
       }
       return { principal };
     } catch {

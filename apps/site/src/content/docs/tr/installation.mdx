@@ -1,6 +1,6 @@
 ---
 title: "Kurulum ve Proje Başlatma"
-description: "CopyPatch v2 paketlerini kurun ve copypatch CLI ile uygulamanızın içine gömülü rota yapılandırmasını oluşturun."
+description: "CopyPatch v3 paketlerini kurun ve copypatch CLI ile uygulamanızın içine gömülü rota yapılandırmasını oluşturun."
 group: getting-started
 order: 2
 ---
@@ -16,7 +16,7 @@ pnpm add @copypatch/backend @copypatch/storage-sqlite
 pnpm add @copypatch/next    # Next.js App Router için
 pnpm add @copypatch/node    # Astro, Express, Fastify, Hono, React Router için`;
 
-export const npmInstall = `npm install @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/next`;
+export const npmInstall = `npm install @copypatch/core @copypatch/react @copypatch/backend @copypatch/storage-sqlite @copypatch/node @copypatch/next`;
 
 export const cliUsage = `# İnteraktif şablon oluşturma (veya doğrudan bayraklarla çalıştırma)
 npx copypatch init --framework next --storage sqlite
@@ -33,7 +33,7 @@ npx copypatch migrate --storage sqlite
 # Çalışma zamanı yapılandırmasını ve sağlık durumunu denetleme
 npx copypatch doctor`;
 
-<h1>CopyPatch v2 Kurulumu</h1>
+<h1>CopyPatch v3 Kurulumu</h1>
   <p class="lead">
     CopyPatch paketleri <code>@copypatch</code> npm kapsamı altında yayınlanmaktadır. Uygulamanızın istemci ve sunucu mimarisine göre yalnızca ihtiyaç duyduğunuz paketleri projenize ekleyin.
   </p>
@@ -42,7 +42,7 @@ npx copypatch doctor`;
   <ul>
     <li><strong>Çalışma Zamanı (Runtime):</strong> Node.js <code>&gt;=20.0.0</code> (Node.js 24 LTS önerilir)</li>
     <li><strong>Modül Formatı:</strong> Saf ESM (ECMAScript Modules)</li>
-    <li><strong>Eş Bağımlılıklar (Peer Dependencies):</strong> React <code>&gt;=18.0.0</code> ve React DOM <code>&gt;=18.0.0</code></li>
+    <li><strong>Eş Bağımlılıklar (Peer Dependencies):</strong> React ve React DOM <code>&gt;=18 &lt;20</code></li>
     <li><strong>Çalışma Ortamı:</strong> Aynı kökenden (same-origin) API rotası barındırabilen sunucu özellikli bir web uygulaması</li>
   </ul>
 
@@ -68,7 +68,7 @@ npx copypatch doctor`;
       </tr>
       <tr>
         <td><code>@copypatch/backend</code></td>
-        <td>Node / Edge Sunucu</td>
+        <td>Node Sunucu</td>
         <td>Gömülü Web <code>Request</code>/<code>Response</code> API çalışma zamanı, Argon2id oturum yönetimi ve CSRF koruması.</td>
       </tr>
       <tr>
@@ -117,7 +117,7 @@ npx copypatch doctor`;
       <tr>
         <td><code>copypatch init</code></td>
         <td><code>--framework &lt;next|astro|react-router|vite-node&gt;</code><br/><code>--storage &lt;sqlite|postgres&gt;</code><br/><code>--dry-run</code>, <code>--cwd &lt;dizin&gt;</code></td>
-        <td>Seçilen çerçeve ve depolama motoruna göre <code>copypatch.config.ts</code>, <code>copypatch.env.example</code> ve ilgili rota dosyasını oluşturur. Tekrar çalıştırılması güvenlidir; mevcut çakışan dosyaların üzerine yazmaz.</td>
+        <td>Yapılandırma ve rota dosyalarını üretir, doğrudan bağımlılıklarını host <code>package.json</code> dosyasına ekler ve çalıştırmadan önce tespit edilen install komutunu yazar. Tekrar çalıştırılması güvenlidir; çakışan dosyaların üzerine yazmaz.</td>
       </tr>
       <tr>
         <td><code>copypatch hash</code></td>
@@ -132,7 +132,7 @@ npx copypatch doctor`;
       <tr>
         <td><code>copypatch doctor</code></td>
         <td>Yok</td>
-        <td>Yerel ortam değişkenlerini, rota yapılandırmalarını ve depolama bağlantı sağlığını denetler.</td>
+        <td>Üretilen yapılandırmayı ve gerekli CopyPatch ortam değişkenlerini inceler.</td>
       </tr>
     </tbody>
   </table>

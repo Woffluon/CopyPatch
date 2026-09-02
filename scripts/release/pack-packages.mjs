@@ -34,7 +34,7 @@ export async function packAllPackages(repoRoot, outputDirectory) {
     if (unexpected.length > 0) {
       throw new Error(`${item.name} tarball contains unexpected files: ${unexpected.join(', ')}`);
     }
-    if (!entries.includes('package/package.json') || !entries.includes('package/README.md')) {
+    if (!entries.includes('package/package.json') || !entries.includes('package/README.md') || !entries.includes('package/LICENSE')) {
       throw new Error(`${item.name} tarball is missing npm metadata.`);
     }
     if (JSON.stringify(packed.manifest).includes('workspace:')) {

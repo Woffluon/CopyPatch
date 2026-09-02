@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/react",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Lightweight, production-ready inline copy editing library for React",
   "license": "MIT",
   "type": "module",
@@ -22,7 +22,6 @@
     "typescript"
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -50,11 +49,12 @@
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/react",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "peerDependencies": {
-    "react": ">=18.0.0 || >=19.0.0",
-    "react-dom": ">=18.0.0 || >=19.0.0"
+    "react": ">=18 <20",
+    "react-dom": ">=18 <20"
   },
   "dependencies": {
     "@copypatch/core": "workspace:*"

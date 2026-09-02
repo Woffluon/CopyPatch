@@ -1,10 +1,10 @@
+import { API_BASE_PATH } from '@copypatch/core';
+
 export type Framework = 'next' | 'astro' | 'react-router' | 'vite-node';
 export type Storage = 'sqlite' | 'postgres';
 
 export interface InitFile { path: string; contents: string; }
 export interface InitTemplateOptions { framework: Framework; storage: Storage; }
-
-const API_BASE_PATH = '/__copypatch/api/v2';
 
 /** Produces standalone, server-only files without changing an existing host route. */
 export function createInitFiles(options: InitTemplateOptions): readonly InitFile[] {
@@ -82,6 +82,11 @@ export const runtime = 'nodejs';
 
 const routes = createCopyPatchRouteHandlers(backend);
 type RouteHandler = (request: Request) => Promise<Response>;
+
+// Unsafe requests stay fail-closed until createCopyPatchRouteHandlers receives
+// a resolveContext callback that returns a trusted clientAddress. If your
+// deployment intentionally accepts one shared rate-limit bucket, pass
+// unsafeRequestWithoutClientAddress: 'shared-bucket' explicitly instead.
 
 function withBootstrap(handler: RouteHandler): RouteHandler {
   return async (request) => {

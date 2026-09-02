@@ -4,7 +4,7 @@
 
 ## Desteklenen Sürümler
 
-CopyPatch v2 aktif olarak desteklenen ana sürüm serisidir. v1 sürümündeki `@copypatch/server` paketi yeni entegrasyonlar için kullanımdan kaldırılmıştır; mevcut kullanıcılar geçiş yaparken paketler npm üzerinde kalmaya devam edecektir.
+CopyPatch v3 aktif olarak desteklenen ana sürüm serisidir. v1 sürümündeki `@copypatch/server` paketi yeni entegrasyonlar için kullanımdan kaldırılmıştır; mevcut kullanıcılar geçiş yaparken paketler npm üzerinde kalmaya devam edecektir.
 
 | Sürüm | Destek Durumu |
 | --- | --- |
@@ -13,7 +13,7 @@ CopyPatch v2 aktif olarak desteklenen ana sürüm serisidir. v1 sürümündeki `
 
 ## Güvenlik Modeli
 
-CopyPatch v2 doğrudan ana uygulamanın içine `/__copypatch/api/v2` rotasında yerleşir. Değişiklik yapan mutasyon istekleri tam olarak eşleşen same-origin `Origin` başlığı gerektirir. CopyPatch harici API kökenini, CORS yapılandırmasını veya proxy tabanlı dağıtımları desteklemez.
+CopyPatch v3 doğrudan ana uygulamanın içine `/__copypatch/api/v2` rotasında yerleşir. Değişiklik yapan mutasyon istekleri tam olarak eşleşen same-origin `Origin` başlığı gerektirir. CopyPatch harici API kökenini, CORS yapılandırmasını veya proxy tabanlı dağıtımları desteklemez.
 
 Backend iki kimlik doğrulama seçeneği sunar:
 

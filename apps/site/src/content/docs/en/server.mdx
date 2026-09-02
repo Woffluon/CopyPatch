@@ -1,6 +1,6 @@
 ---
 title: "Backend Runtime & Adapters"
-description: "Configure the framework-neutral CopyPatch v2 backend, storage persistence, and authentication adapters."
+description: "Configure the framework-neutral CopyPatch v3 backend, storage persistence, and authentication adapters."
 group: operations-security
 order: 1
 ---
@@ -9,7 +9,7 @@ import CodeBlock from '../../../components/ui/CodeBlock.astro';
 export const basicBackend = `import { createCopyPatchBackend } from '@copypatch/backend';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const copypatch = createCopyPatchBackend({
@@ -17,12 +17,23 @@ const copypatch = createCopyPatchBackend({
   passphraseHash: process.env.COPYPATCH_PASSPHRASE_HASH!,
 });`;
 
-export const customAuthAdapter = `import { createCopyPatchBackend, type CopyPatchAuthAdapter } from '@copypatch/backend';
+export const customAuthAdapter = `import { createCopyPatchBackend } from '@copypatch/backend';
+import { type CopyPatchAuthAdapter } from '@copypatch/core';
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
 // Custom adapter connecting CopyPatch to your existing auth system (e.g. NextAuth, Clerk, Auth0)
-const hostAuthAdapter: CopyPatchAuthAdapter = {
-  async resolvePrincipal(context) {
+interface HostAuthContext {
+  user?: {
+    id: string;
+    isAdmin: boolean;
+    canEditCopy: boolean;
+    canPublishCopy: boolean;
+  };
+  csrfValid?: boolean;
+}
+
+const hostAuthAdapter: CopyPatchAuthAdapter<HostAuthContext> = {
+  async authenticate(_request, context) {
     const user = context.hostAuth?.user;
     if (!user) return null;
 
@@ -30,23 +41,23 @@ const hostAuthAdapter: CopyPatchAuthAdapter = {
     if (user.isAdmin || user.canEditCopy) roles.push('editor');
     if (user.isAdmin || user.canPublishCopy) roles.push('publisher');
 
-    return { id: user.id, roles };
+    return { subject: user.id, roles };
   },
 
-  async verifyMutation(request, context) {
+  async verifyMutation(_request, _principal, context) {
     // Verify host CSRF token or session integrity
     return context.hostAuth?.csrfValid === true;
   },
 };
 
 const backend = createCopyPatchBackend({
-  persistence: createPostgresPersistence({ connectionString: process.env.DATABASE_URL! }),
+  persistence: createPostgresPersistence({ connectionString: process.env.COPYPATCH_DATABASE_URL! }),
   authAdapter: hostAuthAdapter,
 });`;
 
 <h1>Backend Runtime & Adapters</h1>
   <p class="lead">
-    The <code>@copypatch/backend</code> package is the headless core of CopyPatch v2. It provides a standard Web <code>Request</code>/<code>Response</code> pipeline that handles routing, authorization, CSRF checks, and optimistic revision coordination.
+    The <code>@copypatch/backend</code> package is the headless core of CopyPatch v3. It provides a standard Web <code>Request</code>/<code>Response</code> pipeline that handles routing, authorization, CSRF checks, and optimistic revision coordination.
   </p>
 
   <h2>1. Creating a Backend Instance</h2>

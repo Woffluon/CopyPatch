@@ -1,6 +1,6 @@
 ---
 title: "Vite + Node Server Integration"
-description: "Mount CopyPatch v2 in Express, Fastify, Hono, or native Node servers alongside Vite client builds."
+description: "Mount CopyPatch v3 in Express, Fastify, Hono, or native Node servers alongside Vite client builds."
 group: framework-guides
 order: 3
 ---
@@ -12,7 +12,7 @@ import { expressMiddleware } from '@copypatch/node';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
 const app = express();
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const backend = createCopyPatchBackend({
@@ -90,7 +90,7 @@ await fastify.listen({ port: 3000 });`;
 
   <h2>Why Not a Vite Dev Proxy?</h2>
   <p>
-    Do not configure a cross-origin reverse proxy in <code>vite.config.ts</code> for CopyPatch. CopyPatch v2 enforces strict same-origin security:
+    Do not configure a cross-origin reverse proxy in <code>vite.config.ts</code> for CopyPatch. CopyPatch v3 enforces strict same-origin security:
   </p>
   <ul>
     <li>Mutating requests require an exact same-origin <code>Origin</code> header matching the host domain.</li>

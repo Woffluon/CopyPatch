@@ -1,2 +1,4 @@
-export * from './backend.js';
-export * from './crypto.js';
+export {
+  createCopyPatchBackend,
+  type CopyPatchBackend,
+} from './backend.js';

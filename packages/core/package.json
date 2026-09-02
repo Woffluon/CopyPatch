@@ -1,9 +1,10 @@
 {
   "name": "@copypatch/core",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Shared types, contracts, constants, and validation for CopyPatch",
   "license": "MIT",
   "type": "module",
+  "sideEffects": false,
   "homepage": "https://copypatch.vercel.app",
   "repository": {
     "type": "git",
@@ -22,7 +23,6 @@
     "typescript"
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -43,8 +43,9 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.tests.json",
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/core",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.0"

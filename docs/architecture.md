@@ -1,4 +1,4 @@
-# CopyPatch v2 architecture map
+# CopyPatch v3 architecture map
 
 [English](architecture.md) | [Türkçe](architecture.tr.md)
 

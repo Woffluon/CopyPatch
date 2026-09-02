@@ -7,8 +7,10 @@ import { fileURLToPath } from 'node:url';
 import { PUBLISH_PACKAGES } from './manifests.mjs';
 import { buildPackageTarball } from './pack-package.mjs';
 import { getRegistryStatus, queryPackage } from './registry-status.mjs';
+import { assertCanonicalTarballs } from './publish-guard.mjs';
 
-function runPublish(tarball, repoRoot) {
+async function runPublish(tarball, packageName, repoRoot) {
+  await assertCanonicalTarballs([tarball], [packageName]);
   const windowsCli = path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js');
   const command = process.platform === 'win32' && existsSync(windowsCli) ? process.execPath : 'npm';
   const args = ['publish', tarball, '--access', 'public', '--provenance'];
@@ -36,7 +38,7 @@ export async function publishPackages(repoRoot, outputDirectory) {
       continue;
     }
     const packed = await buildPackageTarball(repoRoot, item.path, outputDirectory);
-    runPublish(packed.tarball, repoRoot);
+    await runPublish(packed.tarball, item.name, repoRoot);
     results.push({ name: item.name, status: 'published' });
   }
   return { version: initial.version, results };

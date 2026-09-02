@@ -10,12 +10,12 @@
     "typecheck": "astro check && tsc --noEmit"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.4",
-    "@astrojs/mdx": "^6.0.3",
-    "@astrojs/react": "^4.2.1",
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/mdx": "^8.0.0",
+    "@astrojs/react": "^4.4.2",
     "@copypatch/core": "workspace:*",
     "@copypatch/react": "workspace:*",
-    "astro": "^6.4.8",
+    "astro": "^7.2.10",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },

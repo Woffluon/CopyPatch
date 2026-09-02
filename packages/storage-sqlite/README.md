@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-SQLite persistence for CopyPatch v2. The adapter implements the asynchronous
+SQLite persistence for CopyPatch v3. The adapter implements the asynchronous
 `CopyPatchPersistence` contract while using transactional, synchronous SQLite
 operations internally.
 
@@ -19,7 +19,7 @@ Node.js 20 or newer is required.
 ```ts
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 try {

@@ -1,14 +1,14 @@
-# CopyPatch v2 Tehdit Modeli ve Güvenlik Durumu
+# CopyPatch v3 Tehdit Modeli ve Güvenlik Durumu
 
 [English](threat-model.md) | [Türkçe](threat-model.tr.md)
 
 Uygulama rehberi için [güvenlik operasyonları sayfasına](https://copypatch.vercel.app/tr/docs/security) ve [HTTP API referansına](https://copypatch.vercel.app/tr/docs/http-api) bakın.
 
-Bu belge, CopyPatch v2'nin güvenlik sınırlarını ve mimari tasarım kararlarını belgeler. Kimlik doğrulama, kalıcılık, API davranışları veya tehdit sınırları değiştiğinde bu belgeyi güncelleyin.
+Bu belge, CopyPatch v3'ün güvenlik sınırlarını ve mimari tasarım kararlarını belgeler. Kimlik doğrulama, kalıcılık, API davranışları veya tehdit sınırları değiştiğinde bu belgeyi güncelleyin.
 
 ## Kapsam ve Çalışma Sınırı
 
-CopyPatch v2 doğrudan ana uygulamanın içine `/__copypatch/api/v2` adresinde gömülür. Taşıma katmanı (transport), TLS/HTTPS, dağıtım ve rota erişim kontrolü ana uygulamanın sorumluluğundadır. CopyPatch harici uzak API, bağımsız sunucu süreci, CORS izin listesi veya proxy yapılandırmalarını desteklemez.
+CopyPatch v3 doğrudan ana uygulamanın içine `/__copypatch/api/v2` adresinde gömülür. Taşıma katmanı (transport), TLS/HTTPS, dağıtım ve rota erişim kontrolü ana uygulamanın sorumluluğundadır. CopyPatch harici uzak API, bağımsız sunucu süreci, CORS izin listesi veya proxy yapılandırmalarını desteklemez.
 
 ## Korunan Varlıklar
 

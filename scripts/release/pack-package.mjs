@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { assertManifestConsistency, parseManifest, readManifestEntries } from './manifests.mjs';
 
 const DEPENDENCY_FIELDS = ['dependencies', 'optionalDependencies', 'peerDependencies', 'devDependencies'];
+export const SOURCE_PUBLISH_GUARD = 'node ../../scripts/release/reject-source-publish.mjs';
 
 export function transformWorkspaceDependencies(manifest, version) {
   const transformed = structuredClone(manifest);
@@ -19,6 +20,9 @@ export function transformWorkspaceDependencies(manifest, version) {
         throw new Error(`Unsupported workspace range ${range} for ${name} in ${manifest.name}.`);
       }
     }
+  }
+  if (transformed.scripts?.prepublishOnly === SOURCE_PUBLISH_GUARD) {
+    delete transformed.scripts.prepublishOnly;
   }
   return transformed;
 }
@@ -65,11 +69,7 @@ export async function buildPackageTarball(repoRoot, packagePath, outputDirectory
     const transformedManifest = transformWorkspaceDependencies(sourceManifest, rootVersion);
     await writeFile(path.join(stagingDirectory, 'package.json'), `${JSON.stringify(transformedManifest, null, 2)}\n`, 'utf8');
     await cp(path.join(sourceDirectory, 'README.md'), path.join(stagingDirectory, 'README.md'), { errorOnExist: true });
-    try {
-      await cp(path.join(repoRoot, 'LICENSE'), path.join(stagingDirectory, 'LICENSE'), { errorOnExist: true });
-    } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-    }
+    await cp(path.join(repoRoot, 'LICENSE'), path.join(stagingDirectory, 'LICENSE'), { errorOnExist: true });
 
     await mkdir(outputDirectory, { recursive: true });
     const output = runNpm(['pack', stagingDirectory, '--pack-destination', path.resolve(outputDirectory), '--json', '--ignore-scripts'], repoRoot);

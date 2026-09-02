@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-PostgreSQL persistence for CopyPatch v2. The adapter uses the vendor-neutral `pg` driver and implements the `CopyPatchPersistence` contract from `@copypatch/core`.
+PostgreSQL persistence for CopyPatch v3. The adapter uses the vendor-neutral `pg` driver and implements the `CopyPatchPersistence` contract from `@copypatch/core`.
 
 ## Install
 
@@ -18,7 +18,7 @@ Node.js 20 or newer is required.
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
 const persistence = createPostgresPersistence({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.COPYPATCH_DATABASE_URL!,
   schema: 'copypatch',
   publishingMode: 'draft',
 });
@@ -34,7 +34,7 @@ The connection pool is created lazily. Call `close()` during application shutdow
 import { Pool } from 'pg';
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+const pool = new Pool({ connectionString: process.env.COPYPATCH_DATABASE_URL });
 const persistence = createPostgresPersistence({ pool, schema: 'copypatch' });
 
 await persistence.migrate();

@@ -1,0 +1,71 @@
+---
+title: "Migrate to v3"
+description: "Upgrade v2 applications to CopyPatch v3's fail-closed auth, trusted request identity, readonly React state, and factory-only storage APIs."
+group: getting-started
+order: 3
+---
+
+# Migrate to v3
+
+CopyPatch v3 tightens security and package boundaries. Upgrade all installed CopyPatch packages together because the seven public packages use lockstep versioning.
+
+## 1. Upgrade the selected packages
+
+Install v3 for every CopyPatch package used by the application. A Next.js application with SQLite typically updates these packages:
+
+```bash
+pnpm up @copypatch/core@^3 @copypatch/react@^3 @copypatch/backend@^3 @copypatch/storage-sqlite@^3 @copypatch/node@^3 @copypatch/next@^3
+```
+
+`@copypatch/node` keeps backend and storage integrations as optional peers. Install `@copypatch/backend` and the selected storage package explicitly when using its CLI or runtime adapters.
+
+## 2. Make mutation verification explicit
+
+Import `CopyPatchAuthAdapter` from `@copypatch/core`. Its `verifyMutation(request, principal, context)` method must resolve to `true` for an unsafe request to continue. A missing return value now fails closed.
+
+Re-check custom authentication tests for both accepted and rejected mutations before deploying.
+
+## 3. Provide a trusted request identity
+
+Next.js unsafe requests require `context.clientAddress`. Resolve it from platform request metadata or forwarding headers only after the host has applied an explicit trusted-proxy policy.
+
+If no trustworthy address exists and one shared rate-limit bucket is acceptable, opt in deliberately:
+
+```ts
+const handlers = createCopyPatchRouteHandlers(backend, {
+  unsafeRequestWithoutClientAddress: 'shared-bucket',
+});
+```
+
+Without either choice, unsafe Next.js requests return `503 CLIENT_ADDRESS_UNAVAILABLE`.
+
+## 4. Replace removed or internal imports
+
+- Import shared contracts, including `CopyPatchAuthAdapter`, from `@copypatch/core`.
+- Do not import backend crypto helpers, `SESSION_COOKIE_NAME`, or backend option internals from `@copypatch/backend`.
+- Create PostgreSQL persistence with `createPostgresPersistence(...)`; the implementation class is no longer a public runtime export.
+- Import only documented React entrypoints. Store and context implementation details are not public API.
+
+## 5. Treat React snapshots as readonly
+
+Snapshots exposed by React and Next integrations are immutable. Replace in-place mutation with a new object and new `content` map. This preserves subscriber consistency and server/client snapshot parity.
+
+## 6. Verify the upgrade
+
+- Run type checking and the application's existing tests.
+- Exercise authentication, save, publish, discard, and revision-conflict flows.
+- Test unsafe requests with and without the trusted client identity.
+- Pack the application or library and confirm ESM entrypoints and declarations resolve from the installed tarballs.
+- Keep the v2 deployment available for rollback until the v3 request and storage paths are verified.
+
+## Migrating directly from v1
+
+First replace the standalone `@copypatch/server` process with `@copypatch/backend`, one explicit storage adapter, and the host adapter from `@copypatch/node` or `@copypatch/next`. Run storage migrations before accepting traffic and mount the API inside the host application.
+
+The HTTP base path remains `/__copypatch/api/v2` in CopyPatch v3. For a Next.js filesystem route, encode the leading underscores:
+
+```text
+app/%5F%5Fcopypatch/api/v2/[...path]/route.ts
+```
+
+CopyPatch packages are ESM-only and require Node.js 20 or newer. Validate the v1-to-embedded-backend migration first, then apply every v3 contract change above.

@@ -1,6 +1,6 @@
 ---
 title: "Vite + Node Sunucu Entegrasyonu"
-description: "CopyPatch v2'yi Express, Fastify, Hono veya yerel Node sunucularında Vite istemcisiyle aynı kökenden (same-origin) çalıştırın."
+description: "CopyPatch v3'ü Express, Fastify, Hono veya yerel Node sunucularında Vite istemcisiyle aynı kökenden (same-origin) çalıştırın."
 group: framework-guides
 order: 3
 ---
@@ -12,7 +12,7 @@ import { expressMiddleware } from '@copypatch/node';
 import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
 const app = express();
-const persistence = createSQLitePersistence('./data/copypatch.sqlite');
+const persistence = createSQLitePersistence('./copypatch.sqlite');
 await persistence.migrate();
 
 const backend = createCopyPatchBackend({
@@ -90,7 +90,7 @@ await fastify.listen({ port: 3000 });`;
 
   <h2>Neden Vite Dev Proxy Kullanılmamalı?</h2>
   <p>
-    <code>vite.config.ts</code> dosyası içinde CopyPatch için harici bir reverse proxy tanımlamayın. CopyPatch v2 sıkı same-origin güvenlik kontrolleri uygular:
+    <code>vite.config.ts</code> dosyası içinde CopyPatch için harici bir reverse proxy tanımlamayın. CopyPatch v3 sıkı same-origin güvenlik kontrolleri uygular:
   </p>
   <ul>
     <li>Değişiklik yapan (mutating) tüm istekler tarayıcıdan host etki alanıyla birebir eşleşen <code>Origin</code> başlığı gerektirir.</li>

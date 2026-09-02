@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-CopyPatch v2 için SQLite kalıcılığı. Tek sunuculu veya kalıcı diski olan dağıtımlar için uygundur.
+CopyPatch v3 için SQLite kalıcılığı. Tek sunuculu veya kalıcı diski olan dağıtımlar için uygundur.
 
 ```bash
 pnpm add @copypatch/core @copypatch/storage-sqlite better-sqlite3

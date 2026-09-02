@@ -12,8 +12,8 @@ CopyPatch, tarayıcı, sunucu, depolama ve framework sorumluluklarını ayrı pa
 | Paket | Genel giriş noktaları | Kullanım amacı |
 | --- | --- | --- |
 | `@copypatch/core` | `API_BASE_PATH`, içerik snapshot'ları, istek sözleşmeleri, doğrulama yardımcıları | Paylaşılan tipler ve özel kalıcılık uygulamaları |
-| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText` | React istemci render'ı ve satır içi düzenleme |
-| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` | Gömülü Web Request/Response çalışma zamanı |
+| `@copypatch/react` | `CopyPatchProvider`, `EditableText`, `useCopyPatch`, `useEditableText`, `useCopyPatchStore` | React istemci render'ı ve satır içi düzenleme |
+| `@copypatch/backend` | `createCopyPatchBackend`, `CopyPatchBackend` tipi | Gömülü Web Request/Response çalışma zamanı |
 | `@copypatch/storage-sqlite` | `createSQLitePersistence` | Yerel veya tek örnekli kalıcılık |
 | `@copypatch/storage-postgres` | `createPostgresPersistence` | Uygulama örnekleri arasında paylaşılan kalıcılık |
 | `@copypatch/node` | Node, Express, Fastify ve Hono adaptörleri; `copypatch` CLI | Node sunucusu yüzeyi sunan host'lar |
@@ -28,6 +28,8 @@ Varsayılan metin sınırı düzenlenen her değer için 10.000 karakterdir. Ger
 ## React entegrasyonu
 
 `CopyPatchProvider`, `apiBase` verilmezse `/__copypatch/api/v2` kullanır. Locale verin ve SSR veya RSC host'larında `initialSnapshot` sağlayın. `EditableText`, ziyaretçilere fallback metni render eder ve yalnızca düzenleme modunda `contentEditable` yüzeyini etkinleştirir. Düzenlenebilir değer bir öznitelikte, seçenekte veya buton etiketinde kullanılacaksa `useCopyPatch` kullanın.
+
+`useCopyPatchStore` tarafından döndürülen store snapshot'ı derin readonly'dir ve gerçek bir state değişikliğine kadar aynı referansı korur. Lazy editor runtime yükleme hatasını host telemetry'sine aktarmak için provider üzerinde `onEditorLoadError` kullanın.
 
 ## Kalıcılık sözleşmesi
 

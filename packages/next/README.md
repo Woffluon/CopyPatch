@@ -54,9 +54,16 @@ export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
 `resolveContext(request)` returns `CopyPatchHandleContext` (including an
 optional opaque `hostAuth` value and a trusted `clientAddress` for unsafe
 request rate limits). It is passed directly to the backend and is never
-serialized into request headers. `readPublishedSnapshot` returns the
-backend result directly; supply `{ fallback }` when the host needs a specific
-safe snapshot if the read rejects.
+serialized into request headers. Forwarding headers are not trusted
+automatically: an unsafe request without a trusted address fails with
+`CLIENT_ADDRESS_UNAVAILABLE`. Deployments that deliberately accept a shared
+rate-limit bucket can explicitly set
+`unsafeRequestWithoutClientAddress: 'shared-bucket'`.
+
+`readPublishedSnapshot` reads the backend directly without an HTTP self-fetch.
+Supply a complete `{ fallback: { revision, content } }` snapshot when the host
+needs a specific safe value if the read rejects. Every successful or fallback
+result is a fresh, deeply readonly copy.
 
 ## Exports
 

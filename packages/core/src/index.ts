@@ -5,8 +5,8 @@
 export type PublishingMode = 'direct' | 'draft';
 
 export interface ContentSnapshot {
-  revision: number;
-  content: Record<string, string>;
+  readonly revision: number;
+  readonly content: Readonly<Record<string, string>>;
 }
 
 export interface EditorSnapshot {
@@ -69,6 +69,14 @@ export interface CopyPatchHandleContext<THostAuth = unknown> {
   signal?: AbortSignal;
 }
 
+export interface CopyPatchRequestHandler<THostAuth = unknown> {
+  handle(request: Request, context?: CopyPatchHandleContext<THostAuth>): Promise<Response>;
+}
+
+export interface PublishedSnapshotReader {
+  readPublished(locale: string): Promise<ContentSnapshot>;
+}
+
 export interface CopyPatchAuthAdapter<THostAuth = unknown> {
   authenticate(
     request: Request,
@@ -78,7 +86,7 @@ export interface CopyPatchAuthAdapter<THostAuth = unknown> {
     request: Request,
     principal: Readonly<CopyPatchPrincipal>,
     context: Readonly<CopyPatchHandleContext<THostAuth>>,
-  ): Promise<boolean | void>;
+  ): Promise<boolean>;
 }
 
 export interface PersistenceHealth {
@@ -169,6 +177,7 @@ export type ErrorCode =
   | 'CSRF_FAILED'
   | 'ORIGIN_REJECTED'
   | 'RATE_LIMITED'
+  | 'CLIENT_ADDRESS_UNAVAILABLE'
   | 'REVISION_CONFLICT'
   | 'UNSUPPORTED_OPERATION'
   | 'INTERNAL_ERROR'

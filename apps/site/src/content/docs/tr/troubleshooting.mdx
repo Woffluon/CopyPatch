@@ -1,6 +1,6 @@
 ---
 title: "Sorun Giderme ve Sıkça Sorulan Sorular"
-description: "CopyPatch v2 entegrasyonlarındaki hata kodları, ara yazılım sıralama sorunları, veritabanı kilitleri ve kimlik doğrulama çözümleri."
+description: "CopyPatch v3 entegrasyonlarındaki hata kodları, ara yazılım sıralama sorunları, veritabanı kilitleri ve kimlik doğrulama çözümleri."
 group: operations-security
 order: 4
 ---
@@ -11,12 +11,12 @@ npx copypatch doctor`;
 
 <h1>Sorun Giderme ve SSS</h1>
   <p class="lead">
-    CopyPatch v2 entegrasyonlarında karşılaşabileceğiniz yapılandırma, rota yönlendirme, yetkilendirme ve veritabanı durumlarını hızla teşhis edin.
+    CopyPatch v3 entegrasyonlarında karşılaşabileceğiniz yapılandırma, rota yönlendirme, yetkilendirme ve veritabanı durumlarını hızla teşhis edin.
   </p>
 
   <h2>1. CLI ile Hızlı Teşhis</h2>
   <p>
-    Yerel yapılandırmanızı, ortam değişkenlerinizi ve veritabanı bağlantı sağlığınızı test etmenin en hızlı yolu <code>doctor</code> komutudur:
+    Üretilen yapılandırmayı ve gerekli CopyPatch ortam değişkenlerini incelemenin en hızlı yolu <code>doctor</code> komutudur:
   </p>
   <CodeBlock code={doctorExample} lang="bash" title="Terminal" />
 
@@ -32,46 +32,51 @@ npx copypatch doctor`;
     </thead>
     <tbody>
       <tr>
-        <td><code>ORIGIN_REJECTED</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td>İsteğin <code>Origin</code> başlığı uygulamanın host etki alanıyla tam olarak eşleşmiyor.</td>
-        <td>İsteklerin aynı kökenden (same-origin) yapıldığından emin olun. Harici proxy veya CORS ayarlarını kaldırın; uygulamayı doğrudan host adresi üzerinden açın.</td>
+        <td><code>VALIDATION_ERROR</code></td><td><code>400</code></td>
+        <td>İstek gövdesi, locale, içerik anahtarı veya metin doğrulamayı geçemedi.</td>
+        <td>İstek biçimini düzeltin ve yapılandırılmış metin sınırına uyun.</td>
       </tr>
       <tr>
-        <td><code>CSRF_FAILED</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td><code>x-copypatch-csrf</code> başlığı eksik, geçersiz veya süresi dolmuş.</td>
-        <td><code>?copypatch=1</code> ile sayfayı yenileyip yeniden giriş yapın. Özel bir <code>authAdapter</code> kullanıyorsanız, adaptörün <code>verifyMutation</code> fonksiyonunu denetleyin.</td>
+        <td><code>UNAUTHENTICATED</code></td><td><code>401 / 403</code></td>
+        <td>Kimlik doğrulaması eksik veya principal gerekli role sahip değil.</td>
+        <td>Yeniden giriş yapın; adaptördeki <code>editor</code> ve <code>publisher</code> rol eşlemesini denetleyin.</td>
       </tr>
       <tr>
-        <td><code>UNAUTHORIZED</code></td>
-        <td><code>401 Unauthorized</code></td>
-        <td>Oturum çerezi eksik, geçersiz veya zaman aşımına uğramış.</td>
-        <td>Parola modalı üzerinden oturum açın veya ana uygulamanızdaki kullanıcı hesabınıza giriş yapın.</td>
+        <td><code>CSRF_FAILED</code></td><td><code>403</code></td>
+        <td>CSRF belirteci veya host mutasyon doğrulaması başarısız oldu.</td>
+        <td>Oturumu yenileyin; özel adaptör <code>verifyMutation</code> metodundan açıkça <code>true</code> döndürmelidir.</td>
       </tr>
       <tr>
-        <td><code>FORBIDDEN</code></td>
-        <td><code>403 Forbidden</code></td>
-        <td>Kullanıcı istenen eylem için gerekli role sahip değil (taslak için <code>editor</code>, yayınlama için <code>publisher</code>).</td>
-        <td>Ana uygulamanızın kimlik doğrulama sisteminde veya adaptörünüzdeki rol tanımlamalarını kontrol edin.</td>
+        <td><code>ORIGIN_REJECTED</code></td><td><code>403</code></td>
+        <td>İsteğin <code>Origin</code> değeri URL origin'iyle tam eşleşmiyor.</td>
+        <td>Same-origin API rotasını ve host trusted-proxy politikasını denetleyin.</td>
       </tr>
       <tr>
-        <td><code>REVISION_CONFLICT</code></td>
-        <td><code>409 Conflict</code></td>
-        <td>Siz sayfadayken başka bir ekip üyesi aktif dilde değişiklik yayınladı veya kaydetti.</td>
-        <td>En güncel metinleri yüklemek için sayfayı/anlık görüntüyü yenileyin ve düzenlemenizi veri kaybı olmadan tekrar uygulayın.</td>
+        <td><code>RATE_LIMITED</code></td><td><code>429</code></td>
+        <td>İstemci anahtarının unsafe istek sınırı aşıldı.</td>
+        <td>Retry penceresini bekleyin ve istemcilerin ayrı güvenilir adresler aldığını doğrulayın.</td>
       </tr>
       <tr>
-        <td><code>VALIDATION_FAILED</code></td>
-        <td><code>400 Bad Request</code></td>
-        <td>Geçersiz metin anahtarı formatı veya yapılandırılan metin sınırı aşıldı. Varsayılan 10.000, sert üst sınır 100.000 karakterdir.</td>
-        <td>İçerik anahtarlarının noktayla ayrılmış alfa-sayısal formatta (örn. <code>hero.title</code>) olduğundan ve metinlerin düz metin olduğundan emin olun.</td>
+        <td><code>CLIENT_ADDRESS_UNAVAILABLE</code></td><td><code>503</code></td>
+        <td>Next.js unsafe isteğinde güvenilir istemci adresi yok.</td>
+        <td>Deployment platformundan adres çözümleyin veya paylaşımlı bucket'ı açıkça seçin.</td>
       </tr>
       <tr>
-        <td><code>STORAGE_UNAVAILABLE</code></td>
-        <td><code>503 Service Unavailable</code></td>
-        <td>Veritabanı dosyası kilitli, dizin yazma izni yok veya PostgreSQL bağlantı havuzu yanıt vermiyor.</td>
-        <td>Migrasyonları çalıştırın (<code>copypatch migrate</code>), SQLite dizin izinlerini kontrol edin veya PostgreSQL bağlantı bilgilerinizi test edin.</td>
+        <td><code>REVISION_CONFLICT</code></td><td><code>409</code></td>
+        <td>Başka bir editör published veya draft revizyonunu değiştirdi.</td>
+        <td>Editor snapshot'ını yeniden yükleyip değişikliği tekrar uygulayın.</td>
+      </tr>
+      <tr>
+        <td><code>UNSUPPORTED_OPERATION</code></td><td><code>405</code></td>
+        <td>Endpoint kullanılan HTTP metodunu desteklemiyor.</td><td>Endpoint için belgelenen metodu kullanın.</td>
+      </tr>
+      <tr>
+        <td><code>INTERNAL_ERROR</code></td><td><code>500</code></td>
+        <td>Backend isteği tamamlayamadı.</td><td>İç ayrıntıları istemciye açmadan sunucu loglarını ve depolama sağlığını inceleyin.</td>
+      </tr>
+      <tr>
+        <td><code>NOT_FOUND</code></td><td><code>404</code></td>
+        <td>İstenen CopyPatch endpoint'i yok.</td><td>Canonical <code>/__copypatch/api/v2</code> mount'unu ve rota son ekini doğrulayın.</td>
       </tr>
     </tbody>
   </table>

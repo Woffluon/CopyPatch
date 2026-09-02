@@ -51,6 +51,10 @@ export interface PostgresPersistenceOptions {
   maxTextLength?: number;
 }
 
+export interface PostgresPersistence extends CopyPatchPersistence {
+  close(): Promise<void>;
+}
+
 interface StateRow extends Record<string, unknown> {
   published_revision: number | string;
   draft_revision: number | string;
@@ -86,7 +90,7 @@ const REQUIRED_TABLES = ['content_entries', 'content_state', 'rate_limits', 'ses
 
 type PoolFactory = () => Promise<PgPoolLike>;
 
-export class PostgresPersistence implements CopyPatchPersistence {
+class PostgresPersistenceAdapter implements PostgresPersistence {
   readonly schema: string;
   readonly publishingMode: PublishingMode;
 
@@ -567,13 +571,13 @@ export function createPostgresPersistence(
     return fromConnectionString(input, {});
   }
   if (isPool(input)) {
-    return new PostgresPersistence(input);
+    return new PostgresPersistenceAdapter(input);
   }
   const { pool, connectionString, ...options } = input;
   if ((pool === undefined) === (connectionString === undefined)) {
     throw new TypeError('Provide exactly one of pool or connectionString');
   }
-  return pool ? new PostgresPersistence(pool, options) : fromConnectionString(connectionString!, options);
+  return pool ? new PostgresPersistenceAdapter(pool, options) : fromConnectionString(connectionString!, options);
 }
 
 function fromConnectionString(
@@ -588,7 +592,7 @@ function fromConnectionString(
     };
     return new pgModule.Pool({ connectionString });
   };
-  return new PostgresPersistence(factory, options, true);
+  return new PostgresPersistenceAdapter(factory, options, true);
 }
 
 function isPool(value: PgPoolLike | PostgresPersistenceOptions): value is PgPoolLike {

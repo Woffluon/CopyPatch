@@ -1,8 +1,8 @@
-# CopyPatch v2 Mimari Haritası
+# CopyPatch v3 Mimari Haritası
 
 [English](architecture.md) | [Türkçe](architecture.tr.md)
 
-Bu belge, CopyPatch v2'nin güncel mimari haritasıdır. Bir paket sınırı, genel entegrasyon sözleşmesi veya dağıtım sınırı değiştiğinde bu belgeyi güncelleyin.
+Bu belge, CopyPatch v3'ün güncel mimari haritasıdır. Bir paket sınırı, genel entegrasyon sözleşmesi veya dağıtım sınırı değiştiğinde bu belgeyi güncelleyin.
 
 ## Çalışma Zamanı Şeması
 

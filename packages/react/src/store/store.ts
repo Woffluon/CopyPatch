@@ -1,37 +1,56 @@
-import { ContentSnapshot, EditorSnapshot, PublishingMode } from '@copypatch/core';
+import type { ContentSnapshot, EditorSnapshot, PublishingMode } from '@copypatch/core';
 
-export type Listener = () => void;
+type Listener = () => void;
 
 export interface CopyPatchStoreState {
-  locale: string;
-  isEditorActive: boolean;
-  isAuthenticated: boolean;
-  csrfToken: string | null;
-  publishingMode: PublishingMode;
-  published: Record<string, string>;
-  drafts: Record<string, string>;
-  unsaved: Record<string, string>;
-  publishedRevision: number;
-  draftRevision: number;
-  activeEditingKey: string | null;
-  errorMessage: string | null;
-  isSaving: boolean;
+  readonly locale: string;
+  readonly isEditorActive: boolean;
+  readonly isAuthenticated: boolean;
+  readonly csrfToken: string | null;
+  readonly publishingMode: PublishingMode;
+  readonly published: Readonly<Record<string, string>>;
+  readonly drafts: Readonly<Record<string, string>>;
+  readonly unsaved: Readonly<Record<string, string>>;
+  readonly publishedRevision: number;
+  readonly draftRevision: number;
+  readonly activeEditingKey: string | null;
+  readonly errorMessage: string | null;
+  readonly isSaving: boolean;
 }
 
-export class CopyPatchStore {
+export interface CopyPatchStoreApi {
+  getState(): CopyPatchStoreState;
+  subscribe(listener: () => void): () => void;
+  subscribeKey(key: string, listener: () => void): () => void;
+  registerFallback(key: string, fallback: string): void;
+  getBaseContent(key: string, fallback?: string): string;
+  resolveContent(key: string, fallback: string): string;
+  setLocale(locale: string, snapshot?: ContentSnapshot): void;
+  setPublishedSnapshot(snapshot: ContentSnapshot): void;
+  setEditorSnapshot(snapshot: EditorSnapshot): void;
+  setEditorActive(active: boolean): void;
+  setAuthenticated(authenticated: boolean, csrfToken?: string | null, mode?: PublishingMode): void;
+  setActiveEditingKey(key: string | null): void;
+  setUnsavedEdit(key: string, text: string): void;
+  discardUnsaved(): void;
+  clearDrafts(): void;
+  setSaving(isSaving: boolean, errorMessage?: string | null): void;
+}
+
+class CopyPatchStore implements CopyPatchStoreApi {
   private state: CopyPatchStoreState;
   private keyListeners = new Map<string, Set<Listener>>();
   private globalListeners = new Set<Listener>();
   private fallbackRegistry = new Map<string, string>();
 
   constructor(initialLocale: string, initialSnapshot?: ContentSnapshot) {
-    this.state = {
+    this.state = createSnapshot({
       locale: initialLocale,
       isEditorActive: false,
       isAuthenticated: false,
       csrfToken: null,
       publishingMode: 'direct',
-      published: initialSnapshot?.content ? { ...initialSnapshot.content } : {},
+      published: initialSnapshot?.content ?? {},
       drafts: {},
       unsaved: {},
       publishedRevision: initialSnapshot?.revision ?? 1,
@@ -39,7 +58,7 @@ export class CopyPatchStore {
       activeEditingKey: null,
       errorMessage: null,
       isSaving: false,
-    };
+    });
   }
 
   getState(): CopyPatchStoreState {
@@ -48,9 +67,7 @@ export class CopyPatchStore {
 
   subscribe(listener: Listener): () => void {
     this.globalListeners.add(listener);
-    return () => {
-      this.globalListeners.delete(listener);
-    };
+    return () => this.globalListeners.delete(listener);
   }
 
   subscribeKey(key: string, listener: Listener): () => void {
@@ -62,32 +79,8 @@ export class CopyPatchStore {
     set.add(listener);
     return () => {
       set?.delete(listener);
-      if (set?.size === 0) {
-        this.keyListeners.delete(key);
-      }
+      if (set?.size === 0) this.keyListeners.delete(key);
     };
-  }
-
-  private notify(changedKeys?: string[]) {
-    for (const listener of this.globalListeners) {
-      listener();
-    }
-    if (changedKeys) {
-      for (const key of changedKeys) {
-        const listeners = this.keyListeners.get(key);
-        if (listeners) {
-          for (const listener of listeners) {
-            listener();
-          }
-        }
-      }
-    } else {
-      for (const keySet of this.keyListeners.values()) {
-        for (const listener of keySet) {
-          listener();
-        }
-      }
-    }
   }
 
   registerFallback(key: string, fallback: string): void {
@@ -97,148 +90,110 @@ export class CopyPatchStore {
         console.warn(
           `[CopyPatch Warning] Duplicate contentKey "${key}" registered with conflicting fallback texts:\n` +
           `  - Existing: "${existing}"\n` +
-          `  - New:      "${fallback}"`
+          `  - New:      "${fallback}"`,
         );
       }
     }
     this.fallbackRegistry.set(key, fallback);
   }
 
-  /**
-   * Resolve persistent baseline content without unsaved edits:
-   * draft (if draft mode / exists) -> published -> fallback
-   */
   getBaseContent(key: string, fallback?: string): string {
-    if (key in this.state.drafts) {
-      return this.state.drafts[key] ?? '';
-    }
-    if (key in this.state.published) {
-      return this.state.published[key] ?? '';
-    }
+    if (key in this.state.drafts) return this.state.drafts[key] ?? '';
+    if (key in this.state.published) return this.state.published[key] ?? '';
     return fallback ?? this.fallbackRegistry.get(key) ?? '';
   }
 
-  /**
-   * Resolve content for key with priority:
-   * unsaved -> draft (if editor) -> published -> fallback
-   */
   resolveContent(key: string, fallback: string): string {
     this.registerFallback(key, fallback);
-
     if (this.state.isEditorActive) {
-      if (key in this.state.unsaved) {
-        return this.state.unsaved[key] ?? '';
-      }
-      if (key in this.state.drafts) {
-        return this.state.drafts[key] ?? '';
-      }
+      if (key in this.state.unsaved) return this.state.unsaved[key] ?? '';
+      if (key in this.state.drafts) return this.state.drafts[key] ?? '';
     }
-
-    if (key in this.state.published) {
-      return this.state.published[key] ?? '';
-    }
-
+    if (key in this.state.published) return this.state.published[key] ?? '';
     return fallback;
   }
 
-  setLocale(locale: string, snapshot?: ContentSnapshot) {
-    if (this.state.locale === locale && !snapshot) return;
-
-    this.state = {
+  setLocale(locale: string, snapshot?: ContentSnapshot): void {
+    if (this.state.locale === locale && snapshot === undefined) return;
+    this.commit({
       ...this.state,
       locale,
-      published: snapshot?.content ? { ...snapshot.content } : {},
+      published: snapshot?.content ?? {},
       publishedRevision: snapshot?.revision ?? 1,
       drafts: {},
       unsaved: {},
       activeEditingKey: null,
-    };
-    this.notify();
+    });
   }
 
-  setPublishedSnapshot(snapshot: ContentSnapshot) {
-    const keys = Object.keys(snapshot.content);
-    this.state = {
+  setPublishedSnapshot(snapshot: ContentSnapshot): void {
+    this.commit({
       ...this.state,
-      published: { ...snapshot.content },
+      published: snapshot.content,
       publishedRevision: snapshot.revision,
-    };
-    this.notify(keys);
+    }, changedKeys(this.state.published, snapshot.content));
   }
 
-  setEditorSnapshot(snapshot: EditorSnapshot) {
-    this.state = {
+  setEditorSnapshot(snapshot: EditorSnapshot): void {
+    this.commit({
       ...this.state,
       locale: snapshot.locale,
       publishedRevision: snapshot.publishedRevision,
       draftRevision: snapshot.draftRevision,
       publishingMode: snapshot.publishingMode,
-      published: { ...snapshot.published },
-      drafts: { ...snapshot.drafts },
-    };
-    this.notify();
+      published: snapshot.published,
+      drafts: snapshot.drafts,
+    });
   }
 
-  setEditorActive(active: boolean) {
-    if (this.state.isEditorActive === active) return;
-    this.state = { ...this.state, isEditorActive: active };
-    this.notify();
+  setEditorActive(active: boolean): void {
+    this.commit({ ...this.state, isEditorActive: active });
   }
 
-  setAuthenticated(authenticated: boolean, csrfToken: string | null = null, mode?: PublishingMode) {
-    this.state = {
+  setAuthenticated(
+    authenticated: boolean,
+    csrfToken: string | null = null,
+    mode?: PublishingMode,
+  ): void {
+    this.commit({
       ...this.state,
       isAuthenticated: authenticated,
       csrfToken,
       publishingMode: mode ?? this.state.publishingMode,
-    };
-    this.notify();
+    });
   }
 
-  setActiveEditingKey(key: string | null) {
-    if (this.state.activeEditingKey === key) return;
-    this.state = { ...this.state, activeEditingKey: key };
-    this.notify();
+  setActiveEditingKey(key: string | null): void {
+    this.commit({ ...this.state, activeEditingKey: key });
   }
 
-  setUnsavedEdit(key: string, text: string) {
+  setUnsavedEdit(key: string, text: string): void {
     const base = this.getBaseContent(key);
-    const currentUnsaved = this.state.unsaved[key];
-
-    // If edited text is identical to base content, clear dirty state
     if (text === base) {
-      if (key in this.state.unsaved) {
-        const nextUnsaved = { ...this.state.unsaved };
-        delete nextUnsaved[key];
-        this.state = { ...this.state, unsaved: nextUnsaved };
-        this.notify([key]);
-      }
+      if (!(key in this.state.unsaved)) return;
+      const unsaved = { ...this.state.unsaved };
+      delete unsaved[key];
+      this.commit({ ...this.state, unsaved }, [key]);
       return;
     }
-
-    // Don't trigger redundant notification if text hasn't changed
-    if (currentUnsaved === text) return;
-
-    const nextUnsaved = { ...this.state.unsaved, [key]: text };
-    this.state = { ...this.state, unsaved: nextUnsaved };
-    this.notify([key]);
+    if (this.state.unsaved[key] === text) return;
+    this.commit({ ...this.state, unsaved: { ...this.state.unsaved, [key]: text } }, [key]);
   }
 
-  discardUnsaved() {
-    const changedKeys = Object.keys(this.state.unsaved);
-    this.state = { ...this.state, unsaved: {} };
-    this.notify(changedKeys);
+  discardUnsaved(): void {
+    const keys = Object.keys(this.state.unsaved);
+    if (keys.length === 0) return;
+    this.commit({ ...this.state, unsaved: {} }, keys);
   }
 
-  clearDrafts() {
-    const changedKeys = Object.keys(this.state.drafts);
-    this.state = { ...this.state, drafts: {} };
-    this.notify(changedKeys);
+  clearDrafts(): void {
+    const keys = Object.keys(this.state.drafts);
+    if (keys.length === 0) return;
+    this.commit({ ...this.state, drafts: {} }, keys);
   }
 
-  setSaving(isSaving: boolean, errorMessage: string | null = null) {
-    this.state = { ...this.state, isSaving, errorMessage };
-    this.notify();
+  setSaving(isSaving: boolean, errorMessage: string | null = null): void {
+    this.commit({ ...this.state, isSaving, errorMessage });
   }
 
   destroy(): void {
@@ -246,4 +201,69 @@ export class CopyPatchStore {
     this.keyListeners.clear();
     this.fallbackRegistry.clear();
   }
+
+  private commit(next: CopyPatchStoreState, keys?: readonly string[]): void {
+    if (statesEqual(this.state, next)) return;
+    this.state = createSnapshot(next);
+    this.notify(keys);
+  }
+
+  private notify(changedKeys?: readonly string[]): void {
+    const listeners = new Set(this.globalListeners);
+    if (changedKeys) {
+      for (const key of changedKeys) {
+        for (const listener of this.keyListeners.get(key) ?? []) listeners.add(listener);
+      }
+    } else {
+      for (const keyListeners of this.keyListeners.values()) {
+        for (const listener of keyListeners) listeners.add(listener);
+      }
+    }
+    for (const listener of listeners) listener();
+  }
+}
+
+export { CopyPatchStore };
+
+function createSnapshot(state: CopyPatchStoreState): CopyPatchStoreState {
+  return Object.freeze({
+    ...state,
+    published: Object.freeze({ ...state.published }),
+    drafts: Object.freeze({ ...state.drafts }),
+    unsaved: Object.freeze({ ...state.unsaved }),
+  });
+}
+
+function statesEqual(left: CopyPatchStoreState, right: CopyPatchStoreState): boolean {
+  return (
+    left.locale === right.locale &&
+    left.isEditorActive === right.isEditorActive &&
+    left.isAuthenticated === right.isAuthenticated &&
+    left.csrfToken === right.csrfToken &&
+    left.publishingMode === right.publishingMode &&
+    recordsEqual(left.published, right.published) &&
+    recordsEqual(left.drafts, right.drafts) &&
+    recordsEqual(left.unsaved, right.unsaved) &&
+    left.publishedRevision === right.publishedRevision &&
+    left.draftRevision === right.draftRevision &&
+    left.activeEditingKey === right.activeEditingKey &&
+    left.errorMessage === right.errorMessage &&
+    left.isSaving === right.isSaving
+  );
+}
+
+function recordsEqual(
+  left: Readonly<Record<string, string>>,
+  right: Readonly<Record<string, string>>,
+): boolean {
+  const leftKeys = Object.keys(left);
+  const rightKeys = Object.keys(right);
+  return leftKeys.length === rightKeys.length && leftKeys.every((key) => left[key] === right[key]);
+}
+
+function changedKeys(
+  left: Readonly<Record<string, string>>,
+  right: Readonly<Record<string, string>>,
+): string[] {
+  return [...new Set([...Object.keys(left), ...Object.keys(right)])].filter((key) => left[key] !== right[key]);
 }

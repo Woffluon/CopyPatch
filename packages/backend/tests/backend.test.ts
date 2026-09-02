@@ -1,17 +1,51 @@
 import { hash } from '@node-rs/argon2';
+import { readFile } from 'node:fs/promises';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   API_BASE_PATH,
   HARD_MAX_TEXT_LENGTH,
   type ContentSnapshot,
   type CopyPatchAuthAdapter,
+  type CopyPatchRequestHandler,
   type CopyPatchPersistence,
   type EditorSnapshot,
   type PersistenceMutationResult,
+  type PublishedSnapshotReader,
   type RateLimitDecision,
   type StoredSession,
 } from '@copypatch/core';
-import { createCopyPatchBackend, hashToken } from '../src/index.js';
+import {
+  createCopyPatchBackend,
+  type CopyPatchBackend,
+} from '../src/index.js';
+import { verifyMutationReturningUndefined } from './fixtures/undefined-mutation-verifier.js';
+
+type BackendUsesCorePorts = CopyPatchBackend extends CopyPatchRequestHandler & PublishedSnapshotReader
+  ? true
+  : false;
+
+const backendUsesCorePorts: BackendUsesCorePorts = true;
+const optionsContract = (
+  options: Parameters<typeof createCopyPatchBackend>[0],
+): Parameters<typeof createCopyPatchBackend>[0] => options;
+
+function parseJsonObject(text: string): Record<string, unknown> {
+  const value: unknown = JSON.parse(text);
+  if (!isRecord(value)) {
+    throw new TypeError('Expected a JSON object.');
+  }
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function latestSession(persistence: MemoryPersistence): [string, StoredSession] {
+  const entry = [...persistence.sessions.entries()].at(-1);
+  if (!entry) throw new Error('Expected a persisted session.');
+  return entry;
+}
 
 class MemoryPersistence implements CopyPatchPersistence {
   readonly sessions = new Map<string, StoredSession>();
@@ -160,6 +194,43 @@ describe('CopyPatch backend v2', () => {
     expect(() => createCopyPatchBackend({ persistence, passphraseHash: '$argon2i$not-id' })).toThrow(/Argon2id/);
   });
 
+  it('extends the core request-handler and published-snapshot ports', () => {
+    expect(backendUsesCorePorts).toBe(true);
+    expect(typeof optionsContract).toBe('function');
+  });
+
+  it('exports only the documented backend runtime allowlist', async () => {
+    const publicApi = await import('../src/index.js');
+    const indexSource = await readFile(new URL('../src/index.ts', import.meta.url), 'utf8');
+
+    expect(Object.keys(publicApi)).toEqual(['createCopyPatchBackend']);
+    expect(indexSource).not.toContain('export *');
+    expect(typeof createCopyPatchBackend).toBe('function');
+  });
+
+  it('aligns npm metadata with the core package pattern', async () => {
+    const packageJson = parseJsonObject(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+
+    expect(packageJson.module).toBeUndefined();
+    expect(packageJson.sideEffects).toBe(false);
+    expect(packageJson.exports).toEqual({
+      '.': {
+        types: './dist/index.d.ts',
+        import: './dist/index.js',
+        default: './dist/index.js',
+      },
+    });
+    expect(packageJson.files).toEqual(['dist']);
+    expect(packageJson.homepage).toBe('https://copypatch.vercel.app');
+    expect(packageJson.repository).toEqual({
+      type: 'git',
+      url: 'git+https://github.com/Woffluon/CopyPatch.git',
+      directory: 'packages/backend',
+    });
+    expect(packageJson.bugs).toEqual({ url: 'https://github.com/Woffluon/CopyPatch/issues' });
+    expect(packageJson.keywords).toEqual(expect.arrayContaining(['copypatch', 'backend', 'typescript']));
+  });
+
   it('creates a 256-bit session while persisting only its hash and emits a hardened host cookie', async () => {
     const backend = createCopyPatchBackend({ persistence, passphraseHash: await hash('correct horse battery staple') });
     const { response, data, cookie, setCookie } = await login(backend);
@@ -168,7 +239,9 @@ describe('CopyPatch backend v2', () => {
     expect(data.requiresCsrf).toBe(true);
     expect(Buffer.from(rawToken, 'base64url')).toHaveLength(32);
     expect(persistence.sessions.has(rawToken)).toBe(false);
-    expect(persistence.sessions.has(hashToken(rawToken))).toBe(true);
+    const [storedHash, storedSession] = latestSession(persistence);
+    expect(storedHash).toMatch(/^[a-f0-9]{64}$/);
+    expect(storedSession.tokenHash).toBe(storedHash);
     expect(setCookie).toMatch(/^__Host-copypatch-session=/);
     expect(setCookie).toContain('HttpOnly');
     expect(setCookie).toContain('Secure');
@@ -323,8 +396,7 @@ describe('CopyPatch backend v2', () => {
       now: () => now,
     });
     const { cookie } = await login(backend);
-    const tokenHash = hashToken(cookie.split('=')[1] ?? '');
-    const stored = persistence.sessions.get(tokenHash)!;
+    const [tokenHash, stored] = latestSession(persistence);
     stored.idleExpiresAt = now;
 
     const expired = await backend.handle(request('/session', { headers: { cookie } }));
@@ -333,8 +405,7 @@ describe('CopyPatch backend v2', () => {
     expect(persistence.sessions.has(tokenHash)).toBe(false);
 
     const relogin = await login(backend);
-    const reloginTokenHash = hashToken(relogin.cookie.split('=')[1] ?? '');
-    const invalidPrincipal = persistence.sessions.get(reloginTokenHash)!;
+    const [reloginTokenHash, invalidPrincipal] = latestSession(persistence);
     invalidPrincipal.subject = '';
     const invalid = await backend.handle(request('/editor/en', { headers: { cookie: relogin.cookie } }));
     expect(invalid.status).toBe(401);
@@ -351,7 +422,7 @@ describe('CopyPatch backend v2', () => {
   it('deletes built-in sessions only after cookie and CSRF authentication succeed', async () => {
     const backend = createCopyPatchBackend({ persistence, passphraseHash: await hash('correct horse battery staple') });
     const { cookie, data } = await login(backend);
-    const tokenHash = hashToken(cookie.split('=')[1] ?? '');
+    const [tokenHash] = latestSession(persistence);
 
     const deleted = await backend.handle(request('/session', {
       method: 'DELETE',
@@ -437,6 +508,41 @@ describe('CopyPatch backend v2', () => {
     }), { hostAuth: { sentinel } });
     expect(response.status).toBe(403);
     expect(await response.text()).not.toContain('host secret failure');
+    expect((await persistence.readEditor('en')).drafts).toEqual({});
+  });
+
+  it('accepts only literal true from host mutation verification', async () => {
+    const verifiers = [
+      { label: 'false', clientAddress: '203.0.113.20', verifyMutation: async () => false },
+      { label: 'undefined', clientAddress: '203.0.113.21', verifyMutation: verifyMutationReturningUndefined },
+      { label: 'throw', clientAddress: '203.0.113.22', verifyMutation: () => { throw new Error('sync verifier failure'); } },
+      { label: 'rejection', clientAddress: '203.0.113.23', verifyMutation: () => Promise.reject(new Error('async verifier failure')) },
+    ];
+
+    for (const { label, clientAddress, verifyMutation } of verifiers) {
+      const backend = createCopyPatchBackend({
+        persistence,
+        authAdapter: {
+          authenticate: async () => ({ subject: 'host', roles: ['editor'] }),
+          verifyMutation,
+        },
+      });
+      const response = await backend.handle(request('/editor/en/changes', {
+        method: 'PUT',
+        headers: { origin, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          expectedPublishedRevision: 1,
+          expectedDraftRevision: 1,
+          changes: [{ key: `blocked.${label}`, text: 'must not persist' }],
+        }),
+      }), { clientAddress });
+
+      expect(response.status, label).toBe(403);
+      expect(await response.json(), label).toEqual({
+        error: { code: 'CSRF_FAILED', message: 'Mutation verification failed.' },
+      });
+    }
+
     expect((await persistence.readEditor('en')).drafts).toEqual({});
   });
 

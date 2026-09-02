@@ -1,6 +1,6 @@
 ---
 title: "Security Architecture & Threat Model"
-description: "Explore CopyPatch v2's same-origin security model, Argon2id cryptography, CSRF defense, and XSS immunity."
+description: "Explore CopyPatch v3's same-origin security model, Argon2id cryptography, CSRF defense, and XSS immunity."
 group: operations-security
 order: 2
 ---
@@ -25,7 +25,7 @@ export const cspExample = `Content-Security-Policy: default-src 'self'; script-s
 
   <h2>2. Same-Origin Boundary & Origin Validation</h2>
   <p>
-    CopyPatch v2 runs exclusively inside the host application's origin:
+    CopyPatch v3 runs exclusively inside the host application's origin:
   </p>
   <ul>
     <li>The embedded API rejects any mutating request whose <code>Origin</code> header does not exactly match the host domain.</li>

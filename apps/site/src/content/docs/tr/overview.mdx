@@ -1,5 +1,5 @@
 ---
-title: "CopyPatch v2 Dokümantasyonu"
+title: "CopyPatch v3 Dokümantasyonu"
 description: "Sunucu destekli React uygulamanıza aynı kökenden (same-origin) çalışan güvenli satır içi metin düzenleme yeteneği kazandırın."
 group: getting-started
 order: 1
@@ -11,8 +11,14 @@ export const quickExample = `// 1. Sunucunuza route handler'ı ekleyin (Örn. Ne
 import { createCopyPatchRouteHandlers } from '@copypatch/next/server';
 import { copypatch } from '@/lib/copypatch';
 
-const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
-  createCopyPatchRouteHandlers(copypatch);
+declare function resolveTrustedClientAddress(request: Request): Promise<string>;
+
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  createCopyPatchRouteHandlers(copypatch, {
+    resolveContext: async (request) => ({
+      clientAddress: await resolveTrustedClientAddress(request),
+    }),
+  });
 
 // 2. İstemci bileşenlerinizi sağlayıcı ile sarın
 import { CopyPatchProvider, EditableText } from '@copypatch/react';

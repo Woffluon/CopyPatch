@@ -1,6 +1,6 @@
 ---
 title: "Çoklu Dil ve Çeviri İzolasyonu"
-description: "CopyPatch v2 ile her dil için bağımsız yayınlanmış anlık görüntüleri ve taslak revizyonlarını yönetin."
+description: "CopyPatch v3 ile her dil için bağımsız yayınlanmış anlık görüntüleri ve taslak revizyonlarını yönetin."
 group: editing-publishing
 order: 3
 ---
@@ -93,12 +93,12 @@ export function FiyatlandirmaBasligi({ locale }: { locale: string }) {
         <td><code>tr-TR</code>, <code>en-US</code>, <code>pt-BR</code></td>
         <td>Dil ve bölgesel ülke alt etiketleri.</td>
       </tr>
-      <tr>
-        <td><code>tr_TR</code>, <code>en_US</code></td>
-        <td>POSIX ve sistem formatındaki alt çizgili etiketler.</td>
-      </tr>
     </tbody>
   </table>
+
+  <p>
+    <code>tr_TR</code> ve <code>en_US</code> gibi alt çizgili POSIX biçimleri reddedilir. Bu değerleri CopyPatch'e vermeden önce tire kullanan BCP 47 etiketlerine dönüştürün.
+  </p>
 
   <blockquote>
     <strong>Kapsam Notu:</strong> CopyPatch bir metin kalıcılık ve sayfa içi düzenleme aracıdır; otomatik makine çevirisi veya URL yönlendirme motoru değildir. Uygulamanızın URL yapısı ve i18n rotalama mimarisi tamamen sizin kontrolünüzdedir.

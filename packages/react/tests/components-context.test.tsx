@@ -12,9 +12,27 @@ import { useDataAttributeObserver } from '../src/editor/data-attribute-observer.
 import { CopyPatchStore } from '../src/store/store.js';
 import * as publicApi from '../src/index.js';
 
+const editorLoaderControl = vi.hoisted(() => ({
+  error: new Error('Editor runtime is unavailable'),
+  shouldReject: false,
+}));
+
+vi.mock('../src/editor-loader.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../src/editor-loader.js')>();
+  return {
+    ...actual,
+    loadCopyPatchEditor: () => (
+      editorLoaderControl.shouldReject
+        ? Promise.reject(editorLoaderControl.error)
+        : actual.loadCopyPatchEditor()
+    ),
+  };
+});
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+  editorLoaderControl.shouldReject = false;
   document.body.innerHTML = '';
 });
 
@@ -80,6 +98,23 @@ describe('React public rendering APIs', () => {
     expect(screen.getByText('Offline fallback')).toBeTruthy();
     await Promise.resolve();
     expect(screen.getByText('Offline fallback')).toBeTruthy();
+  });
+
+  it('reports a lazy editor loading failure to the host exactly once', async () => {
+    editorLoaderControl.shouldReject = true;
+    window.history.replaceState({}, '', '/?copypatch=1');
+    const onEditorLoadError = vi.fn();
+
+    render(
+      <React.StrictMode>
+        <CopyPatchProvider locale="en" onEditorLoadError={onEditorLoadError}>
+          <CopyValue />
+        </CopyPatchProvider>
+      </React.StrictMode>,
+    );
+
+    await waitFor(() => expect(onEditorLoadError).toHaveBeenCalledTimes(1));
+    expect(onEditorLoadError).toHaveBeenCalledWith(editorLoaderControl.error);
   });
 
   it('edits, normalizes, and commits an EditableText value in authenticated editor mode', async () => {

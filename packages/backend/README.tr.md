@@ -2,7 +2,7 @@
 
 [English](README.md) | [Türkçe](README.tr.md)
 
-Framework bağımsız CopyPatch v2 backend çalışma zamanı. Host uygulamanızın içine Web `Request`/`Response` API'si olarak gömülür; ikinci sunucu, port veya CORS yapılandırması gerektirmez.
+Framework bağımsız CopyPatch v3 backend çalışma zamanı. Host uygulamanızın içine Web `Request`/`Response` API'si olarak gömülür; ikinci sunucu, port veya CORS yapılandırması gerektirmez.
 
 ## Kurulum
 

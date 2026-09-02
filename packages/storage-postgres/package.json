@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/storage-postgres",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "PostgreSQL persistence adapter for CopyPatch",
   "license": "MIT",
   "type": "module",
@@ -20,7 +20,6 @@
     "content-editing"
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
@@ -32,6 +31,7 @@
   "files": [
     "dist"
   ],
+  "sideEffects": false,
   "engines": {
     "node": ">=20.0.0"
   },
@@ -43,7 +43,8 @@
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
     "test": "vitest run tests",
-    "clean": "rm -rf dist"
+    "clean": "node ../../scripts/safe-clean.mjs --package=packages/storage-postgres",
+    "prepublishOnly": "node ../../scripts/release/reject-source-publish.mjs"
   },
   "dependencies": {
     "@copypatch/core": "workspace:*",

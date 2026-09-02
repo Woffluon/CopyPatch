@@ -1,6 +1,6 @@
 ---
 title: "Üretim Ortamı ve Dağıtım Rehberi"
-description: "CopyPatch v2'yi tek sunuculu SQLite veya yatayda ölçeklenen PostgreSQL ortamlarında güvenle dağıtın."
+description: "CopyPatch v3'ü tek sunuculu SQLite veya yatayda ölçeklenen PostgreSQL ortamlarında güvenle dağıtın."
 group: operations-security
 order: 3
 ---
@@ -9,7 +9,7 @@ import CodeBlock from '../../../components/ui/CodeBlock.astro';
 export const sqliteConfig = `import { createSQLitePersistence } from '@copypatch/storage-sqlite';
 
 const persistence = createSQLitePersistence({
-  filename: process.env.COPYPATCH_SQLITE_PATH ?? './data/copypatch.sqlite',
+  filename: process.env.COPYPATCH_SQLITE_PATH ?? './copypatch.sqlite',
   busyTimeoutMs: 5_000,
 });
 
@@ -20,7 +20,7 @@ export const postgresConfig = `import { Pool } from 'pg';
 import { createPostgresPersistence } from '@copypatch/storage-postgres';
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL!,
+  connectionString: process.env.COPYPATCH_DATABASE_URL!,
   max: 10,
   idleTimeoutMillis: 30000,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
@@ -44,7 +44,7 @@ export const healthExample = `// Sağlık denetimi uç noktası
 
 <h1>Üretim Ortamı ve Dağıtım Rehberi</h1>
   <p class="lead">
-    CopyPatch v2, doğrudan ana web uygulamanızın sunucusu içinde barındırılır. API rotası aynı HTTPS kökeni (same-origin) altında <code>/__copypatch/api/v2</code> adresinde çalıştığı için ek süreçler, açık portlar veya CORS reverse proxy kuralları gerektirmez.
+    CopyPatch v3, doğrudan ana web uygulamanızın sunucusu içinde barındırılır. API rotası aynı HTTPS kökeni (same-origin) altında <code>/__copypatch/api/v2</code> adresinde çalıştığı için ek süreçler, açık portlar veya CORS reverse proxy kuralları gerektirmez.
   </p>
 
   <h2>1. Kalıcılık (Depolama) Yapılandırması</h2>
@@ -87,17 +87,12 @@ export const healthExample = `// Sağlık denetimi uç noktası
       <tr>
         <td><code>COPYPATCH_SQLITE_PATH</code></td>
         <td>Hayır (SQLite için)</td>
-        <td>SQLite veritabanı dosyasının mutlak veya göreli yolu (varsayılan: <code>./data/copypatch.sqlite</code>).</td>
+        <td>SQLite veritabanı dosyasının mutlak veya göreli yolu (varsayılan: <code>./copypatch.sqlite</code>).</td>
       </tr>
       <tr>
-        <td><code>DATABASE_URL</code></td>
+        <td><code>COPYPATCH_DATABASE_URL</code></td>
         <td>Evet (Postgres için)</td>
         <td>PostgreSQL bağlantı dizgisi (örn. <code>postgres://user:pass@host:5432/dbname</code>).</td>
-      </tr>
-      <tr>
-        <td><code>NODE_ENV</code></td>
-        <td>Önerilir</td>
-        <td>Güvenli çerez bayraklarını ve HTTPS kurallarını etkinleştirmek için <code>production</code> olarak ayarlayın.</td>
       </tr>
     </tbody>
   </table>
