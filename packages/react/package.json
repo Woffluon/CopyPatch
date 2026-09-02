@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/react",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Lightweight, production-ready inline copy editing library for React",
   "license": "MIT",
   "type": "module",

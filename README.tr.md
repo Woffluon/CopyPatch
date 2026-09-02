@@ -3,7 +3,7 @@
 > React uygulamaları için modern ve aynı köken (same-origin) satır içi metin düzenleyici.
 
 [![CI Durumu](https://img.shields.io/github/actions/workflow/status/Woffluon/CopyPatch/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/Woffluon/CopyPatch/actions/workflows/ci.yml)
-[![Sürüm](https://img.shields.io/badge/version-3.0.0-blue.svg?style=flat-square)](packages)
+[![Sürüm](https://img.shields.io/badge/version-3.0.1-blue.svg?style=flat-square)](packages)
 [![Lisans](https://img.shields.io/badge/license-MIT-green.svg?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg?style=flat-square)](package.json)
 [![Dökümantasyon](https://img.shields.io/badge/docs-copypatch.vercel.app-blueviolet.svg?style=flat-square)](https://copypatch.vercel.app)
@@ -98,17 +98,17 @@ Herhangi bir sayfayı `?copypatch=1` parametresiyle ziyaret edin (örneğin `htt
 
 ## Monorepo paketleri
 
-Tüm genel paketler kilit adımlı (lockstep) sürümleme (`3.0.0`) ile yayınlanır:
+Tüm genel paketler kilit adımlı (lockstep) sürümleme (`3.0.1`) ile yayınlanır:
 
 | Paket | Sürüm | Açıklama | Rehber |
 | :--- | :--- | :--- | :--- |
-| [`@copypatch/core`](packages/core) | `3.0.0` | Ortak sözleşmeler, sabitler, şemalar ve kalıcılık arayüzleri. | [README](packages/core/README.md) |
-| [`@copypatch/react`](packages/react) | `3.0.0` | Sağlayıcı, hook'lar, `<EditableText>` ve düzenleyici çalışma zamanı. | [README](packages/react/README.md) |
-| [`@copypatch/backend`](packages/backend) | `3.0.0` | Depolamadan bağımsız HTTP denetleyicisi ve yetkilendirme motoru. | [README](packages/backend/README.md) |
-| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.0` | Tek sunuculu ve yerel ortamlar için SQLite adaptörü. | [README](packages/storage-sqlite/README.md) |
-| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.0` | Yatayda ölçeklenen çoklu sunucular için PostgreSQL adaptörü. | [README](packages/storage-postgres/README.md) |
-| [`@copypatch/node`](packages/node) | `3.0.0` | Express, Fastify, Hono, Node HTTP adaptörleri ve `copypatch` CLI aracı. | [README](packages/node/README.md) |
-| [`@copypatch/next`](packages/next) | `3.0.0` | Next.js App Router rota işleyicileri ve RSC snapshot okuyucuları. | [README](packages/next/README.md) |
+| [`@copypatch/core`](packages/core) | `3.0.1` | Ortak sözleşmeler, sabitler, şemalar ve kalıcılık arayüzleri. | [README](packages/core/README.md) |
+| [`@copypatch/react`](packages/react) | `3.0.1` | Sağlayıcı, hook'lar, `<EditableText>` ve düzenleyici çalışma zamanı. | [README](packages/react/README.md) |
+| [`@copypatch/backend`](packages/backend) | `3.0.1` | Depolamadan bağımsız HTTP denetleyicisi ve yetkilendirme motoru. | [README](packages/backend/README.md) |
+| [`@copypatch/storage-sqlite`](packages/storage-sqlite) | `3.0.1` | Tek sunuculu ve yerel ortamlar için SQLite adaptörü. | [README](packages/storage-sqlite/README.md) |
+| [`@copypatch/storage-postgres`](packages/storage-postgres) | `3.0.1` | Yatayda ölçeklenen çoklu sunucular için PostgreSQL adaptörü. | [README](packages/storage-postgres/README.md) |
+| [`@copypatch/node`](packages/node) | `3.0.1` | Express, Fastify, Hono, Node HTTP adaptörleri ve `copypatch` CLI aracı. | [README](packages/node/README.md) |
+| [`@copypatch/next`](packages/next) | `3.0.1` | Next.js App Router rota işleyicileri ve RSC snapshot okuyucuları. | [README](packages/next/README.md) |
 
 ---
 

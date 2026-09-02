@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/storage-sqlite",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "SQLite persistence adapter for CopyPatch",
   "license": "MIT",
   "type": "module",
@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@copypatch/core": "workspace:*",
-    "better-sqlite3": "^11.8.1"
+    "better-sqlite3": "^12.11.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

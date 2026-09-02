@@ -1,6 +1,6 @@
 {
   "name": "@copypatch/node",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Node.js adapters and project CLI for CopyPatch",
   "license": "MIT",
   "type": "module",
