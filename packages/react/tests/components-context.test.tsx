@@ -273,6 +273,7 @@ describe('editor controls', () => {
     fireEvent.click(screen.getByRole('button', { name: /unlock editor/i }));
 
     expect(await screen.findByText('Incorrect passphrase')).toBeTruthy();
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Cancel' }) as HTMLButtonElement).disabled).toBe(false));
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
